@@ -1,5 +1,19 @@
 # OpenDCC
 
+### 🔀 About This Fork
+
+This is an **independent, pure open-source fork** of the [original OpenDCC project](https://github.com/shapefx/OpenDCC), started by one of the original authors.
+
+**Goals of this fork:**
+- 📜 **Apache 2.0 licensed** — Maintains the same permissive open-source license
+- 🌍 **Easier OSS contribution** — Streamlined workflows for community contributors
+- ⚡ **Upgrades and improvements** — Modernization and enhancements across the codebase
+- 📦 **Prebuilt binaries** — Downloadable releases to lower the barrier to entry
+
+We welcome contributions, feedback, and collaboration from the broader community!
+
+---
+
 ### Overview
 
 **OpenDCC** is an Apache 2.0 licensed, open-source Digital Content Creation (DCC) application framework for building modular, production-grade 3D tools. It combines a flexible, plugin-driven architecture with an industry-standard Qt-based interface, embedded Python scripting, [OpenUSD](https://github.com/PixarAnimationStudios/OpenUSD) and Hydra integration.
