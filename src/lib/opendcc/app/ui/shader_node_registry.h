@@ -8,7 +8,15 @@
 #include "opendcc/opendcc.h"
 #include "opendcc/app/core/api.h"
 #include <pxr/base/tf/token.h>
+#if PXR_VERSION >= 2508
+#include <pxr/usd/sdr/shaderNodeDiscoveryResult.h>
+#else
 #include <pxr/usd/ndr/nodeDiscoveryResult.h>
+PXR_NAMESPACE_OPEN_SCOPE
+using SdrShaderNodeDiscoveryResult = NdrNodeDiscoveryResult;
+using SdrShaderNodeDiscoveryResultVec = NdrNodeDiscoveryResultVec;
+PXR_NAMESPACE_CLOSE_SCOPE
+#endif
 #include <pxr/base/plug/plugin.h>
 #include <pxr/base/plug/notice.h>
 
@@ -19,7 +27,7 @@ class OPENDCC_API ShaderNodeRegistry
 public:
     static std::string get_node_plugin_name(const PXR_NS::TfToken& node_name);
     static std::vector<std::string> get_loaded_node_plugin_names();
-    static PXR_NS::NdrNodeDiscoveryResultVec get_ndr_plugin_nodes(const std::string& plugin_name);
+    static PXR_NS::SdrShaderNodeDiscoveryResultVec get_ndr_plugin_nodes(const std::string& plugin_name);
 
 private:
     ShaderNodeRegistry();
@@ -50,7 +58,7 @@ private:
     };
 
     std::unordered_map<PXR_NS::TfToken, std::string, PXR_NS::TfToken::HashFunctor> m_node_to_plugin;
-    std::map<std::string, PXR_NS::NdrNodeDiscoveryResultVec> m_plugin_nodes;
+    std::map<std::string, PXR_NS::SdrShaderNodeDiscoveryResultVec> m_plugin_nodes;
     std::set<PluginEntry> m_loaded_plugins;
     std::set<PXR_NS::TfType> m_ndr_plugins;
     std::unique_ptr<PluginWatcher> m_watcher;

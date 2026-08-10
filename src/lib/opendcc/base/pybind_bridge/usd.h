@@ -23,7 +23,11 @@
 #include <pxr/base/gf/matrix3d.h>
 #include <pxr/base/gf/matrix4d.h>
 #include <pxr/base/gf/matrix4f.h>
+#if PXR_VERSION >= 2508
+#include <pxr/usd/sdr/shaderNodeDiscoveryResult.h>
+#else
 #include <pxr/usd/ndr/nodeDiscoveryResult.h>
+#endif
 
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::GfVec2i, "pxr.Gf.Vec2i")
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::GfVec2h, "pxr.Gf.Vec2h")
@@ -61,7 +65,11 @@ OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::SdfLayerRefPtr, "pxr.Sdf.Layer")
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::UsdTimeCode, "pxr.Usd.TimeCode")
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::SdfPath, "pxr.Sdf.Path")
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::SdfSpecType, "pxr.Sdf.SpecType")
+#if PXR_VERSION >= 2508
+OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::SdrShaderNodeDiscoveryResult, "pxr.Sdr.ShaderNodeDiscoveryResult");
+#else
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::NdrNodeDiscoveryResult, "pxr.Ndr.NodeDiscoveryResult");
+#endif
 
 namespace pybind11
 {

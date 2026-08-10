@@ -470,8 +470,12 @@ void PaintPrimvarToolContext::set_primvar_index(size_t idx)
 )#";
 
     frag_src = frag_header + frag_src;
+#if PXR_VERSION >= 2508
+    SdrTokenMap shader_metadata = { { SdrNodeMetadata->Primvars, ShaderMetadataHelpers::CreateStringFromStringVec(SdrStringVec { primvar_name }) } };
+#else
     NdrTokenMap shader_metadata = { { SdrNodeMetadata->Primvars, ShaderMetadataHelpers::CreateStringFromStringVec(NdrStringVec { primvar_name }) } };
-    auto shader_node = SdrRegistry::GetInstance().GetNodeFromSourceCode(frag_src, TfToken("glslfx"), shader_metadata);
+#endif
+    auto shader_node = SdrRegistry::GetInstance().GetShaderNodeFromSourceCode(frag_src, TfToken("glslfx"), shader_metadata);
     HdMaterialNetworkMap material_network_map;
     material_network_map.terminals.push_back(m_mesh_data->mesh.GetPath());
 

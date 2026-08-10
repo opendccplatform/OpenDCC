@@ -4,7 +4,6 @@
 #include "opendcc/usd_editor/texture_paint/texture_paint_tool_context.h"
 #include "opendcc/app/viewport/prim_material_override.h"
 #include "pxr/usd/sdr/registry.h"
-#include "pxr/usd/ndr/registry.h"
 #include "pxr/imaging/hd/material.h"
 #include "pxr/imaging/hd/renderBuffer.h"
 #include "opendcc/app/ui/application_ui.h"
@@ -77,7 +76,7 @@ namespace
 
     TfToken get_texture_shader_id()
     {
-        static const auto node = SdrRegistry::GetInstance().GetNodeFromSourceCode(s_texture_source, TfToken("glslfx"), {});
+        static const auto node = SdrRegistry::GetInstance().GetShaderNodeFromSourceCode(s_texture_source, TfToken("glslfx"), {});
         return node ? node->GetIdentifier() : TfToken();
     }
 
@@ -414,12 +413,12 @@ void TexturePaintToolContext::set_material()
 
     HdMaterialNode st_reader;
     st_reader.path = SdfPath("/st_reader");
-    st_reader.identifier = SdrRegistry::GetInstance().GetNodeByIdentifier(TfToken("UsdPrimvarReader_float2"))->GetIdentifier();
+    st_reader.identifier = SdrRegistry::GetInstance().GetShaderNodeByIdentifier(TfToken("UsdPrimvarReader_float2"))->GetIdentifier();
     st_reader.parameters[TfToken("varname")] = VtValue(TfToken("st"));
 
     HdMaterialNode sampler;
     sampler.path = SdfPath("/sampler");
-    sampler.identifier = SdrRegistry::GetInstance().GetNodeByIdentifier(TfToken("UsdUVTexture"))->GetIdentifier();
+    sampler.identifier = SdrRegistry::GetInstance().GetShaderNodeByIdentifier(TfToken("UsdUVTexture"))->GetIdentifier();
     sampler.parameters[TfToken("file")] = VtValue(painted_texture);
 
     HdMaterialNode terminal;

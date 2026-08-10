@@ -8,8 +8,13 @@
 #include <pxr/usd/sdf/path.h>
 #include <pxr/usd/usd/stage.h>
 #include <pxr/usd/usd/attribute.h>
+#if PXR_VERSION >= 2508
+#include <pxr/usd/sdf/usdFileFormat.h>
+#include <pxr/usd/sdf/usdcFileFormat.h>
+#else
 #include <pxr/usd/usd/usdFileFormat.h>
 #include <pxr/usd/usd/usdcFileFormat.h>
+#endif
 
 #include "opendcc/base/vendor/ghc/filesystem.hpp"
 #include "opendcc/base/commands_api/core/command_registry.h"
@@ -25,7 +30,11 @@ UsdClipboard::UsdClipboard()
     auto clipboard_path = ghc::filesystem::temp_directory_path();
     clipboard_path.append("OpenDCCClipboard.usd");
     set_clipboard_path(clipboard_path.string());
+#if PXR_VERSION >= 2508
+    set_clipboard_file_format(SdfUsdcFileFormatTokens->Id.GetText());
+#else
     set_clipboard_file_format(UsdUsdcFileFormatTokens->Id.GetText());
+#endif
 
     if (!ghc::filesystem::exists(m_path_to_clipboard))
     {
@@ -85,7 +94,11 @@ void UsdClipboard::clear_clipboard()
 void UsdClipboard::set_clipboard(const UsdStageWeakPtr& clipboard)
 {
     SdfFileFormat::FileFormatArguments args;
+#if PXR_VERSION >= 2508
+    args[SdfUsdFileFormatTokens->FormatArg] = m_clipboard_file_format;
+#else
     args[UsdUsdFileFormatTokens->FormatArg] = m_clipboard_file_format;
+#endif
     if (!clipboard->GetRootLayer()->Export(m_path_to_clipboard, "OpenDCCСlipboard", args))
     {
         return;
@@ -107,7 +120,11 @@ void UsdClipboard::set_clipboard_file_format(const std::string& format)
 void UsdClipboard::save_clipboard_data(const UsdStageWeakPtr& stage)
 {
     SdfFileFormat::FileFormatArguments args;
+#if PXR_VERSION >= 2508
+    args[SdfUsdFileFormatTokens->FormatArg] = m_clipboard_file_format;
+#else
     args[UsdUsdFileFormatTokens->FormatArg] = m_clipboard_file_format;
+#endif
     if (!stage->GetRootLayer()->Export(m_path_to_clipboard, "OpenDCCСlipboard", args))
     {
         return;

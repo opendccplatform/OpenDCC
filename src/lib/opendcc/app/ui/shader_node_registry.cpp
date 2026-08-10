@@ -3,10 +3,41 @@
 
 #include "shader_node_registry.h"
 #include "pxr/base/plug/registry.h"
+#if PXR_VERSION >= 2508
+#include "pxr/usd/sdr/discoveryPlugin.h"
+#else
 #include "pxr/usd/ndr/discoveryPlugin.h"
+PXR_NAMESPACE_OPEN_SCOPE
+using SdrDiscoveryPluginContext = NdrDiscoveryPluginContext;
+using SdrDiscoveryPluginFactoryBase = NdrDiscoveryPluginFactoryBase;
+PXR_NAMESPACE_CLOSE_SCOPE
+#endif
 
 OPENDCC_NAMESPACE_OPEN
 PXR_NAMESPACE_USING_DIRECTIVE
+
+namespace
+{
+    // The discovery-plugin base type was renamed as USD deprecated the legacy Ndr library in favor
+    // of Sdr: older USD registers plugins under "NdrDiscoveryPlugin", newer USD under
+    // "SdrDiscoveryPlugin", and during the deprecation window both names can be present. Looking up
+    // only the wrong one yields an unknown TfType, so GetAllDerivedTypes() returns nothing and the
+    // shader palette comes up empty (the symptom in the USD 26.05 build). Query both names and union
+    // the results — an absent name resolves to an invalid TfType whose GetAllDerivedTypes() is a
+    // harmless no-op, and the std::set dedups if a build aliases one name to the other.
+    void collect_discovery_plugin_types(std::set<PXR_NS::TfType>& out)
+    {
+        for (const char* type_name : { "SdrDiscoveryPlugin", "NdrDiscoveryPlugin" })
+        {
+            const auto base = PXR_NS::PlugRegistry::FindTypeByName(type_name);
+            if (!base)
+                continue;
+            std::set<PXR_NS::TfType> derived;
+            base.GetAllDerivedTypes(&derived);
+            out.insert(derived.begin(), derived.end());
+        }
+    }
+}
 
 std::string OPENDCC_NAMESPACE::ShaderNodeRegistry::get_node_plugin_name(const PXR_NS::TfToken& node_name)
 {
@@ -17,20 +48,19 @@ std::string OPENDCC_NAMESPACE::ShaderNodeRegistry::get_node_plugin_name(const PX
     return iter == self.m_node_to_plugin.end() ? "" : iter->second;
 }
 
-PXR_NS::NdrNodeDiscoveryResultVec OPENDCC_NAMESPACE::ShaderNodeRegistry::get_ndr_plugin_nodes(const std::string& plugin_name)
+PXR_NS::SdrShaderNodeDiscoveryResultVec OPENDCC_NAMESPACE::ShaderNodeRegistry::get_ndr_plugin_nodes(const std::string& plugin_name)
 {
     auto& self = instance();
     self.init();
 
     auto iter = self.m_plugin_nodes.find(plugin_name);
-    return iter == self.m_plugin_nodes.end() ? NdrNodeDiscoveryResultVec() : iter->second;
+    return iter == self.m_plugin_nodes.end() ? SdrShaderNodeDiscoveryResultVec() : iter->second;
 }
 
 OPENDCC_NAMESPACE::ShaderNodeRegistry::ShaderNodeRegistry()
 {
     m_watcher = std::make_unique<PluginWatcher>();
-    auto registry = PlugRegistry::FindTypeByName("NdrDiscoveryPlugin");
-    registry.GetAllDerivedTypes(&m_ndr_plugins);
+    collect_discovery_plugin_types(m_ndr_plugins);
     for (const auto& plugin : m_ndr_plugins)
     {
         auto plug = PlugRegistry::GetInstance().GetPluginForType(plugin);
@@ -59,8 +89,7 @@ void OPENDCC_NAMESPACE::ShaderNodeRegistry::PluginWatcher::on_did_register_plugi
 {
     auto& self = ShaderNodeRegistry::instance();
     self.m_loaded_plugins.clear();
-    auto registry = PlugRegistry::FindTypeByName("NdrDiscoveryPlugin");
-    registry.GetAllDerivedTypes(&self.m_ndr_plugins);
+    collect_discovery_plugin_types(self.m_ndr_plugins);
     self.init();
 }
 
@@ -83,7 +112,7 @@ void OPENDCC_NAMESPACE::ShaderNodeRegistry::init()
     m_plugin_nodes.clear();
     m_loaded_plugins = loaded_plugins;
 
-    class CustomCtx : public NdrDiscoveryPluginContext
+    class CustomCtx : public SdrDiscoveryPluginContext
     {
     public:
         CustomCtx() = default;
@@ -93,14 +122,18 @@ void OPENDCC_NAMESPACE::ShaderNodeRegistry::init()
 
     for (const auto plugin_entry : m_loaded_plugins)
     {
-        if (const auto discovery_plug_factory = plugin_entry.type.GetFactory<NdrDiscoveryPluginFactoryBase>())
+        if (const auto discovery_plug_factory = plugin_entry.type.GetFactory<SdrDiscoveryPluginFactoryBase>())
         {
             const auto discovery_plug = discovery_plug_factory->New();
+#if PXR_VERSION >= 2508
+            auto nodes = discovery_plug->DiscoverShaderNodes(ctx);
+#else
             auto nodes = discovery_plug->DiscoverNodes(ctx);
+#endif
             if (!nodes.empty())
             {
                 std::sort(nodes.begin(), nodes.end(),
-                          [](const NdrNodeDiscoveryResult& left, const NdrNodeDiscoveryResult& right) { return left.name < right.name; });
+                          [](const SdrShaderNodeDiscoveryResult& left, const SdrShaderNodeDiscoveryResult& right) { return left.name < right.name; });
                 for (const auto& node : nodes)
                     m_node_to_plugin[node.identifier] = plugin_entry.name;
                 m_plugin_nodes[plugin_entry.name] = std::move(nodes);

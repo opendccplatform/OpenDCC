@@ -126,8 +126,8 @@ HdMaterialNetworkMap ViewportLocatorData::get_material_resource(const SdfPath& m
     static TfToken unlit_source_id;
     static TfToken domelight_source_id;
     std::call_once(once, [] {
-        const auto unlit_node = SdrRegistry::GetInstance().GetNodeFromSourceCode(usd_locator_unlit_source, TfToken("glslfx"), NdrTokenMap());
-        const auto domelight_node = SdrRegistry::GetInstance().GetNodeFromSourceCode(usd_locator_domelight_source, TfToken("glslfx"), NdrTokenMap());
+        const auto unlit_node = SdrRegistry::GetInstance().GetShaderNodeFromSourceCode(usd_locator_unlit_source, TfToken("glslfx"), {});
+        const auto domelight_node = SdrRegistry::GetInstance().GetShaderNodeFromSourceCode(usd_locator_domelight_source, TfToken("glslfx"), {});
         unlit_source_id = unlit_node->GetIdentifier();
         domelight_source_id = domelight_node->GetIdentifier();
     });
@@ -142,7 +142,7 @@ HdMaterialNetworkMap ViewportLocatorData::get_material_resource(const SdfPath& m
         const auto texture_path = rprim_path.AppendProperty(TfToken("texture"));
         HdMaterialNode domelight_shader_node = { rprim_path, domelight_source_id };
         domelight_shader_node.parameters[TfToken("texture")] = VtValue(GfVec3f(1, 1, 1));
-        HdMaterialNode texture_sampler = { texture_path, SdrRegistry::GetInstance().GetNodeByIdentifier(TfToken("UsdUVTexture"))->GetIdentifier() };
+        HdMaterialNode texture_sampler = { texture_path, SdrRegistry::GetInstance().GetShaderNodeByIdentifier(TfToken("UsdUVTexture"))->GetIdentifier() };
         texture_sampler.parameters[TfToken("file")] = VtValue(SdfAssetPath(texture_iter->second));
         HdMaterialRelationship rel;
         rel.inputId = texture_path;

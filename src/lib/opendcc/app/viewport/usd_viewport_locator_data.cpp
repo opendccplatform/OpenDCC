@@ -150,7 +150,7 @@ bool UsdViewportLocatorData::contains_texture(const SdfPath& path) const
     if (mat_map_iter == mat_network.map.end())
         return false;
 
-    static const auto texture_identifier = SdrRegistry::GetInstance().GetNodeByIdentifier(TfToken("UsdUVTexture"))->GetIdentifier();
+    static const auto texture_identifier = SdrRegistry::GetInstance().GetShaderNodeByIdentifier(TfToken("UsdUVTexture"))->GetIdentifier();
     for (const auto& node : mat_map_iter->second.nodes)
     {
         if (node.identifier == texture_identifier)

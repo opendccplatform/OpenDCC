@@ -214,7 +214,11 @@ void MoonrayPropertyFactory::get_properties(const UsdPrim& prim, PropertyGathere
     if (!sdr_node)
         return;
 
+#if PXR_VERSION >= 2508
+    const auto outputs = sdr_node->GetShaderOutputNames();
+#else
     const auto outputs = sdr_node->GetOutputNames();
+#endif
     if (outputs.empty())
     {
         property_gatherer.try_insert_property(SdfSpecTypeAttribute, moonray_attribute_tokens->outputsOut, prim, get_outputs_metadata(), source);
@@ -271,7 +275,11 @@ void MoonrayPropertyFactory::get_property(const UsdPrim& prim, const TfToken& pr
     if (!sdr_node)
         return;
 
+#if PXR_VERSION >= 2508
+    if (property_name == moonray_attribute_tokens->outputsOut && sdr_node->GetShaderOutputNames().empty())
+#else
     if (property_name == moonray_attribute_tokens->outputsOut && sdr_node->GetOutputNames().empty())
+#endif
     {
         property_gatherer.try_insert_property(SdfSpecTypeAttribute, moonray_attribute_tokens->outputsOut, prim, get_outputs_metadata(),
                                               UsdPropertySource(TfToken(), get_type()));

@@ -23,7 +23,6 @@
 #include "opendcc/usd_editor/common_tools/viewport_usd_snap_strategy.h"
 #include "opendcc/app/viewport/prim_material_override.h"
 #include "pxr/imaging/hd/material.h"
-#include "pxr/usd/ndr/registry.h"
 #include "pxr/usd/sdr/registry.h"
 #include "pxr/usd/usdShade/shader.h"
 #include "pxr/usd/sdr/shaderProperty.h"

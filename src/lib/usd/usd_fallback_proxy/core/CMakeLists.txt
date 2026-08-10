@@ -34,13 +34,17 @@ target_link_libraries(
     usd_fallback_proxy
     usd
     ar
-    ndr
     sdr
     sdf
     usdUtils
     usdShade
     usdUIExt
     utils)
+# The 'ndr' library was merged into 'sdr' in USD 25.05 and no longer exists there;
+# link it only when the imported target is present (i.e. older USD like 25.02a).
+if(TARGET ndr)
+    target_link_libraries(usd_fallback_proxy ndr)
+endif()
 
 install(
     TARGETS usd_fallback_proxy

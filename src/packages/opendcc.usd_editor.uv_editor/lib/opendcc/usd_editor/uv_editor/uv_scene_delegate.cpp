@@ -132,12 +132,12 @@ static HdMaterialNetworkMap get_background_texture_material_network(const SdfPat
 
     HdMaterialNode st_reader;
     st_reader.path = bg_texture.AppendChild(TfToken("st_reader"));
-    st_reader.identifier = SdrRegistry::GetInstance().GetNodeByIdentifier(TfToken("UsdPrimvarReader_float2"))->GetIdentifier();
+    st_reader.identifier = SdrRegistry::GetInstance().GetShaderNodeByIdentifier(TfToken("UsdPrimvarReader_float2"))->GetIdentifier();
     st_reader.parameters[TfToken("varname")] = VtValue(TfToken("st"));
 
     HdMaterialNode sampler;
     sampler.path = bg_texture_mat;
-    sampler.identifier = SdrRegistry::GetInstance().GetNodeByIdentifier(TfToken("UsdUVTexture"))->GetIdentifier();
+    sampler.identifier = SdrRegistry::GetInstance().GetShaderNodeByIdentifier(TfToken("UsdUVTexture"))->GetIdentifier();
     sampler.parameters[TfToken("file")] = VtValue(SdfAssetPath(texture_file));
 
     HdMaterialNode terminal;
@@ -304,7 +304,7 @@ SdfPath UVSceneDelegate::get_background_texture_material() const
 
 TfToken OPENDCC_NAMESPACE::UVSceneDelegate::get_texture_node_id() const
 {
-    if (auto node = SdrRegistry::GetInstance().GetNodeFromSourceCode(s_texture_source, HioGlslfxTokens->glslfx, {}))
+    if (auto node = SdrRegistry::GetInstance().GetShaderNodeFromSourceCode(s_texture_source, HioGlslfxTokens->glslfx, {}))
         return node->GetIdentifier();
     else
         return TfToken();
@@ -626,7 +626,7 @@ void UVSceneDelegate::populate_selection(const SelectionList& selection_list, co
 
 HdMaterialNetworkMap UVSceneDelegate::get_mesh_material_network(PXR_NS::SdfPath prim_path)
 {
-    const auto mesh_node = SdrRegistry::GetInstance().GetNodeFromSourceCode(s_mesh_source, HioGlslfxTokens->glslfx, NdrTokenMap());
+    const auto mesh_node = SdrRegistry::GetInstance().GetShaderNodeFromSourceCode(s_mesh_source, HioGlslfxTokens->glslfx, {});
     const auto& mesh_source_id = mesh_node->GetIdentifier();
 
     HdMaterialNetworkMap material_network_map;

@@ -155,14 +155,22 @@ void UsdPrimPropertyFactory::get_properties(const UsdPrim& prim, PropertyGathere
     if (!shader_node)
         return;
 
+#if PXR_VERSION >= 2508
+    for (const auto& input_name : shader_node->GetShaderInputNames())
+#else
     for (const auto& input_name : shader_node->GetInputNames())
+#endif
     {
         auto input = shader_node->GetShaderInput(input_name);
         auto property_name = TfToken(s_input_prefix + input->GetName().GetString());
         create_property_proxy(prim, property_name, input, property_gatherer);
     }
 
+#if PXR_VERSION >= 2508
+    for (const auto& output_name : shader_node->GetShaderOutputNames())
+#else
     for (const auto& output_name : shader_node->GetOutputNames())
+#endif
     {
         auto output = shader_node->GetShaderOutput(output_name);
         auto property_name = TfToken(s_output_prefix + output->GetName().GetString());
