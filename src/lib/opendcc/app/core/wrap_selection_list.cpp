@@ -21,7 +21,7 @@ namespace
     template <class T>
     VtArray<T> slice_vtarray(const pybind11::object& src)
     {
-        namespace bp = boost::python;
+        namespace bp = PXR_BOOST_PYTHON_NAMESPACE;
         VtArray<T> result;
         result.resize(len(src));
         Vt_WrapArray::setArraySlice(result, bp::slice(0, result.size()), bp::object(bp::handle<>(bp::borrowed(src.ptr()))));

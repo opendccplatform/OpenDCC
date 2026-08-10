@@ -6,7 +6,7 @@
 #pragma once
 #include "opendcc/opendcc.h"
 #include "opendcc/base/pybind_bridge/pybind11.h"
-#include <boost/python.hpp>
+#include "opendcc/base/pybind_bridge/boost_python.h"
 
 OPENDCC_NAMESPACE_OPEN
 
@@ -15,7 +15,7 @@ struct pybind_boost_bridge
 {
     static bool load(T& value, const pybind11::handle& src)
     {
-        namespace bp = boost::python;
+        namespace bp = PXR_BOOST_PYTHON_NAMESPACE;
         namespace py = pybind11;
         bp::object boost_obj { bp::handle<>(bp::borrowed(src.ptr())) };
         bp::extract<T> extractor(boost_obj);
@@ -30,7 +30,7 @@ struct pybind_boost_bridge
     // C++ -> Python
     static pybind11::handle cast(const T& src)
     {
-        namespace bp = boost::python;
+        namespace bp = PXR_BOOST_PYTHON_NAMESPACE;
         return bp::incref(bp::object(src).ptr());
     }
 };

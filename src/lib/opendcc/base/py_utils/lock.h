@@ -7,7 +7,7 @@
 
 #include "opendcc/base/py_utils/api.h"
 #include "opendcc/base/logging/logger.h"
-#include <boost/python.hpp>
+#include "Python.h"
 
 OPENDCC_NAMESPACE_OPEN
 

@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/base/py_utils/error.h"
-#include <boost/python.hpp>
+#include "opendcc/base/pybind_bridge/boost_python.h"
 #include "opendcc/base/logging/logger.h"
 
 OPENDCC_NAMESPACE_OPEN
 
 std::string py_get_error_str()
 {
-    using namespace boost::python;
+    using namespace PXR_BOOST_PYTHON_NAMESPACE;
     try
     {
         PyObject* type = nullptr;

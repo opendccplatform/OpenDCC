@@ -5,7 +5,7 @@
 #include "opendcc/app/core/application.h"
 #include "opendcc/app/ui/main_window.h"
 #include "opendcc/app/core/undo/stack.h"
-#include <boost/python.hpp>
+#include "opendcc/base/pybind_bridge/boost_python.h"
 #include <pxr/base/tf/pyError.h>
 #include "opendcc/app/core/selection_list.h"
 #include "opendcc/base/commands_api/core/command_registry.h"

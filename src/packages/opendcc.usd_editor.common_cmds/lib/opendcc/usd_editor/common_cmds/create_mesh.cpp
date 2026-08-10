@@ -3,7 +3,7 @@
 
 #include "opendcc/usd_editor/common_cmds/create_mesh.h"
 #include "opendcc/app/core/command_utils.h"
-#include <boost/python.hpp>
+#include "opendcc/base/pybind_bridge/boost_python.h"
 #include <pxr/base/tf/pyError.h>
 #include <pxr/usd/sdf/attributeSpec.h>
 #include <pxr/usd/usdGeom/metrics.h>

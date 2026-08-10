@@ -7,8 +7,7 @@
 #include <pxr/base/tf/pyResultConversions.h>
 #include <pxr/base/tf/pyUtils.h>
 #include <pxr/usd/usd/pyConversions.h>
-#include <boost/python.hpp>
-#include <boost/python/dict.hpp>
+#include "opendcc/base/pybind_bridge/boost_python.h"
 #include <pxr/base/tf/pyContainerConversions.h>
 #include <pxr/base/tf/pyError.h>
 #include <pxr/usd/ar/pyResolverContext.h>
@@ -22,6 +21,8 @@
 OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
+
+namespace bp = PXR_BOOST_PYTHON_NAMESPACE;
 
 static VtValue get(UsdPropertyProxy* self, const UsdTimeCode& time = UsdTimeCode::Default())
 {
@@ -41,12 +42,12 @@ static TfPyObjWrapper get_default(UsdPropertyProxy* self)
 
 static bool set(UsdPropertyProxy* self, pybind11::object val, const UsdTimeCode time = UsdTimeCode::Default())
 {
-    auto bp_object = boost::python::object(boost::python::handle<>(boost::python::borrowed(val.ptr())));
+    auto bp_object = bp::object(bp::handle<>(bp::borrowed(val.ptr())));
     auto wrapper = TfPyObjWrapper(bp_object);
     VtValue vt_value;
     {
         TfPyLock lock;
-        vt_value = boost::python::extract<VtValue>(wrapper.Get())();
+        vt_value = bp::extract<VtValue>(wrapper.Get())();
     }
 
     VtValue def_value = self->get_type_name().GetDefaultValue();
@@ -68,7 +69,7 @@ static VtValue get_metadata(UsdPropertyProxy* self, const TfToken& key)
 static bool set_metadata(UsdPropertyProxy* self, const TfToken& key, pybind11::object obj)
 {
     VtValue value;
-    return UsdPythonToMetadataValue(key, TfToken(), boost::python::object(boost::python::handle<>(boost::python::borrowed(obj.ptr()))), &value) &&
+    return UsdPythonToMetadataValue(key, TfToken(), bp::object(bp::handle<>(bp::borrowed(obj.ptr()))), &value) &&
            self->set_metadata(key, value);
 }
 

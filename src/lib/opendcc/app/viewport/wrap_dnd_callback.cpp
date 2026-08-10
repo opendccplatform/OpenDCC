@@ -4,7 +4,6 @@
 #include "opendcc/app/viewport/wrap_dnd_callback.h"
 #include "opendcc/base/pybind_bridge/shiboken.h"
 #include "opendcc/base/pybind_bridge/usd.h"
-#include <boost/python.hpp>
 #include "opendcc/app/viewport/viewport_dnd_callback_registry.h"
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>

@@ -113,7 +113,26 @@ find_package(
     COMPONENTS ${BOOST_COMPONENTS}
     REQUIRED)
 
-if(${boost_version_string} VERSION_GREATER_EQUAL "1.67")
+# USD 24.11+ can be built with a vendored boost.python (pxr_boost::python, baked into pxr.h as
+# PXR_USE_INTERNAL_BOOST_PYTHON); newer USD defines it unconditionally. In that mode real
+# boost.python must not be found or linked. A '#if 0'-guarded define means USD was built against
+# real boost.python.
+set(USD_USES_INTERNAL_BOOST_PYTHON FALSE)
+if(USD_PXR_VERSION GREATER_EQUAL 2411 AND EXISTS "${USD_INCLUDE_DIR}/pxr/pxr.h")
+    file(READ "${USD_INCLUDE_DIR}/pxr/pxr.h" _pxr_h_text)
+    if(_pxr_h_text MATCHES "#define[ \t]+PXR_USE_INTERNAL_BOOST_PYTHON"
+       AND NOT _pxr_h_text MATCHES "#if[ \t]+0[ \t\r\n]+#define[ \t]+PXR_USE_INTERNAL_BOOST_PYTHON")
+        set(USD_USES_INTERNAL_BOOST_PYTHON TRUE)
+    endif()
+    unset(_pxr_h_text)
+endif()
+
+if(USD_USES_INTERNAL_BOOST_PYTHON)
+    # USD exports its vendored boost.python as the imported target 'python' (libpython);
+    # route all ${Boost_PYTHON_LIBRARY} link references to it.
+    message(STATUS "USD uses internal pxr boost.python; skipping boost.python")
+    set(Boost_PYTHON_LIBRARY python)
+elseif(${boost_version_string} VERSION_GREATER_EQUAL "1.67")
     set(python_version_nodot "${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
     find_package(
         Boost
@@ -130,7 +149,7 @@ else()
         COMPONENTS python
         REQUIRED)
 endif()
-if(Python3_FOUND)
+if(Python3_FOUND AND NOT USD_USES_INTERNAL_BOOST_PYTHON)
     find_package(
         Boost
         COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}

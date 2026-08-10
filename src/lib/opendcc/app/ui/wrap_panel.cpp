@@ -3,7 +3,7 @@
 
 #include "opendcc/app/ui/wrap_panel.h"
 #include "opendcc/base/pybind_bridge/shiboken.h"
-#include <boost/python.hpp>
+#include "opendcc/base/pybind_bridge/boost_python.h"
 
 #include "opendcc/app/core/application.h"
 #include "opendcc/app/ui/application_ui.h"

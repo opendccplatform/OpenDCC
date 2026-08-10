@@ -8,15 +8,16 @@
 	<load-typesystem name="opendcc.ui.node_editor.xml" generate="no"/>
 
 	<primitive-type name="pxr::UsdPrim" target-name="UsdPrim">
+		<include file-name="opendcc/base/pybind_bridge/boost_python.h" location="global"/>
 		<conversion-rule>
 			<native-to-target>
-				auto obj = boost::python::object(%in);
+				auto obj = PXR_BOOST_PYTHON_NAMESPACE::object(%in);
 				Py_IncRef(obj.ptr());
 				return obj.ptr();
 			</native-to-target>
 			<target-to-native>
-				<add-conversion type="pxr::UsdPrim" check="boost::python::extract&lt;pxr::UsdPrim&gt;(%in).check()">
-					boost::python::extract&lt;pxr::UsdPrim&gt; ex(%in);
+				<add-conversion type="pxr::UsdPrim" check="PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::UsdPrim&gt;(%in).check()">
+					PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::UsdPrim&gt; ex(%in);
 					if (ex.check())
 					    %out=ex();
 					else
@@ -26,15 +27,16 @@
 		</conversion-rule>
 	</primitive-type>
 	<primitive-type name="pxr::TfToken" target-name="TfToken">
+		<include file-name="opendcc/base/pybind_bridge/boost_python.h" location="global"/>
 		<conversion-rule>
 			<native-to-target>
-				auto obj = boost::python::object(%in);
+				auto obj = PXR_BOOST_PYTHON_NAMESPACE::object(%in);
 				Py_IncRef(obj.ptr());
 				return obj.ptr();
 			</native-to-target>
 			<target-to-native>
-				<add-conversion type="pxr::TfToken" check="boost::python::extract&lt;pxr::TfToken&gt;(%in).check()">
-					boost::python::extract&lt;pxr::TfToken&gt; ex(%in);
+				<add-conversion type="pxr::TfToken" check="PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::TfToken&gt;(%in).check()">
+					PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::TfToken&gt; ex(%in);
 					if (ex.check())
 						%out=ex();
 					else
@@ -45,15 +47,16 @@
 	</primitive-type>
 	
 	<primitive-type name="pxr::SdfPath" target-name="SdfPath">
+		<include file-name="opendcc/base/pybind_bridge/boost_python.h" location="global"/>
 		<conversion-rule>
 			<native-to-target>
-				auto obj = boost::python::object(%in);
+				auto obj = PXR_BOOST_PYTHON_NAMESPACE::object(%in);
 				Py_IncRef(obj.ptr());
 				return obj.ptr();
 			</native-to-target>
 			<target-to-native>
-				<add-conversion type="pxr::UsdPrim" check="boost::python::extract&lt;pxr::SdfPath&gt;(%in).check()">
-					boost::python::extract&lt;pxr::SdfPath&gt; ex(%in);
+				<add-conversion type="pxr::UsdPrim" check="PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::SdfPath&gt;(%in).check()">
+					PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::SdfPath&gt; ex(%in);
 					if (ex.check())
 					%out=ex();
 					else

@@ -13,6 +13,7 @@ opendcc_make_library(
     INCLUDE_DIRS
     ${Boost_INCLUDE_DIRS}
     ${PYTHON_INCLUDE_DIRS}
+    ${USD_INCLUDE_DIR}
     LIBRARY_DEPENDENCIES
     logging
     pybind11::pybind11
