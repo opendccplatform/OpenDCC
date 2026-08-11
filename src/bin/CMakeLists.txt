@@ -9,4 +9,6 @@ if(DCC_BUILD_RENDER_VIEW)
     endif()
 endif()
 
-add_subdirectory(crash_reporter)
+if(DCC_BUILD_CRASH_REPORTER)
+    add_subdirectory(crash_reporter)
+endif()

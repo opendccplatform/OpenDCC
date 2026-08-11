@@ -10,6 +10,8 @@ option(DCC_PYSIDE_CMAKE_FIND
        "PySide2 could be build via setup.py build or cmake. Option will look for cmake exports file" OFF)
 option(DCC_BUILD_ARNOLD_SUPPORT "" ON)
 option(DCC_BUILD_TESTS "" OFF)
+# needs the crashpad client libraries and headers, which only a crashpad-backend sentry-native ships
+option(DCC_BUILD_CRASH_REPORTER "Build the crash reporter" ON)
 
 
 option(DCC_USD_FALLBACK_PROXY_BUILD_ARNOLD_USD "" ON)
