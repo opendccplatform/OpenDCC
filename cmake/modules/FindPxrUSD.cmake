@@ -15,17 +15,16 @@ find_path(
     PATHS ${USD_ROOT}/include $ENV{USD_ROOT}/include
     DOC "USD Include directory")
 
-if(WIN32)
-    find_path(
-        USD_LIBRARY_DIR libusd.dll
-        PATHS ${USD_ROOT}/lib $ENV{USD_ROOT}/lib
-        DOC "USD Libraries directory")
-elseif(UNIX)
-    find_path(
-        USD_LIBRARY_DIR libusd.so libusd.dylib
-        PATHS ${USD_ROOT}/lib $ENV{USD_ROOT}/lib
-        DOC "USD Libraries directory")
+# USD library names are prefixed with PXR_LIB_PREFIX, "lib" by default
+if(NOT DEFINED PXR_LIB_PREFIX)
+    set(PXR_LIB_PREFIX lib)
 endif()
+
+find_path(
+    USD_LIBRARY_DIR
+    NAMES ${PXR_LIB_PREFIX}usd${CMAKE_SHARED_LIBRARY_SUFFIX}
+    PATHS ${USD_ROOT}/lib $ENV{USD_ROOT}/lib
+    DOC "USD Libraries directory")
 
 find_file(
     USD_GENSCHEMA_SCRIPT

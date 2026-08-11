@@ -19,27 +19,18 @@ def parse(usdgenschema_path, schema_path, output_dir):
 
     usdGenSchema.InitializeResolver()
 
+    # ParseUsd keeps gaining trailing return values between USD versions, so index
+    # the fields we need instead of unpacking the whole tuple. Of those, only the
+    # position of classes moved: 20.08 added a skip-codegen flag in front of it.
+    parsed = usdGenSchema.ParseUsd(schema_path)
+    lib_name = parsed[0]
+    lib_prefix = parsed[2]
+    use_export_api = parsed[4]
+    lib_tokens = parsed[5]
     if usdGenSchema.Usd.GetVersion() > (0, 20, 8):
-        (
-            lib_name,
-            lib_path,
-            lib_prefix,
-            tokens_prefix,
-            use_export_api,
-            lib_tokens,
-            code_gen,
-            classes,
-        ) = usdGenSchema.ParseUsd(schema_path)
+        classes = parsed[7]
     else:
-        (
-            lib_name,
-            lib_path,
-            lib_prefix,
-            tokens_prefix,
-            use_export_api,
-            lib_tokens,
-            classes,
-        ) = usdGenSchema.ParseUsd(schema_path)
+        classes = parsed[6]
 
     headers = []
     src = []
