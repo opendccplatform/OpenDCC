@@ -1,3 +1,12 @@
+# plugInfo bases name TfTypes, which USD 25.08 renamed. Set before add_subdirectory so ndrCycles inherits.
+if(USD_PXR_VERSION GREATER_EQUAL 2508)
+    set(SDR_DISCOVERY_PLUGIN_BASE "SdrDiscoveryPlugin")
+    set(SDR_PARSER_PLUGIN_BASE "SdrParserPlugin")
+else()
+    set(SDR_DISCOVERY_PLUGIN_BASE "NdrDiscoveryPlugin")
+    set(SDR_PARSER_PLUGIN_BASE "NdrParserPlugin")
+endif()
+
 add_subdirectory(ndrCycles)
 
 set(PROJECT_NAME cycles_property_proxy)

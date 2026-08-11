@@ -20,23 +20,27 @@ OPENDCC_NAMESPACE_OPEN
 
 TF_DEFINE_PRIVATE_TOKENS(ndr_tokens, ((family, "shader"))((discoveryType, "cycles"))((sourceType, "cycles")));
 
-NDR_REGISTER_DISCOVERY_PLUGIN(NdrCyclesDiscoveryPlugin)
+SDR_REGISTER_DISCOVERY_PLUGIN(NdrCyclesDiscoveryPlugin)
 
 NdrCyclesDiscoveryPlugin::NdrCyclesDiscoveryPlugin() {}
 
-const NdrStringVec& NdrCyclesDiscoveryPlugin::GetSearchURIs() const
+const SdrStringVec& NdrCyclesDiscoveryPlugin::GetSearchURIs() const
 {
-    static const auto result = []() -> NdrStringVec {
-        NdrStringVec result = TfStringSplit(TfGetenv("CYCLES_PLUGIN_PATH"), ARCH_PATH_LIST_SEP);
+    static const auto result = []() -> SdrStringVec {
+        SdrStringVec result = TfStringSplit(TfGetenv("CYCLES_PLUGIN_PATH"), ARCH_PATH_LIST_SEP);
         result.push_back("<built-in>");
         return result;
     }();
     return result;
 }
 
-NdrNodeDiscoveryResultVec NdrCyclesDiscoveryPlugin::DiscoverNodes(const Context& context)
+#if PXR_VERSION >= 2508
+SdrShaderNodeDiscoveryResultVec NdrCyclesDiscoveryPlugin::DiscoverShaderNodes(const Context& context)
+#else
+SdrShaderNodeDiscoveryResultVec NdrCyclesDiscoveryPlugin::DiscoverNodes(const Context& context)
+#endif
 {
-    NdrNodeDiscoveryResultVec result;
+    SdrShaderNodeDiscoveryResultVec result;
     const auto node_definitions = get_node_definitions();
     if (!node_definitions)
         return result;
@@ -47,10 +51,11 @@ NdrNodeDiscoveryResultVec NdrCyclesDiscoveryPlugin::DiscoverNodes(const Context&
         if (!shader)
             continue;
         const auto shader_name = prim.GetName();
-        NdrNodeDiscoveryResult node_discovery_result(NdrIdentifier(TfStringPrintf("cycles:%s", shader_name.GetText())), NdrVersion(1, 0),
-                                                     shader_name.GetString(), ndr_tokens->family, ndr_tokens->discoveryType, ndr_tokens->sourceType,
-                                                     "<built-in>", // uri
-                                                     "<built-in>" // resolved uri
+        SdrShaderNodeDiscoveryResult node_discovery_result(SdrIdentifier(TfStringPrintf("cycles:%s", shader_name.GetText())), SdrVersion(1, 0),
+                                                           shader_name.GetString(), ndr_tokens->family, ndr_tokens->discoveryType,
+                                                           ndr_tokens->sourceType,
+                                                           "<built-in>", // uri
+                                                           "<built-in>" // resolved uri
         );
         result.emplace_back(std::move(node_discovery_result));
     }

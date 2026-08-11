@@ -1,6 +1,6 @@
 set(PROJECT_NAME ndrCycles)
 
-set(HEADERS api.h discovery.h node_definitions.h parser.h)
+set(HEADERS api.h discovery.h node_definitions.h parser.h sdr_compat.h)
 
 set(SRC discovery.cpp node_definitions.cpp parser.cpp)
 
@@ -23,7 +23,6 @@ target_include_directories(
 
 target_link_libraries(
     ${PROJECT_NAME}
-    ndr
     usd
     sdr
     usdShade
@@ -36,6 +35,10 @@ target_link_libraries(
     ${OPENSUBDIV_LIBRARIES}
     ${OCIO_LIBRARY}
     ${ALEMBIC_LIBRARIES})
+# 'ndr' was merged into 'sdr' in USD 25.05 and no longer exists there.
+if(TARGET ndr)
+    target_link_libraries(${PROJECT_NAME} ndr)
+endif()
 target_compile_definitions(
     ${PROJECT_NAME}
     PRIVATE -DNDR_CYCLES_EXPORT

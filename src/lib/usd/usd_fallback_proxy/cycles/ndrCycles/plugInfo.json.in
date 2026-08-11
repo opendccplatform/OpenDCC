@@ -4,12 +4,12 @@
         "Info": {
           "Types": {
             "OpenDCC::NdrCyclesDiscoveryPlugin" : {
-              "bases": ["NdrDiscoveryPlugin"],
+              "bases": ["@SDR_DISCOVERY_PLUGIN_BASE@"],
               "displayName": "Cycles Node Discovery"
             },
             "OpenDCC::NdrCyclesParserPlugin": {
                 "bases": [
-                    "NdrParserPlugin"
+                    "@SDR_PARSER_PLUGIN_BASE@"
                 ],
                 "displayName": "Cycles Node Parser"
             }

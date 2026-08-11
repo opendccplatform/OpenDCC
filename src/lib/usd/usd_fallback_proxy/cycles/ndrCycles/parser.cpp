@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "parser.h"
-#include <pxr/usd/ndr/nodeDiscoveryResult.h>
 #include <pxr/base/tf/staticTokens.h>
 #include <pxr/usd/sdr/shaderNode.h>
 #include "node_definitions.h"
@@ -17,7 +16,7 @@
 OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
-NDR_REGISTER_PARSER_PLUGIN(NdrCyclesParserPlugin)
+SDR_REGISTER_PARSER_PLUGIN(NdrCyclesParserPlugin)
 #if PXR_VERSION < 2108
 TF_DEFINE_PRIVATE_TOKENS(_tokens, (cycles)(binary)(defaultInput)(implementationName));
 #else
@@ -175,7 +174,11 @@ NdrCyclesParserPlugin::NdrCyclesParserPlugin() {}
 
 NdrCyclesParserPlugin::~NdrCyclesParserPlugin() {}
 
-NdrNodeUniquePtr NdrCyclesParserPlugin::Parse(const NdrNodeDiscoveryResult& discoveryResult)
+#if PXR_VERSION >= 2508
+SdrShaderNodeUniquePtr NdrCyclesParserPlugin::ParseShaderNode(const SdrShaderNodeDiscoveryResult& discoveryResult)
+#else
+NdrNodeUniquePtr NdrCyclesParserPlugin::Parse(const SdrShaderNodeDiscoveryResult& discoveryResult)
+#endif
 {
     auto node_definitions = get_node_definitions();
     auto prim = node_definitions->GetPrimAtPath(SdfPath(TfStringPrintf("/%s", discoveryResult.name.c_str())));
@@ -185,10 +188,12 @@ NdrNodeUniquePtr NdrCyclesParserPlugin::Parse(const NdrNodeDiscoveryResult& disc
     if (!shader)
         return nullptr;
 
-#if PXR_VERSION >= 2108
-    NdrPropertyUniquePtrVec props = UsdShadeShaderDefUtils::GetShaderProperties(shader);
+#if PXR_VERSION >= 2508
+    SdrShaderPropertyUniquePtrVec props = UsdShadeShaderDefUtils::GetProperties(shader);
+#elif PXR_VERSION >= 2108
+    SdrShaderPropertyUniquePtrVec props = UsdShadeShaderDefUtils::GetShaderProperties(shader);
 #else
-    NdrPropertyUniquePtrVec props;
+    SdrShaderPropertyUniquePtrVec props;
     for (auto& input : shader.GetInputs())
     {
         // Only inputs will have default value provided
@@ -232,31 +237,34 @@ NdrNodeUniquePtr NdrCyclesParserPlugin::Parse(const NdrNodeDiscoveryResult& disc
     }
 
 #endif
-#if PXR_MINOR_VERSION >= 20 && PXR_PATCH_VERSION >= 5
-    return NdrNodeUniquePtr(new SdrShaderNode(discoveryResult.identifier, // identifier
-                                              discoveryResult.version, // version
-                                              discoveryResult.name, // name
-                                              discoveryResult.family, // family
-                                              discoveryResult.discoveryType, // context
-                                              discoveryResult.sourceType, // sourceType
-                                              discoveryResult.uri, // uri
-                                              discoveryResult.uri, // resolvedUri
-                                              std::move(props)));
+    // Not PXR_MINOR/PATCH_VERSION: those are 25 and 2 for USD 25.02, so the old
+    // `MINOR >= 20 && PATCH >= 5` test picked the 8-argument overload dropped in 20.05.
+    // 2508+ keeps this overload deprecated; the replacement derives context from metadata.
+#if PXR_VERSION >= 2005
+    return SdrShaderNodeUniquePtr(new SdrShaderNode(discoveryResult.identifier, // identifier
+                                                    discoveryResult.version, // version
+                                                    discoveryResult.name, // name
+                                                    discoveryResult.family, // family
+                                                    discoveryResult.discoveryType, // context
+                                                    discoveryResult.sourceType, // sourceType
+                                                    discoveryResult.uri, // uri
+                                                    discoveryResult.uri, // resolvedUri
+                                                    std::move(props)));
 #else
-    return NdrNodeUniquePtr(new SdrShaderNode(discoveryResult.identifier, // identifier
-                                              discoveryResult.version, // version
-                                              discoveryResult.name, // name
-                                              discoveryResult.family, // family
-                                              discoveryResult.discoveryType, // context
-                                              discoveryResult.sourceType, // sourceType
-                                              discoveryResult.uri, // uri
-                                              std::move(props)));
+    return SdrShaderNodeUniquePtr(new SdrShaderNode(discoveryResult.identifier, // identifier
+                                                    discoveryResult.version, // version
+                                                    discoveryResult.name, // name
+                                                    discoveryResult.family, // family
+                                                    discoveryResult.discoveryType, // context
+                                                    discoveryResult.sourceType, // sourceType
+                                                    discoveryResult.uri, // uri
+                                                    std::move(props)));
 #endif
 }
 
-const NdrTokenVec& NdrCyclesParserPlugin::GetDiscoveryTypes() const
+const SdrTokenVec& NdrCyclesParserPlugin::GetDiscoveryTypes() const
 {
-    static const NdrTokenVec ret = { _tokens->cycles };
+    static const SdrTokenVec ret = { _tokens->cycles };
     return ret;
 }
 

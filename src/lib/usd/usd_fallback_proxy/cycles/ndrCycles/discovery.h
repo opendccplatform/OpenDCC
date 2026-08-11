@@ -6,21 +6,25 @@
 #pragma once
 
 #include "opendcc/opendcc.h"
-#include <pxr/usd/ndr/discoveryPlugin.h>
+#include "sdr_compat.h"
 
 OPENDCC_NAMESPACE_OPEN
 
-class NdrCyclesDiscoveryPlugin : public PXR_NS::NdrDiscoveryPlugin
+class NdrCyclesDiscoveryPlugin : public PXR_NS::SdrDiscoveryPlugin
 {
 public:
-    using Context = PXR_NS::NdrDiscoveryPluginContext;
+    using Context = PXR_NS::SdrDiscoveryPluginContext;
 
     NdrCyclesDiscoveryPlugin();
     ~NdrCyclesDiscoveryPlugin();
 
-    PXR_NS::NdrNodeDiscoveryResultVec DiscoverNodes(const Context& context) override;
+#if PXR_VERSION >= 2508
+    PXR_NS::SdrShaderNodeDiscoveryResultVec DiscoverShaderNodes(const Context& context) override;
+#else
+    PXR_NS::SdrShaderNodeDiscoveryResultVec DiscoverNodes(const Context& context) override;
+#endif
 
-    const PXR_NS::NdrStringVec& GetSearchURIs() const override;
+    const PXR_NS::SdrStringVec& GetSearchURIs() const override;
 };
 
 OPENDCC_NAMESPACE_CLOSE

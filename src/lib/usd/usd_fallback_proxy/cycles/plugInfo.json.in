@@ -11,7 +11,7 @@
             }
           },
           "PluginDependencies": {
-            "NdrDiscoveryPlugin": ["OpenDCC::NdrCyclesDiscoveryPlugin"]
+            "@SDR_DISCOVERY_PLUGIN_BASE@": ["OpenDCC::NdrCyclesDiscoveryPlugin"]
           }
         },
         "LibraryPath": "@LIBRARY_LOCATION@/@CMAKE_SHARED_LIBRARY_PREFIX@cycles_property_proxy@CMAKE_SHARED_LIBRARY_SUFFIX@",
