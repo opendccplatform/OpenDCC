@@ -1180,12 +1180,18 @@ HdxRenderTaskParams ViewportHydraEngine::make_viewport_hydra_render_params(const
         hd_params.enableLighting = params.enable_lighting && !params.enable_id_render;
     }
 
+    // enableIdRender was removed from HdxRenderTaskParams in USD 25.05, id render is driven through HdxPickTask there
+#if PXR_VERSION < 2505
     hd_params.enableIdRender = params.enable_id_render;
+#endif
     hd_params.depthBiasUseDefault = true;
     hd_params.depthFunc = params.depth_func;
     hd_params.cullStyle =
         params.cull_style == ViewportHydraCullStyle::CULL_STYLE_BACK_UNLESS_DOUBLE_SIDED ? HdCullStyleBackUnlessDoubleSided : HdCullStyleNothing;
+    // enableSceneMaterials was removed from HdxRenderTaskParams in USD 25.11
+#if PXR_VERSION < 2511
     hd_params.enableSceneMaterials = params.enable_scene_materials;
+#endif
 
     return hd_params;
 }
