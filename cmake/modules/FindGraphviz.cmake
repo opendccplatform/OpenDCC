@@ -55,4 +55,8 @@ if(NOT TARGET Graphviz)
     add_library(Graphviz INTERFACE IMPORTED)
     set_target_properties(Graphviz PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${GRAPHVIZ_INCLUDE_DIR};"
                                               INTERFACE_LINK_LIBRARIES "${GRAPHVIZ_LIBRARIES}")
+    # graphviz headers declare data symbols such as Agdirected dllimport only under GVDLL
+    if(WIN32)
+        set_target_properties(Graphviz PROPERTIES INTERFACE_COMPILE_DEFINITIONS GVDLL)
+    endif()
 endif()
