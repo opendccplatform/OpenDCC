@@ -336,7 +336,7 @@ void ActionComboBox::showEvent(QShowEvent* event)
 void ActionComboBox::update_width()
 {
     QFontMetrics metrics(font());
-    int width = metrics.width(currentText());
+    int width = metrics.horizontalAdvance(currentText());
 
     if (m_has_arrow)
         width += 20;

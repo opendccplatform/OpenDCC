@@ -1,6 +1,7 @@
 // Copyright Contributors to the OpenDCC project
 // SPDX-License-Identifier: Apache-2.0
 
+#include <QGuiApplication>
 #include <memory>
 #include <iostream>
 
@@ -12,10 +13,10 @@
 #include <QTimer>
 #include <QScreen>
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QToolButton>
 
 #include "opendcc/ui/common_widgets/color_widget.h"
+#include "opendcc/ui/common_widgets/qt_compat.h"
 #include "opendcc/ui/common_widgets/ramp_widget.h"
 #include "opendcc/ui/common_widgets/tiny_slider.h"
 #include <array>
@@ -594,12 +595,12 @@ void ColorWidget::update_color()
     if (m_pick_variant->currentIndex() != RGB)
     {
         color = QColor::fromHsvF(H, S, V);
-        color.getRgbF(&R, &G, &B);
+        get_rgb_f(color, &R, &G, &B);
     }
     else
     {
         color = QColor::fromRgbF(R, G, B);
-        color.getHsvF(&H, &S, &V);
+        get_hsv_f(color, &H, &S, &V);
     }
 
     color.setAlphaF(A);
@@ -626,12 +627,12 @@ void ColorWidget::color(const QColor& val, bool update_prev /* = true*/)
     if (update_prev)
         m_prev_color = val;
 
-    R = clamp(val.redF(), 0., 1.);
-    G = clamp(val.greenF(), 0., 1.);
-    B = clamp(val.blueF(), 0., 1.);
-    A = clamp(val.alphaF(), 0., 1.);
+    R = clamp(static_cast<double>(val.redF()), 0., 1.);
+    G = clamp(static_cast<double>(val.greenF()), 0., 1.);
+    B = clamp(static_cast<double>(val.blueF()), 0., 1.);
+    A = clamp(static_cast<double>(val.alphaF()), 0., 1.);
 
-    val.getHsvF(&H, &S, &V, &A);
+    get_hsv_f(val, &H, &S, &V, &A);
     if (H == -1) // we don't need to work with this
     {
         m_achromatic = true;
@@ -1380,7 +1381,7 @@ ColorButton::ColorButton(QWidget* parent, bool enable_alpha /*= false*/, ColorPi
     };
 
     m_value_editor->mouse_press_event = [this, dialog, enable_alpha](QMouseEvent* e) mutable {
-        QRect rec = QApplication::desktop()->screenGeometry();
+        QRect rec = screen_geometry_at(mapToGlobal(QPoint(0, 0)));
         auto height = rec.height();
         auto width = rec.width();
 
@@ -1590,7 +1591,7 @@ ColorWidget::ScreenColorPickingWidget::ScreenColorPickingWidget(QWidget* parent 
 {
     static const auto background_color = QColor(52, 52, 52);
     QPalette background_palette;
-    background_palette.setColor(QPalette::Background, background_color);
+    background_palette.setColor(QPalette::Window, background_color);
     setPalette(background_palette);
     auto current_color_widget = new CanvasWidget(this);
     current_color_widget->setFixedWidth(50);
@@ -1680,7 +1681,7 @@ ColorWidget::ScreenColorPickingWidget::ScreenColorPickingWidget(QWidget* parent 
 
     auto vlayout = new QVBoxLayout;
     vlayout->setSpacing(0);
-    vlayout->setMargin(4);
+    vlayout->setContentsMargins(4, 4, 4, 4);
     vlayout->addLayout(current_color_layout);
     vlayout->addLayout(previous_color_layout);
     setLayout(vlayout);

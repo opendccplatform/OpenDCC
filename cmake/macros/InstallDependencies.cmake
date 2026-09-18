@@ -112,96 +112,62 @@ if(DCC_INSTALL_QT5)
     list(
         APPEND
         QT_DEPS
-        Qt5::Core
-        Qt5::Gui
-        Qt5::Widgets
-        Qt5::OpenGL
-        Qt5::Network)
+        Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Gui
+        Qt${QT_VERSION_MAJOR}::Widgets
+        Qt${QT_VERSION_MAJOR}::OpenGL
+        Qt${QT_VERSION_MAJOR}::Network)
 
     if(WIN32)
-        install_qt5_plugin(Qt5::QWindowsIntegrationPlugin QT_PLUGINS)
+        install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QWindowsIntegrationPlugin QT_PLUGINS)
     elseif(APPLE)
-        install_qt5_plugin(Qt5::QCocoaIntegrationPlugin QT_PLUGINS)
-        install_qt5_plugin(Qt5::QOffscreenIntegrationPlugin QT_PLUGINS)
+        install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QCocoaIntegrationPlugin QT_PLUGINS)
+        install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QOffscreenIntegrationPlugin QT_PLUGINS)
     elseif(UNIX)
-        install_qt5_plugin(Qt5::QXcbIntegrationPlugin QT_PLUGINS)
-        install_qt5_plugin(Qt5::QXcbGlxIntegrationPlugin QT_PLUGINS)
+        install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QXcbIntegrationPlugin QT_PLUGINS)
+        install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QXcbGlxIntegrationPlugin QT_PLUGINS)
     endif()
 
     # install to prevent our pyside2 builds import errors this is ugly and should be fixed then we improve our build
     # system
-    if(WIN32)
-        find_package(
-            Qt5
-            REQUIRED
-            PrintSupport
-            UiTools
-            Xml
-            XmlPatterns
-            Help
-            Sql
-            Svg
-            Multimedia
-            MultimediaWidgets
-            Test
-            Qml)
-    elseif(APPLE)
-        find_package(
-            Qt5
-            REQUIRED
-            PrintSupport
-            UiTools
-            Xml
-            XmlPatterns
-            Help
-            Sql
-            Svg
-            Multimedia
-            MultimediaWidgets
-            Test
-            Qml
-            DBus
-            MacExtras)
-    elseif(UNIX)
-        find_package(
-            Qt5
-            REQUIRED
-            PrintSupport
-            UiTools
-            Xml
-            XmlPatterns
-            Help
-            Sql
-            Svg
-            Multimedia
-            MultimediaWidgets
-            Test
-            Qml
-            DBus
-            X11Extras)
+    #
+    # Qt6 dropped XmlPatterns, MacExtras and X11Extras, so build the list instead of keeping
+    # three near-identical find_package calls.
+    set(_qt_extra_components
+        PrintSupport
+        UiTools
+        Xml
+        Help
+        Sql
+        Svg
+        Multimedia
+        MultimediaWidgets
+        Test
+        Qml)
+    if(QT_VERSION_MAJOR LESS 6)
+        list(APPEND _qt_extra_components XmlPatterns)
     endif()
+    if(APPLE)
+        list(APPEND _qt_extra_components DBus)
+        if(QT_VERSION_MAJOR LESS 6)
+            list(APPEND _qt_extra_components MacExtras)
+        endif()
+    elseif(UNIX)
+        list(APPEND _qt_extra_components DBus)
+        if(QT_VERSION_MAJOR LESS 6)
+            list(APPEND _qt_extra_components X11Extras)
+        endif()
+    endif()
+    find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${_qt_extra_components})
 
-    list(
-        APPEND
-        QT_DEPS
-        Qt5::PrintSupport
-        Qt5::Qml
-        Qt5::Test
-        Qt5::Svg
-        Qt5::Help
-        Qt5::Sql
-        Qt5::Xml
-        Qt5::XmlPatterns
-        Qt5::Multimedia)
-    if(WIN32)
-        list(APPEND QT_DEPS Qt5::UiTools)
-    elseif(APPLE)
-        list(APPEND QT_DEPS Qt5::DBus Qt5::MacExtras Qt5::MultimediaWidgets)
-    elseif(UNIX)
-        list(APPEND QT_DEPS Qt5::DBus Qt5::X11Extras)
-        # for sound playback
-        list(APPEND QT_DEPS Qt5::MultimediaWidgets)
-    endif()
+    foreach(_c IN LISTS _qt_extra_components)
+        # UiTools is Windows-only here, matching the previous behaviour
+        if(_c STREQUAL "UiTools" AND NOT WIN32)
+            continue()
+        endif()
+        list(APPEND QT_DEPS Qt${QT_VERSION_MAJOR}::${_c})
+    endforeach()
+
     foreach(library IN LISTS QT_DEPS)
         get_target_property(shared_lib_path ${library} LOCATION)
         get_filename_component(shared_lib_path ${shared_lib_path} REALPATH)
@@ -215,10 +181,10 @@ if(DCC_INSTALL_QT5)
             list(APPEND INSTALL_SHARED_LIBS ${qt_libs})
         endif()
     endforeach()
-    # Qt5::XcbQpa cannot found in our cmake
+    # Qt${QT_VERSION_MAJOR}::XcbQpa cannot found in our cmake
     if(NOT WIN32 AND NOT APPLE)
         # TODO search properly or at least refactor to cmake function TODO version
-        file(GLOB qt_libs "${_qt5Core_install_prefix}/lib/libQt5XcbQpa.so*")
+        file(GLOB qt_libs "${DCC_QT_INSTALL_PREFIX}/lib/libQt${QT_VERSION_MAJOR}XcbQpa.so*")
         list(APPEND INSTALL_SHARED_LIBS ${qt_libs})
 
         get_filename_component(library_prefix ${shared_lib_path} NAME_WE)
@@ -227,7 +193,7 @@ if(DCC_INSTALL_QT5)
         list(APPEND INSTALL_SHARED_LIBS ${qt_libs})
 
         # for sound playback
-        file(GLOB qt_libs "${_qt5Core_install_prefix}/lib/libQt5MultimediaGstTools.so*")
+        file(GLOB qt_libs "${DCC_QT_INSTALL_PREFIX}/lib/libQt${QT_VERSION_MAJOR}MultimediaGstTools.so*")
         list(APPEND INSTALL_SHARED_LIBS ${qt_libs})
 
         get_filename_component(library_prefix ${shared_lib_path} NAME_WE)
@@ -237,23 +203,26 @@ if(DCC_INSTALL_QT5)
     endif()
 
     # reported that image plugins is very useful
-    install_qt5_plugin(Qt5::QTgaPlugin QT_PLUGINS)
-    install_qt5_plugin(Qt5::QGifPlugin QT_PLUGINS)
-    install_qt5_plugin(Qt5::QJpegPlugin QT_PLUGINS)
-    install_qt5_plugin(Qt5::QTiffPlugin QT_PLUGINS)
-    install_qt5_plugin(Qt5::QICOPlugin QT_PLUGINS)
-    install_qt5_plugin(Qt5::QSvgPlugin QT_PLUGINS)
+    install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QTgaPlugin QT_PLUGINS)
+    install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QGifPlugin QT_PLUGINS)
+    install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QJpegPlugin QT_PLUGINS)
+    install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QTiffPlugin QT_PLUGINS)
+    install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QICOPlugin QT_PLUGINS)
+    install_qt5_plugin(Qt${QT_VERSION_MAJOR}::QSvgPlugin QT_PLUGINS)
 
     # for sound playback
-    if(WIN32)
-        install_qt5_plugin(Qt5::WMFServicePlugin QT_PLUGINS)
-    elseif(APPLE)
-        install_qt5_plugin(Qt5::AVFServicePlugin QT_PLUGINS)
-        install_qt5_plugin(Qt5::AVFMediaPlayerServicePlugin QT_PLUGINS)
-        install_qt5_plugin(Qt5::CoreAudioPlugin QT_PLUGINS)
-    elseif(UNIX)
-        install_qt5_plugin(Qt5::QGstreamerAudioDecoderServicePlugin QT_PLUGINS)
-        install_qt5_plugin(Qt5::QGstreamerPlayerServicePlugin QT_PLUGINS)
+    # TODO(qt6): Qt6 replaced these plugins (QWindowsMediaPlugin/QFFmpegMediaPlugin), Qt5 only.
+    if(QT_VERSION_MAJOR LESS 6)
+        if(WIN32)
+            install_qt5_plugin(Qt5::WMFServicePlugin QT_PLUGINS)
+        elseif(APPLE)
+            install_qt5_plugin(Qt5::AVFServicePlugin QT_PLUGINS)
+            install_qt5_plugin(Qt5::AVFMediaPlayerServicePlugin QT_PLUGINS)
+            install_qt5_plugin(Qt5::CoreAudioPlugin QT_PLUGINS)
+        elseif(UNIX)
+            install_qt5_plugin(Qt5::QGstreamerAudioDecoderServicePlugin QT_PLUGINS)
+            install_qt5_plugin(Qt5::QGstreamerPlayerServicePlugin QT_PLUGINS)
+        endif()
     endif()
 
     install(
@@ -500,7 +469,7 @@ get_all_targets(_executables _libraries)
 
 if(WIN32)
     if(DCC_INSTALL_ADS)
-        get_target_property(_ads_lib ads::qtadvanceddocking LOCATION)
+        get_target_property(_ads_lib ${DCC_ADS_TARGET} LOCATION)
         get_filename_component(_ads_lib_dir ${_ads_lib} DIRECTORY)
         list(APPEND _search_dirs ${_ads_lib_dir})
     endif()
@@ -557,9 +526,9 @@ if(WIN32)
         list(APPEND _search_dirs ${_ptex_lib_dir})
     endif()
     if(DCC_INSTALL_PYSIDE2)
-        get_target_property(_pyside_lib PySide2::pyside2 LOCATION)
+        get_target_property(_pyside_lib ${DCC_PYSIDE_TARGET} LOCATION)
         get_filename_component(_pyside_lib_dir ${_pyside_lib} DIRECTORY)
-        get_target_property(_shiboken_lib Shiboken2::libshiboken LOCATION)
+        get_target_property(_shiboken_lib ${DCC_SHIBOKEN_LIB_TARGET} LOCATION)
         get_filename_component(_shiboken_lib_dir ${_shiboken_lib} DIRECTORY)
         list(APPEND _search_dirs ${_shiboken_lib_dir})
     endif()
@@ -589,7 +558,7 @@ if(WIN32)
         endif()
     endif()
     if(DCC_INSTALL_QT5)
-        get_target_property(_qt_lib_path Qt5::Core LOCATION)
+        get_target_property(_qt_lib_path Qt${QT_VERSION_MAJOR}::Core LOCATION)
         get_filename_component(_qt_lib_dir ${_qt_lib_path} DIRECTORY)
         list(APPEND _search_dirs ${_qt_lib_dir})
     endif()
@@ -756,9 +725,9 @@ if(WIN32)
         list(APPEND _search_dirs ${OPENVDB_ROOT}/bin)
     endif()
 else()
-    get_target_property(_pyside_lib PySide2::pyside2 LOCATION)
+    get_target_property(_pyside_lib ${DCC_PYSIDE_TARGET} LOCATION)
     get_filename_component(_pyside_lib_dir ${_pyside_lib} DIRECTORY)
-    get_target_property(_shiboken_lib Shiboken2::libshiboken LOCATION)
+    get_target_property(_shiboken_lib ${DCC_SHIBOKEN_LIB_TARGET} LOCATION)
     get_filename_component(_shiboken_lib_dir ${_shiboken_lib} DIRECTORY)
     set(_search_dirs "${SHIBOKEN_CLANG_INSTALL_DIR}" "${ARNOLD_ROOT}/bin")
     if(DCC_HOUDINI_SUPPORT)

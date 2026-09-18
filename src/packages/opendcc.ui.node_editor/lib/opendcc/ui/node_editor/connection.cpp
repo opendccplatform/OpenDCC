@@ -243,7 +243,7 @@ void BasicLiveConnectionItem::paint(QPainter* painter, const QStyleOptionGraphic
 
 PreConnectionSnapper::PreConnectionSnapper()
 {
-    m_snap_pen.setColor(s_display_color.light());
+    m_snap_pen.setColor(s_display_color.lighter());
     m_snap_pen.setWidth(s_pen_width);
     m_snap_pen.setCapStyle(s_pen_cap_style);
 }

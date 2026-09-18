@@ -20,6 +20,9 @@
 #include <cmath>
 // #include "opendcc/app/core/application.h"
 #include <QMediaPlayer>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QAudioOutput>
+#endif
 #include "opendcc/app/ui/application_ui.h"
 
 #ifdef USE_ANIM_ENGINE
@@ -62,7 +65,7 @@ TimelineWidget::TimelineWidget(TimelineLayout timeline_layout, CurrentTimeIndica
         layout = new QVBoxLayout;
         break;
     }
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
 
     QHBoxLayout* first_row;
     QHBoxLayout* second_row;
@@ -76,8 +79,8 @@ TimelineWidget::TimelineWidget(TimelineLayout timeline_layout, CurrentTimeIndica
     case OPENDCC_NAMESPACE::TimelineLayout::Player:
         first_row = new QHBoxLayout;
         second_row = new QHBoxLayout;
-        first_row->setMargin(0);
-        second_row->setMargin(0);
+        first_row->setContentsMargins(0, 0, 0, 0);
+        second_row->setContentsMargins(0, 0, 0, 0);
         QVBoxLayout* main_layout = qobject_cast<QVBoxLayout*>(layout);
         main_layout->addLayout(first_row);
         main_layout->addLayout(second_row);
@@ -90,7 +93,7 @@ TimelineWidget::TimelineWidget(TimelineLayout timeline_layout, CurrentTimeIndica
 
     m_timer = new QTimer(this);
     m_timeline = new QTimeLine(1000, this);
-    m_timeline->setCurveShape(QTimeLine::CurveShape::LinearCurve);
+    // setCurveShape() was removed in Qt6; setEasingCurve below is the equivalent and works in Qt5 too
     m_timeline->setEasingCurve(QEasingCurve::Linear);
 
     auto init_time_widget = [&](double init_time, std::function<void(double)> value_setter_fn) -> TimeWidget* {
@@ -226,6 +229,11 @@ TimelineWidget::TimelineWidget(TimelineLayout timeline_layout, CurrentTimeIndica
     m_context_menu->addMenu(time_display_menu);
 
     m_player = new QMediaPlayer(this);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // Qt6 split playback from output: a QMediaPlayer without an attached QAudioOutput
+    // decodes but stays silent. Qt5 routed to the default device implicitly.
+    m_player->setAudioOutput(new QAudioOutput(m_player));
+#endif
 
     connect(m_timebar, &TimeBarWidget::time_drag, this, &TimelineWidget::time_drag);
     m_drag_timer = new QTimer(this);
@@ -526,7 +534,12 @@ void TimelineWidget::set_sound_display(const std::string& filepath, const double
 {
     m_timebar->set_sound(filepath, frame_offset);
     m_sound = true;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // QMediaContent is gone in Qt6; the player takes the QUrl directly.
+    m_player->setSource(QUrl::fromLocalFile(filepath.c_str()));
+#else
     m_player->setMedia(QMediaContent(QUrl::fromLocalFile(filepath.c_str())));
+#endif
     m_sound_start = frame_offset;
 }
 

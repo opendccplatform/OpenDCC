@@ -221,6 +221,8 @@ private:
         bool enable = true;
     } m_grid_settings;
     bool m_engine_enabled = true;
+    // initializeGL() runs again on every GL context recreation; the callbacks must be registered once.
+    bool m_callbacks_registered = false;
     bool m_enable_camera_navigation_undo = false;
     MouseControlMode m_mouse_control_mode = MouseControlMode::NONE;
     MouseMode m_mousemode;

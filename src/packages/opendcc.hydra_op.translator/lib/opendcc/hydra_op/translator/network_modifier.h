@@ -155,7 +155,9 @@ inline T* HydraOpNetworkModifier::add_entry(const PXR_NS::UsdPrim& prim, TArgs&&
     }
 
     bool bypass = false;
-    auto bypass_attr = prim.GetAttribute(UsdHydraOpTokens->inputsBypass);
+    // qualified rather than relying on a PXR_NAMESPACE_USING_DIRECTIVE arriving transitively;
+    // this is a header, so pulling the pxr namespace in here would leak into every consumer
+    auto bypass_attr = prim.GetAttribute(PXR_NS::UsdHydraOpTokens->inputsBypass);
     it->second->set_bypass(bypass_attr && bypass_attr.Get(&bypass) && bypass);
 
     m_dirty_topo_nodes.push_back(prim.GetPath());

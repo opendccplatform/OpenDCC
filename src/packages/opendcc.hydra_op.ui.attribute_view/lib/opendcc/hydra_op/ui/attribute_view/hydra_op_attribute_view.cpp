@@ -56,11 +56,18 @@ HduiSceneIndexDebuggerWidget::HduiSceneIndexDebuggerWidget(QWidget *parent, cons
     _splitter->addWidget(_valueTreeView);
 
     m_selection_event_hndl = OpenDCC::HydraOpSession::instance().register_event_handler(OpenDCC::HydraOpSession::EventType::SelectionChanged, [this] {
-        auto primPath = OpenDCC::HydraOpSession::instance().get_selection().begin()->first;
-        auto sceneIndex = OpenDCC::HydraOpSession::instance().get_view_scene_index();
-        auto dataSource = sceneIndex->GetPrim(primPath).dataSource;
+        // Fires on deselect too, and there is no view scene index until a graph is cooked.
+        const auto selection = OpenDCC::HydraOpSession::instance().get_selection();
+        const auto sceneIndex = OpenDCC::HydraOpSession::instance().get_view_scene_index();
         this->_valueTreeView->SetDataSource(nullptr);
-        this->_dsTreeWidget->SetPrimDataSource(primPath, dataSource);
+        if (selection.empty() || !sceneIndex)
+        {
+            this->_dsTreeWidget->SetPrimDataSource(SdfPath::EmptyPath(), nullptr);
+            return;
+        }
+
+        const auto primPath = selection.begin()->first;
+        this->_dsTreeWidget->SetPrimDataSource(primPath, sceneIndex->GetPrim(primPath).dataSource);
     });
 
     QObject::connect(_dsTreeWidget, &HduiDataSourceTreeWidget::DataSourceSelected,

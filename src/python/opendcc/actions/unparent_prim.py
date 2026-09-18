@@ -16,7 +16,7 @@ class UnparentAction(CustomAction):
         CustomAction.__init__(self, i18n("edit_menu.unparent_action", "Unparent"), parent=parent)
         self.custom_triggered.connect(self.do)
 
-        shortcut = QtGui.QKeySequence(QtCore.Qt.SHIFT + QtCore.Qt.Key_P)
+        shortcut = QtGui.QKeySequence(QtCore.Qt.SHIFT | QtCore.Qt.Key_P)
         self.setShortcut(shortcut, self.do)
         self.on_checkbox_clicked(self.show_options)
 

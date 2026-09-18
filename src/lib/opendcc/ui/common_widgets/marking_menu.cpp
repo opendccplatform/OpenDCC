@@ -1,18 +1,19 @@
 // Copyright Contributors to the OpenDCC project
 // SPDX-License-Identifier: Apache-2.0
 
+#include <QGuiApplication>
 #include "opendcc/ui/common_widgets/marking_menu.h"
 #include <QDebug>
 #include "QPushButton"
 #include "qevent.h"
 #include <QDialog>
 #include "QApplication"
-#include "QDesktopWidget"
 #include "QPainter"
 #include "QTimer"
 #include <QStyleOptionButton>
 #include "QBrush"
 #include <QAction>
+#include <QActionGroup>
 #include "QWidget"
 #include <QPaintEngine>
 #include <QScreen>
@@ -24,7 +25,10 @@ OPENDCC_NAMESPACE_OPEN
 MarkingMenu::MarkingMenu(const QPoint& global_pos, QWidget* parent /*= nullptr*/)
     : QWidget(parent, Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint)
 {
-    setGeometry(QApplication::desktop()->availableGeometry(global_pos));
+    const auto* point_screen = QGuiApplication::screenAt(global_pos);
+    if (!point_screen)
+        point_screen = QGuiApplication::primaryScreen();
+    setGeometry(point_screen->availableGeometry());
     m_mouse_pos = this->mapFromGlobal(global_pos);
     setAttribute(Qt::WA_TranslucentBackground);
 }

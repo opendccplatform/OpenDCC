@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/ui/ocio_color_widgets/OCIO_color_widget.h"
+#include "opendcc/ui/common_widgets/qt_compat.h"
 
 #include <QLayout>
 #include <QLabel>
@@ -231,7 +232,7 @@ void OCIOColorWidget::setup_sat()
         qreal s_val = S;
         qreal v_val = V;
         if (is_enabled())
-            m_converted.getHsvF(&h_val, &s_val, &v_val);
+            get_hsv_f(m_converted, &h_val, &s_val, &v_val);
 
         QLinearGradient grad(0, 0, w, 0);
         grad.setColorAt(0, QColor::fromHsvF(h_val, 0, v_val, 1));
@@ -293,7 +294,7 @@ void OCIOColorWidget::setup_val()
         qreal s_val = S;
         qreal v_val = V;
         if (is_enabled())
-            m_converted.getHsvF(&h_val, &s_val, &v_val);
+            get_hsv_f(m_converted, &h_val, &s_val, &v_val);
 
         QLinearGradient grad(0, 0, w, 0);
         grad.setColorAt(0, QColor::fromHsvF(h_val, s_val, 0, 1));
@@ -355,7 +356,7 @@ void OCIOColorWidget::setup_R()
         qreal g_val = G;
         qreal b_val = B;
         if (is_enabled())
-            m_converted.getRgbF(&r_val, &g_val, &b_val);
+            get_rgb_f(m_converted, &r_val, &g_val, &b_val);
 
         QLinearGradient grad(0, 0, w, 0);
         grad.setColorAt(0, QColor::fromRgbF(0, g_val, b_val));
@@ -417,7 +418,7 @@ void OCIOColorWidget::setup_G()
         qreal g_val = G;
         qreal b_val = B;
         if (is_enabled())
-            m_converted.getRgbF(&r_val, &g_val, &b_val);
+            get_rgb_f(m_converted, &r_val, &g_val, &b_val);
 
         QLinearGradient grad(0, 0, w, 0);
         grad.setColorAt(0, QColor::fromRgbF(r_val, 0, b_val));
@@ -481,7 +482,7 @@ void OCIOColorWidget::setup_B()
         qreal b_val = B;
         if (is_enabled())
             if (is_enabled())
-                m_converted.getRgbF(&r_val, &g_val, &b_val);
+                get_rgb_f(m_converted, &r_val, &g_val, &b_val);
 
         QLinearGradient grad(0, 0, w, 0);
         grad.setColorAt(0, QColor::fromRgbF(r_val, g_val, 0));
@@ -672,7 +673,7 @@ void OCIOColorWidget::init_box_sat_val()
         qreal v_val = V;
         if (is_enabled())
         {
-            m_converted.getHsvF(&h_val, &s_val, &v_val);
+            get_hsv_f(m_converted, &h_val, &s_val, &v_val);
             if (v_val == 0)
                 s_val = clamp(float(cursor_pos->x()) / w, 0.f, 1.f); // just a visual fix so it doesn't "jump" to 0 (upper-left corner of the BOX)
         }

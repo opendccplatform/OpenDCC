@@ -798,7 +798,7 @@ class ShelfEditor(QtWidgets.QDialog):
         pal = QtWidgets.QApplication.palette()
         self.right_list.blockSignals(True)
         item.setBackground(pal.color(QtGui.QPalette.Base))
-        item.setForeground(pal.color(QtGui.QPalette.Foreground))
+        item.setForeground(pal.color(QtGui.QPalette.WindowText))
 
         if action["type"] == "separator":
             icon = ":/icons/separator"

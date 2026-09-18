@@ -19,12 +19,23 @@ if sys.platform == "win32" and sys.version_info[0] >= 3 and sys.version_info[1] 
             os.add_dll_directory(abs_path)
 
     import ctypes.util as cu
+    import importlib.util
 
-    qt_path = cu.find_library("Qt5Core.dll")
-    shiboken_path = cu.find_library(
-        "shiboken2.cp{}{}-win_amd64.dll".format(sys.version_info[0], sys.version_info[1])
-    )
-    if qt_path:
-        os.add_dll_directory(os.path.dirname(qt_path))
-    if shiboken_path:
-        os.add_dll_directory(os.path.dirname(shiboken_path))
+    # Qt's core DLL name is stable, so it can be found by name.
+    for lib_name in ("Qt6Core.dll", "Qt5Core.dll"):
+        lib_path = cu.find_library(lib_name)
+        if lib_path:
+            os.add_dll_directory(os.path.dirname(lib_path))
+
+    # shiboken's DLL carries a CPython ABI tag that moves with the interpreter, so locate the
+    # package and use its directory rather than guessing the file name. find_spec does not import
+    # the module, so this is safe before the DLL directories are in place.
+    for mod_name in ("shiboken6", "shiboken2", "PySide6", "PySide2"):
+        try:
+            spec = importlib.util.find_spec(mod_name)
+        except (ImportError, ValueError):
+            continue
+        if spec and spec.submodule_search_locations:
+            for location in spec.submodule_search_locations:
+                if os.path.isdir(location):
+                    os.add_dll_directory(location)

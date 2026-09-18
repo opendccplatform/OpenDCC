@@ -379,7 +379,14 @@ void MainWindow::close_panels()
     }
     for (auto widget : m_main_container_widget->floatingWidgets())
     {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        // ADS 3.x clears AutoHideChildren before hiding, so the dock widgets still inside are not
+        // toggled closed. ADS 4.x (Qt6) dropped the method; skip the hide() there rather than fire
+        // those toggles, since the container is being destroyed anyway.
         widget->hideAndDeleteLater();
+#else
+        widget->deleteLater();
+#endif
     }
 }
 
@@ -403,7 +410,14 @@ void MainWindow::load_layout(const std::string& path)
     }
     for (auto widget : m_main_container_widget->floatingWidgets())
     {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        // ADS 3.x clears AutoHideChildren before hiding, so the dock widgets still inside are not
+        // toggled closed. ADS 4.x (Qt6) dropped the method; skip the hide() there rather than fire
+        // those toggles, since the container is being destroyed anyway.
         widget->hideAndDeleteLater();
+#else
+        widget->deleteLater();
+#endif
     }
 
     qApp->processEvents(); // forces the ui to update, because reasons

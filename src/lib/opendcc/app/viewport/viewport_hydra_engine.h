@@ -21,6 +21,7 @@
 #include <pxr/base/tf/type.h>
 #if PXR_VERSION >= 2005
 #include <pxr/imaging/hgi/hgi.h>
+#include <pxr/imaging/hgiGL/hgi.h>
 #include <pxr/imaging/hgi/tokens.h>
 #include <pxr/imaging/hdx/fullscreenShader.h>
 #else
@@ -53,6 +54,7 @@ class UsdImagingDelegate;
 class HDSceneDelegate;
 struct HdxRenderTaskParams;
 class HdxFullscreenShader;
+class HgiInterop;
 
 PXR_NAMESPACE_CLOSE_SCOPE
 
@@ -279,6 +281,14 @@ private:
     RichSelection m_rich_selection;
 #if PXR_VERSION >= 2005
     static std::unique_ptr<PXR_NS::Hgi> m_hgi;
+    // One framebuffer arena per GL context, as hgiGL/hgi.h requires. One context per widget,
+    // so one arena per engine.
+    // Held rather than built per frame: HgiInterop owns a GL program and VAO, so a function-local
+    // rebuilt and destroyed them on every composited frame. Destroyed with the engine, which the
+    // widget tears down with its context current.
+    std::unique_ptr<PXR_NS::HgiInterop> m_interop;
+    PXR_NS::HgiGLContextArenaHandle m_gl_arena;
+    void _bind_context_arena();
     PXR_NS::HdDriver m_render_driver;
     PXR_NS::HgiTextureHandle m_color_texture;
     PXR_NS::HgiTextureHandle m_intermediate_depth_texture;

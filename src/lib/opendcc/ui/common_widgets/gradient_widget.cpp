@@ -1,6 +1,10 @@
 // Copyright Contributors to the OpenDCC project
 // SPDX-License-Identifier: Apache-2.0
 
+#include "opendcc/ui/common_widgets/qt_compat.h"
+
+#include <QScreen>
+#include <QGuiApplication>
 #include <algorithm>
 #include <cmath>
 #include "opendcc/ui/common_widgets/gradient_widget.h"
@@ -15,7 +19,6 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QApplication>
-#include <QDesktopWidget>
 
 OPENDCC_NAMESPACE_OPEN
 
@@ -490,7 +493,7 @@ void GradientEditor::setup_value_editor(QBoxLayout* layout, ColorPickDialog* col
     };
 
     m_value_editor->mouse_press_event = [this, dialog](QMouseEvent* e) mutable {
-        QRect rec = QApplication::desktop()->screenGeometry();
+        QRect rec = primary_screen_geometry();
         auto height = rec.height();
         auto width = rec.width();
 

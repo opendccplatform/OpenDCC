@@ -43,7 +43,7 @@ set(headers
     translator.h)
 
 set(CMAKE_AUTOMOC ON)
-qt5_add_resources(resources shaders/shaders.qrc)
+qt_add_resources(resources shaders/shaders.qrc)
 include_directories(${PROJECT_SOURCE_DIR}/src/lib)
 include_directories(${RENDER_VIEW_SOURCE_DIR}/thirdparty/qtsingleapplication/src)
 
@@ -74,11 +74,11 @@ target_link_libraries(
     render_view_display_driver_api
     app_version
     app_config
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Widgets
-    Qt5::OpenGL
-    Qt5::Network)
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Widgets
+    ${DCC_QT_OPENGL_TARGETS}
+    Qt${QT_VERSION_MAJOR}::Network)
 
 install(
     TARGETS image_view

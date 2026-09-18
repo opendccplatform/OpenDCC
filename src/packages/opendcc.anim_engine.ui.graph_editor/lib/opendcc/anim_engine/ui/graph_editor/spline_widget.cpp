@@ -993,7 +993,7 @@ void SplineWidget::mouseDoubleClickEvent(QMouseEvent* event)
 
 void SplineWidget::wheelEvent(QWheelEvent* event)
 {
-    const float alpha = ((float)event->delta()) / 400.0f;
+    const float alpha = ((float)event->angleDelta().y()) / 400.0f;
 
     if (alpha > 0)
     {

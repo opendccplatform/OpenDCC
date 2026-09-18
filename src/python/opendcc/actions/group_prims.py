@@ -14,7 +14,7 @@ class GroupAction(CustomAction):
         CustomAction.__init__(self, i18n("edit_menu.group_action", "Group"), parent=parent)
         self.custom_triggered.connect(self.do)
 
-        shortcut = QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_G)
+        shortcut = QtGui.QKeySequence(QtCore.Qt.CTRL | QtCore.Qt.Key_G)
         self.setShortcut(shortcut, self.do)
 
     def do(self):

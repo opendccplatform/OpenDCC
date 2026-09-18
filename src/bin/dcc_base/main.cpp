@@ -130,6 +130,19 @@ void setup_ui(Application& app, QApplication& qt_app)
         palette.setColor(QPalette::Highlight, QColor::fromRgb(103, 141, 178));
         palette.setColor(QPalette::Light, QColor::fromRgb(80, 80, 80));
 
+        // Fusion draws grooves, frames and toolbar edges from Midlight/Dark/Mid/Shadow, inherited
+        // from the platform palette. Qt 6.5 detects Windows dark mode and hands those back
+        // near-black, so the timeline and shelf lose their contrast. Pin them to the Qt5 values.
+        palette.setColor(QPalette::Midlight, QColor::fromRgb(227, 227, 227));
+        palette.setColor(QPalette::Dark, QColor::fromRgb(160, 160, 160));
+        palette.setColor(QPalette::Mid, QColor::fromRgb(160, 160, 160));
+        palette.setColor(QPalette::Shadow, QColor::fromRgb(105, 105, 105));
+        palette.setColor(QPalette::BrightText, QColor::fromRgb(255, 255, 255));
+        palette.setColor(QPalette::HighlightedText, QColor::fromRgb(255, 255, 255));
+        palette.setColor(QPalette::ToolTipBase, QColor::fromRgb(255, 255, 220));
+        palette.setColor(QPalette::ToolTipText, QColor::fromRgb(0, 0, 0));
+        // PlaceholderText is left alone, Qt6 resolves it better for a dark theme.
+
         palette.setColor(QPalette::Disabled, QPalette::WindowText, QColor::fromRgb(42, 42, 42));
         palette.setColor(QPalette::Disabled, QPalette::Text, QColor::fromRgb(100, 100, 100));
         palette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor::fromRgb(90, 90, 90));
@@ -138,7 +151,10 @@ void setup_ui(Application& app, QApplication& qt_app)
         QApplication::setPalette(palette);
     }
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    // Removed in Qt6, where the context-help button is off by default anyway
     QApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
+#endif
     QString stylesheet_path = ":/stylesheets/application_stylesheet.qss";
     if (get_color_theme() == ColorTheme::LIGHT)
     {

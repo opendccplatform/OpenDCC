@@ -3,6 +3,7 @@
 
 // workaround
 #include "opendcc/base/qt_python.h"
+#include <QRegularExpression>
 #include "opendcc/app/ui/application_ui.h"
 #include "opendcc/app/core/application.h"
 #include "opendcc/app/ui/main_window.h"
@@ -205,14 +206,15 @@ std::vector<std::string> ApplicationUI::get_supported_languages() const
     auto i18n = QDir(Application::instance().get_application_root_path().c_str());
     i18n.cd("i18n");
 
-    QRegExp reg("i18n\\.(.*)\\.qm");
+    QRegularExpression reg("i18n\\.(.*)\\.qm");
     for (const auto& entry : i18n.entryInfoList(QDir::Filter::Files, QDir::SortFlag::Name))
     {
-        if (reg.indexIn(entry.fileName()) == -1)
+        const auto match = reg.match(entry.fileName());
+        if (!match.hasMatch())
         {
             continue;
         }
-        const auto lang = reg.capturedTexts()[1];
+        const auto lang = match.captured(1);
         result.push_back(lang.toStdString());
     }
     return result;
@@ -231,6 +233,12 @@ bool ApplicationUI::set_ui_language(const std::string& language_code)
     i18n.cd("i18n");
     const auto locale = QLocale(language_code.c_str());
     auto res = m_translator->load(locale, "i18n", ".", i18n.path());
+    if (!res)
+    {
+        // Qt6 resolves this overload through QLocale::uiLanguages(), which does not reliably yield
+        // the bare language code, so "i18n.en.qm" is missed where Qt5 found it. Retry the exact name.
+        res = m_translator->load(QStringLiteral("i18n.") + QString::fromStdString(language_code), i18n.path());
+    }
     if (!res)
     {
         OPENDCC_ERROR("Failed to load internationalization file for '{}' language.", locale.languageToString(locale.language()).toStdString());

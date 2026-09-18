@@ -6,6 +6,7 @@
 #pragma once
 
 #include "opendcc/opendcc.h"
+#include <QRegularExpression>
 #include "time_display.h"
 #include <QDoubleSpinBox>
 

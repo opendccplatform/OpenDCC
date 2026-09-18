@@ -632,7 +632,7 @@ class ExpressionVariablesToolbar:
                         for item in self.variablesMetadata[variable]["options"]:
                             value_widget.addItem(item)
                         value_widget.setCurrentText(value)
-                        value_widget.setFixedWidth(max(metrics.width(value) + 34, 80))
+                        value_widget.setFixedWidth(max(metrics.horizontalAdvance(value) + 34, 80))
 
                         def check_value(widget, value):
                             if widget.currentText() != value:
@@ -656,7 +656,7 @@ class ExpressionVariablesToolbar:
                     else:
                         value_widget = QtWidgets.QLineEdit()
                         value_widget.setText(value)
-                        value_widget.setFixedWidth(max(metrics.width(value) + 12, 80))
+                        value_widget.setFixedWidth(max(metrics.horizontalAdvance(value) + 12, 80))
                         value_widget.editingFinished.connect(self.set_values)
                         value_widget.setProperty("expression_variables_type", "string")
                         value_widget.setProperty("expression_variables_variable", variable)

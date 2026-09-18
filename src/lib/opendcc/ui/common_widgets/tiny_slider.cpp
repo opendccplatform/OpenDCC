@@ -6,6 +6,7 @@
 #include <QMouseEvent>
 
 #include "opendcc/ui/common_widgets/tiny_slider.h"
+#include "opendcc/ui/common_widgets/qt_compat.h"
 #include "opendcc/ui/common_widgets/canvas_widget.h"
 #include "opendcc/ui/common_widgets/ramp.h"
 
@@ -39,7 +40,7 @@ HTinySlider::HTinySlider(QWidget* parent)
         painter.drawRect(0, 0, width(), height());
 
         double h, s, v;
-        m_slider_color.getHsvF(&h, &s, &v);
+        get_hsv_f(m_slider_color, &h, &s, &v);
 
         brush.setColor(QColor::fromHsvF(h, s, v * 0.5));
         painter.setBrush(brush);
@@ -145,7 +146,7 @@ VTinySlider::VTinySlider(QWidget* parent /*= 0*/)
         painter.drawRect(0, 0, width(), height());
 
         double h, s, v;
-        m_slider_color.getHsvF(&h, &s, &v);
+        get_hsv_f(m_slider_color, &h, &s, &v);
 
         brush.setColor(QColor::fromHsvF(h, s, v * 0.5));
         painter.setBrush(brush);

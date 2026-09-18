@@ -69,7 +69,10 @@ GraphEditor::GraphEditor(QWidget* parent)
 
     spline_widget = new SplineWidget(this);
     spline_widget->set_mode(SplineWidget::Mode::RegionTools);
-    spline_widget->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
+    // Must be Expanding: SplineWidget has no sizeHint, and Qt6's QSplitter gives a Maximum-policy
+    // widget with an invalid hint zero width. A zero-width QOpenGLWidget never paints, so it never
+    // creates its GL context and the canvas comes up blank.
+    spline_widget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     create_actions();
     create_toolbar();
@@ -96,7 +99,7 @@ GraphEditor::GraphEditor(QWidget* parent)
 
     QVBoxLayout* v_layout = new QVBoxLayout;
     v_layout->setSpacing(0);
-    v_layout->setMargin(0);
+    v_layout->setContentsMargins(0, 0, 0, 0);
     // v_layout->addWidget(menu_bar);
     v_layout->setMenuBar(menu_bar);
     v_layout->addWidget(tool_bar);

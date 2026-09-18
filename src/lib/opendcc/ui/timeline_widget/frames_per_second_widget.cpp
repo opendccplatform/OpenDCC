@@ -84,7 +84,7 @@ void FramesPerSecondLineEdit::paintEvent(QPaintEvent* event)
     QRect r = style()->subElementRect(QStyle::SE_LineEditContents, &panel, this);
 
     QFontMetrics fm(font());
-    r.adjust(fm.width(text()) + 5, 0, 0, 0);
+    r.adjust(fm.horizontalAdvance(text()) + 5, 0, 0, 0);
 
     QPainter p(this);
 

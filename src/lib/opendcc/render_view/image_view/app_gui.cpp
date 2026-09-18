@@ -17,7 +17,7 @@
 #include <QtCore/QFileInfo>
 #include <QtWidgets/QDockWidget>
 #include <QtWidgets/QTreeWidget>
-#include <QtWidgets/QAction>
+#include <QAction>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QHBoxLayout>
@@ -27,7 +27,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtGui/QColor>
 #include <QtWidgets/QMessageBox>
-#include <QtWidgets/QActionGroup>
+#include <QActionGroup>
 #include <QtWidgets/QHeaderView>
 #include <QMimeData>
 #include <QtCore/QDebug>
@@ -735,7 +735,7 @@ void RenderViewMainWindow::update_pixel_info()
     if (m_image_cache->exist(image_id))
     {
         QString s;
-        s.sprintf("x= %d y= %d   %0.5f %0.5f %0.5f %0.5f", m_glwidget->m_mouse_image_x, m_glwidget->m_mouse_image_y,
+        s = QString::asprintf("x= %d y= %d   %0.5f %0.5f %0.5f %0.5f", m_glwidget->m_mouse_image_x, m_glwidget->m_mouse_image_y,
                   m_glwidget->m_mouse_image_color[0], m_glwidget->m_mouse_image_color[1], m_glwidget->m_mouse_image_color[2],
                   m_glwidget->m_mouse_image_color[3]);
         m_pixelinfo->setText(s);
@@ -790,7 +790,7 @@ void RenderViewMainWindow::update_titlebar()
 
             QString imageSize;
             auto spec(image->spec());
-            imageSize.sprintf("%dx%d", spec.full_width, spec.full_height);
+            imageSize = QString::asprintf("%dx%d", spec.full_width, spec.full_height);
             s.append(imageSize);
             s.append(" ");
             m_image_cache->release_image(image_id);
@@ -798,7 +798,7 @@ void RenderViewMainWindow::update_titlebar()
     }
 
     QString zoom;
-    zoom.sprintf("%0.1f%%", m_glwidget->m_zoom * 100);
+    zoom = QString::asprintf("%0.1f%%", m_glwidget->m_zoom * 100);
     s.append(zoom);
 
     setWindowTitle(s);
@@ -1065,8 +1065,8 @@ void RenderViewMainWindow::show_about_dialog()
     const auto company_name_str = QString::fromStdWString(unicode_company_name);
 
     QString text;
-    text.sprintf(i18n("render_view.about", "Render View (git_commit: %s build date: %s )").toStdString().c_str(), platform::get_git_commit_hash_str(),
-                 platform::get_build_date_str());
+    text = QString::asprintf(i18n("render_view.about", "Render View (git_commit: %s build date: %s )").toStdString().c_str(),
+                             platform::get_git_commit_hash_str(), platform::get_build_date_str());
     text += "\n";
     text += render_view_build_year;
     text += " " + company_name_str + ".";
@@ -1107,19 +1107,19 @@ void RenderViewMainWindow::update_timesago()
             QString timeago_str;
             if (elapsed_time > day)
             {
-                timeago_str.sprintf("%dd", int(elapsed_time / day));
+                timeago_str = QString::asprintf("%dd", int(elapsed_time / day));
             }
             else if (elapsed_time > hour)
             {
-                timeago_str.sprintf("%dh", int(elapsed_time / hour));
+                timeago_str = QString::asprintf("%dh", int(elapsed_time / hour));
             }
             else if (elapsed_time > minute)
             {
-                timeago_str.sprintf("%dm", int(elapsed_time / minute));
+                timeago_str = QString::asprintf("%dm", int(elapsed_time / minute));
             }
             else
             {
-                timeago_str.sprintf("%ds", int(elapsed_time));
+                timeago_str = QString::asprintf("%ds", int(elapsed_time));
             }
             (*it)->setText(1, timeago_str);
         }

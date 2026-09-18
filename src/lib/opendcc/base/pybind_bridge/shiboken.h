@@ -5,9 +5,16 @@
 
 #pragma once
 
+#include <QtGlobal>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <pyside6_qtcore_python.h>
+#include <pyside6_qtgui_python.h>
+#include <pyside6_qtwidgets_python.h>
+#else
 #include <pyside2_qtcore_python.h>
 #include <pyside2_qtgui_python.h>
 #include <pyside2_qtwidgets_python.h>
+#endif
 
 #include "opendcc/opendcc.h"
 #include <type_traits>

@@ -3,7 +3,7 @@
 
 import os
 from pxr import Usd, Tf
-from PySide2 import QtCore, QtGui, QtWidgets
+from Qt import QtCore, QtGui, QtWidgets
 import opendcc
 import opendcc.core as dcc_core
 import opendcc.usd_editor.bullet_physics as bullet

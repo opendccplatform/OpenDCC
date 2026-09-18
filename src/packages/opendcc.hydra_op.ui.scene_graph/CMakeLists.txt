@@ -19,9 +19,9 @@ opendcc_make_library(
     ${_src_dir}/hydra_op_scene_graph_tree_widget.cpp
     ${_src_dir}/entry_point.cpp
     LIBRARY_DEPENDENCIES
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Widgets
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Widgets
     opendcc_lib
     opendcc.hydra_op
     hd

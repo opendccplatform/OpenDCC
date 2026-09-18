@@ -7,7 +7,7 @@
     <load-typesystem name="typesystem_widgets.xml" generate="no"/>
 	<load-typesystem name="opendcc.ui.node_editor.xml" generate="no"/>
 
-	<primitive-type name="pxr::UsdPrim" target-name="UsdPrim">
+	<primitive-type name="@DCC_PXR_TS_NS@::UsdPrim" target-name="UsdPrim">
 		<include file-name="opendcc/base/pybind_bridge/boost_python.h" location="global"/>
 		<conversion-rule>
 			<native-to-target>
@@ -16,7 +16,7 @@
 				return obj.ptr();
 			</native-to-target>
 			<target-to-native>
-				<add-conversion type="pxr::UsdPrim" check="PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::UsdPrim&gt;(%in).check()">
+				<add-conversion type="@DCC_PXR_TS_NS@::UsdPrim" check="PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::UsdPrim&gt;(%in).check()">
 					PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::UsdPrim&gt; ex(%in);
 					if (ex.check())
 					    %out=ex();
@@ -26,7 +26,7 @@
 			</target-to-native>
 		</conversion-rule>
 	</primitive-type>
-	<primitive-type name="pxr::TfToken" target-name="TfToken">
+	<primitive-type name="@DCC_PXR_TS_NS@::TfToken" target-name="TfToken">
 		<include file-name="opendcc/base/pybind_bridge/boost_python.h" location="global"/>
 		<conversion-rule>
 			<native-to-target>
@@ -35,7 +35,7 @@
 				return obj.ptr();
 			</native-to-target>
 			<target-to-native>
-				<add-conversion type="pxr::TfToken" check="PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::TfToken&gt;(%in).check()">
+				<add-conversion type="@DCC_PXR_TS_NS@::TfToken" check="PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::TfToken&gt;(%in).check()">
 					PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::TfToken&gt; ex(%in);
 					if (ex.check())
 						%out=ex();
@@ -46,7 +46,7 @@
 		</conversion-rule>
 	</primitive-type>
 	
-	<primitive-type name="pxr::SdfPath" target-name="SdfPath">
+	<primitive-type name="@DCC_PXR_TS_NS@::SdfPath" target-name="SdfPath">
 		<include file-name="opendcc/base/pybind_bridge/boost_python.h" location="global"/>
 		<conversion-rule>
 			<native-to-target>
@@ -55,7 +55,7 @@
 				return obj.ptr();
 			</native-to-target>
 			<target-to-native>
-				<add-conversion type="pxr::UsdPrim" check="PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::SdfPath&gt;(%in).check()">
+				<add-conversion type="@DCC_PXR_TS_NS@::SdfPath" check="PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::SdfPath&gt;(%in).check()">
 					PXR_BOOST_PYTHON_NAMESPACE::extract&lt;pxr::SdfPath&gt; ex(%in);
 					if (ex.check())
 					%out=ex();

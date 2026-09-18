@@ -23,7 +23,13 @@ set(src
     range_slider.cpp)
 
 add_library(timeline_widget SHARED ${src} ${moc} ${headers})
-target_link_libraries(timeline_widget Qt5::Core Qt5::Widgets Qt5::Multimedia vt color_theme)
+target_link_libraries(
+    timeline_widget
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Multimedia
+    vt
+    color_theme)
 
 set_property(TARGET timeline_widget PROPERTY AUTOMOC ON)
 target_compile_definitions(timeline_widget PRIVATE -DOPENDCC_UI_TIMELINE_EXPORT)

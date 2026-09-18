@@ -1,6 +1,8 @@
 // Copyright Contributors to the OpenDCC project
 // SPDX-License-Identifier: Apache-2.0
 
+#include <QScreen>
+#include <QGuiApplication>
 #include "opendcc/ui/common_widgets/help_button_widget.h"
 
 #include <QHBoxLayout>
@@ -9,7 +11,6 @@
 #include <QScrollArea>
 #include <QApplication>
 #include <QMouseEvent>
-#include <QDesktopWidget>
 #include <QTextBrowser>
 #include <QRegularExpression>
 
@@ -126,8 +127,9 @@ void HelpButtonWidget::mouseReleaseEvent(QMouseEvent* e)
     dialog->move(e->globalPos());
     dialog->adjustSize();
     auto geom = dialog->frameGeometry();
-    auto screen_id = QApplication::desktop()->screenNumber(this);
-    auto screen_rect = QApplication::desktop()->screenGeometry(screen_id);
+    // QDesktopWidget is gone in Qt6; QWidget::screen() is Qt 5.14+
+    const auto* widget_screen = screen() ? screen() : QGuiApplication::primaryScreen();
+    auto screen_rect = widget_screen->geometry();
 
     if (geom.left() < screen_rect.left())
         geom.translate(screen_rect.left() - geom.left(), 0);

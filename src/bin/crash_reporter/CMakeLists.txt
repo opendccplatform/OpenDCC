@@ -2,7 +2,7 @@ set(TARGET_NAME crash_reporter)
 
 set(BIN_NAME ${TARGET_NAME})
 
-qt5_add_resources(resources ${CMAKE_SOURCE_DIR}/src/lib/opendcc/app/ui/resources/stylesheets.qrc)
+qt_add_resources(resources ${CMAKE_SOURCE_DIR}/src/lib/opendcc/app/ui/resources/stylesheets.qrc)
 
 add_executable(${BIN_NAME} ${resources} main.cpp crash_reporter_window.h crash_reporter_window.cpp
                            crash_report_handler.h crash_report_handler.cpp)
@@ -17,9 +17,9 @@ target_link_libraries(
     sentry_crashpad::client
     sentry_crashpad::client
     sentry_crashpad::handler
-    Qt5::Widgets
-    Qt5::Core
-    Qt5::Gui)
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui)
 
 install(TARGETS ${BIN_NAME} RUNTIME DESTINATION bin)
 if(MSVC)

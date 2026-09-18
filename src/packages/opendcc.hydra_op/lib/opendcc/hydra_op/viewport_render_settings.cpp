@@ -141,7 +141,7 @@ namespace
             }
             else
             {
-                return nullptr;
+                return {};
             }
 
             return GfCamera { xform,       proj_enum, hor_app, ver_app, hor_app_ofs, ver_app_ofs, foc_len, GfRange1f(clip_range[0], clip_range[1]),

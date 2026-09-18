@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/usd_editor/uv_editor/uv_editor.h"
+#include <QActionGroup>
+#include <QRegularExpression>
 
 #include "opendcc/app/viewport/iviewport_tool_context.h"
 #include "opendcc/app/viewport/prim_material_override.h"
@@ -188,7 +190,7 @@ UVEditor::UVEditor(QWidget* parent /*= nullptr*/)
     : QWidget(parent)
 {
     auto layout = new QVBoxLayout;
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     layout->setContentsMargins(0, 0, 0, 0);
 

@@ -1,7 +1,7 @@
 # Copyright Contributors to the OpenDCC project
 # SPDX-License-Identifier: Apache-2.0
 
-from PySide2 import QtCore
+from Qt import QtCore
 import opendcc.core as dcc_core
 
 

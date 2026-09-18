@@ -183,7 +183,7 @@ void RenderLog::add_catalog(QString catalog_name)
     list_item->setSizeHint(widget->sizeHint());
     m_catalog_list->addItem(list_item);
     m_catalog_list->setItemWidget(list_item, widget);
-    m_catalog_list->setItemSelected(list_item, true);
+    list_item->setSelected(true);
     m_catalog_list->verticalScrollBar()->setValue(m_catalog_list->verticalScrollBar()->maximum());
     m_catalog_list->horizontalScrollBar()->setValue(m_catalog_list->horizontalScrollBar()->minimum());
 }

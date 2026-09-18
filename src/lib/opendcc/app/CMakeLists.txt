@@ -241,9 +241,9 @@ if(USD_VERSION VERSION_GREATER_EQUAL 0.25.02)
          viewport/hydra_ext_render_session_api_schema.cpp)
 endif()
 
-qt5_add_resources(resources ${PROJECT_SOURCE_DIR}/icons/icons.qrc)
+qt_add_resources(resources ${PROJECT_SOURCE_DIR}/icons/icons.qrc)
 
-qt5_add_resources(resources ${CMAKE_CURRENT_SOURCE_DIR}/ui/resources/stylesheets.qrc)
+qt_add_resources(resources ${CMAKE_CURRENT_SOURCE_DIR}/ui/resources/stylesheets.qrc)
 
 source_group(
     TREE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -297,11 +297,11 @@ set_property(TARGET opendcc_lib PROPERTY AUTOMOC ON)
 target_compile_definitions(opendcc_lib PRIVATE -DOPENDCC_EXPORT -DBOOST_ALL_DYN_LINK -DBOOST_ALL_NO_LIB
                                                $<$<BOOL:${DCC_USE_HYDRA_FRAMING_API}>:OPENDCC_USE_HYDRA_FRAMING_API>)
 
-get_target_property(PySide2_INCLUDE_DIR PySide2::pyside2 INTERFACE_INCLUDE_DIRECTORIES)
-include_directories(${PySide2_INCLUDE_DIR}/QtCore/)
-include_directories(${PySide2_INCLUDE_DIR}/QtGui/)
-include_directories(${PySide2_INCLUDE_DIR}/QtWidgets/)
-include_directories(${PySide2_INCLUDE_DIR})
+get_target_property(PYSIDE_INCLUDE_DIR ${DCC_PYSIDE_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+include_directories(${PYSIDE_INCLUDE_DIR}/QtCore/)
+include_directories(${PYSIDE_INCLUDE_DIR}/QtGui/)
+include_directories(${PYSIDE_INCLUDE_DIR}/QtWidgets/)
+include_directories(${PYSIDE_INCLUDE_DIR})
 include_directories(${python_include_dir})
 include_directories(${shiboken_include_dir})
 
@@ -309,14 +309,18 @@ if(USD_VERSION VERSION_GREATER_EQUAL 0.22.05)
     target_link_libraries(opendcc_lib compositing)
 endif()
 
-target_link_libraries(opendcc_lib Shiboken2::libshiboken PySide2::pyside2)
+target_link_libraries(opendcc_lib ${DCC_SHIBOKEN_LIB_TARGET} ${DCC_PYSIDE_TARGET})
+
+# Qt6::Platform injects UNICODE/_UNICODE into every consumer unless this is set, which flips
+# TinyProcessLib::Process::string_type to std::wstring and breaks render_process.cpp.
+set_target_properties(opendcc_lib PROPERTIES QT_NO_UNICODE_DEFINES ON)
 target_link_libraries(opendcc_lib app_version app_config color_theme)
 set_target_properties(opendcc_lib PROPERTIES OUTPUT_NAME opendcc_core)
 
 include_directories(${OPENMESH_INCLUDE_DIRS})
 target_link_libraries(opendcc_lib ${OPENMESH_LIBRARIES})
 
-target_link_libraries(opendcc_lib crash_reporting Qt5::Network)
+target_link_libraries(opendcc_lib crash_reporting Qt${QT_VERSION_MAJOR}::Network)
 
 if(USD_VERSION VERSION_LESS_EQUAL 0.20.08)
     target_link_libraries(opendcc_lib ${GLEW_LIBRARY})
@@ -325,7 +329,7 @@ endif()
 
 target_link_libraries(
     opendcc_lib
-    ads::qtadvanceddocking
+    ${DCC_ADS_TARGET}
     test_runner
     packaging
     common_widgets
@@ -343,14 +347,14 @@ target_link_libraries(
     ocio_color_widgets
     hydra_render_session_api
     utils
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Svg
-    Qt5::Widgets
-    Qt5::OpenGL
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    ${DCC_QT_SVG_TARGETS}
+    Qt${QT_VERSION_MAJOR}::Widgets
+    ${DCC_QT_OPENGL_TARGETS}
     $<$<BOOL:${DCC_HOUDINI_SUPPORT}>:OpenGL::GL>
     $<$<BOOL:${DCC_KATANA_SUPPORT}>:OpenGL::GL>
-    Qt5::Multimedia
+    Qt${QT_VERSION_MAJOR}::Multimedia
     pybind11::pybind11
     ${Boost_PYTHON_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
@@ -383,6 +387,7 @@ target_link_libraries(
     usdLux
     vt
     hdx
+    hgiGL
     jsoncpp
     opendcc.usd_editor.scene_indices)
 

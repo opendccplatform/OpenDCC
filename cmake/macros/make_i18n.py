@@ -65,7 +65,12 @@ def generate_qm(qt_path, inputs, output_dir):
     lrelease = os.path.join(qt_path, "bin", "lrelease")
     for i in inputs:
         lang = i.split(".")[-2]  # assumption input is i18n.<lang>.qm
-        loader = """<?xml version="1.0" encoding="utf-8"?>
+
+        # QTranslator fails the whole catalogue if a declared dependency is missing, so chain Qt's
+        # own translations in only when that .qm exists. A source-built Qt may ship none at all.
+        loader_filename = None
+        if os.path.exists(os.path.join(qt_path, "translations", "qt_{}.qm".format(lang))):
+            loader = """<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
 <TS version="2.1" language="{0}">
     <dependencies>
@@ -73,16 +78,17 @@ def generate_qm(qt_path, inputs, output_dir):
     </dependencies>
 </TS>
 """.format(
-            lang
-        )
-        loader_filename = os.path.join(output_dir, "loader.{}.ts".format(lang))
-        with io.open(loader_filename, "w", encoding="utf-8") as loader_f:
-            loader_f.write(loader.decode("utf-8") if sys.version_info[0] < 3 else loader)
+                lang
+            )
+            loader_filename = os.path.join(output_dir, "loader.{}.ts".format(lang))
+            with io.open(loader_filename, "w", encoding="utf-8") as loader_f:
+                loader_f.write(loader.decode("utf-8") if sys.version_info[0] < 3 else loader)
 
         cmd = []
         cmd.append(lrelease)
         cmd.append(i)
-        cmd.append(loader_filename)
+        if loader_filename:
+            cmd.append(loader_filename)
         cmd.append("-qm")
         cmd.append(
             os.path.join(output_dir, "{}.qm".format(os.path.splitext(os.path.basename(i))[0]))
@@ -90,7 +96,8 @@ def generate_qm(qt_path, inputs, output_dir):
         print("Executing lrelease:", " ".join(cmd))
         p = subprocess.Popen(cmd)
         p.communicate()
-        os.remove(loader_filename)
+        if loader_filename:
+            os.remove(loader_filename)
 
 
 if __name__ == "__main__":

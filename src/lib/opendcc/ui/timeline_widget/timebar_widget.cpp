@@ -243,11 +243,11 @@ QString TimeBarWidget::get_time_string(double frame, bool add_prefix /*= false*/
     {
         if (std::ceil(frame) == frame)
         {
-            result.sprintf("%d", int(frame));
+            result = QString::asprintf("%d", int(frame));
         }
         else
         {
-            result.sprintf("%0.2f", frame);
+            result = QString::asprintf("%0.2f", frame);
         }
 
         if (add_prefix)
@@ -299,7 +299,7 @@ void TimeBarWidget::paintEvent(QPaintEvent *event)
     float _top = 0;
     float _height = height();
     float _bottom = _height - 1;
-    QColor backFont = palette().dark().color().dark(120);
+    QColor backFont = palette().dark().color().darker(120);
     QPainter painter(this);
     painter.setRenderHints(QPainter::Antialiasing);
 
@@ -483,7 +483,7 @@ void TimeBarWidget::paintEvent(QPaintEvent *event)
         }
         else
         {
-            painter.setPen(palette().foreground().color());
+            painter.setPen(palette().windowText().color());
         }
         painter.drawText(time_to_x_pos(m_time_selection_start) + 3, _height - 4, start_text);
         painter.drawText(time_to_x_pos(m_time_selection_end) + 3, _height - 4, end_text);
@@ -673,7 +673,7 @@ void TimeBarWidget::paintEvent(QPaintEvent *event)
             }
             else
             {
-                painter.setPen(palette().foreground().color());
+                painter.setPen(palette().windowText().color());
             }
             painter.drawText(time_to_x_pos(m_currentTime) + 3, _height - 4, text);
         }
@@ -812,7 +812,11 @@ void TimeBarWidget::resizeEvent(QResizeEvent *event)
     return QWidget::resizeEvent(event);
 }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+void TimeBarWidget::enterEvent(QEnterEvent *event)
+#else
 void TimeBarWidget::enterEvent(QEvent *event)
+#endif
 {
     m_mouse_hover = true;
     QWidget::enterEvent(event);

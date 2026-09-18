@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <QPainter>
+#include <QRegularExpression>
 #include <QLabel>
 #include <QComboBox>
 #include <QMouseEvent>
@@ -334,7 +335,7 @@ void FloatWidget::focusOutEvent(QFocusEvent* e)
 
 QValidator::State FloatWidget::validate(QString& input, int& pos) const
 {
-    if (input.indexOf(QRegExp("[^0-9.]"), 0) == -1)
+    if (input.indexOf(QRegularExpression("[^0-9.]"), 0) == -1)
     {
         QList<QString> list = input.split(".");
         if (list.size() == 2)

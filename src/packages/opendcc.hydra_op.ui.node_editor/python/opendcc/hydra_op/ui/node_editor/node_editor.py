@@ -20,7 +20,6 @@ from opendcc.usd_editor.usd_node_editor.node_editor_preform import (
     EntryScreen,
     CommonNodeEditorWidgetPreform,
 )
-import shiboken2
 from opendcc.i18n import i18n
 from opendcc import rendersystem
 from pxr import Usd, Tf, UsdShade, Sdr

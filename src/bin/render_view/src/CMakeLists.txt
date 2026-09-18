@@ -3,7 +3,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${RENDER_VIEW_SOURCE_DIR})
 
 set(render_view_src main.cpp)
 set(CMAKE_AUTOMOC ON)
-qt5_add_resources(resources ${PROJECT_SOURCE_DIR}/icons/icons.qrc)
+qt_add_resources(resources ${PROJECT_SOURCE_DIR}/icons/icons.qrc)
 include_directories(${RENDER_VIEW_SOURCE_DIR}/thirdparty/qtsingleapplication/src)
 include_directories(${PROJECT_SOURCE_DIR}/lib/src)
 
@@ -27,15 +27,20 @@ target_compile_definitions(${BIN_NAME} PRIVATE -DGIT_COMMIT="${OPENDCC_GIT_COMMI
 target_link_libraries(${BIN_NAME} image_view color_theme)
 target_link_libraries(
     ${BIN_NAME}
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Widgets
-    Qt5::OpenGL
-    Qt5::Network
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Widgets
+    ${DCC_QT_OPENGL_TARGETS}
+    Qt${QT_VERSION_MAJOR}::Network
     ${CMAKE_THREAD_LIBS_INIT}
     crash_reporting)
 if(WIN32 AND DCC_RENDER_VIEW_WIN_GUI_EXECUTABLE)
-    target_link_libraries(${BIN_NAME} Qt5::WinMain)
+    # Qt5 needs Qt5::WinMain linked explicitly. Qt6 has no equivalent to link by hand:
+    # Qt6::Core's INTERFACE_LINK_LIBRARIES already pulls in Qt6::EntryPointPrivate for
+    # any WIN32_EXECUTABLE target that does not set qt_no_entrypoint.
+    if(QT_VERSION_MAJOR LESS 6)
+        target_link_libraries(${BIN_NAME} Qt5::WinMain)
+    endif()
 endif()
 
 if(MSVC)

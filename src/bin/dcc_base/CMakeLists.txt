@@ -1,4 +1,4 @@
-qt5_add_resources(resources ${PROJECT_SOURCE_DIR}/icons/icons.qrc)
+qt_add_resources(resources ${PROJECT_SOURCE_DIR}/icons/icons.qrc)
 
 
 set(BIN_NAME dcc_base)

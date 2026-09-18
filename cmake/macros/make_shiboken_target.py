@@ -34,7 +34,7 @@ language-level = c++@CMAKE_CXX_STANDARD@
 {include_paths}
 typesystem-path = @PYSIDE_TYPESYSTEMS@
 {typesystem_paths}
-framework-include-path = @Qt5_DIR@/../..
+framework-include-path = @DCC_QT_INSTALL_PREFIX@/lib
 """.format(
                 extra="\n".join(*extra),
                 include_paths="\n".join(["include-path = " + s for s in includes if s]),

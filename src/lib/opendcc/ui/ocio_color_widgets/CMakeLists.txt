@@ -15,7 +15,13 @@ set(src OCIO_color_widget.cpp OCIO_gradient_widget.cpp)
 add_library(ocio_color_widgets SHARED ${src} ${headers})
 target_compile_definitions(ocio_color_widgets PRIVATE -DOPENDCC_UI_OCIO_COLOR_WIDGETS_EXPORT)
 
-target_link_libraries(ocio_color_widgets Qt5::Core Qt5::Gui Qt5::Widgets common_widgets ${OCIO_LIBRARIES})
+target_link_libraries(
+    ocio_color_widgets
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Widgets
+    common_widgets
+    ${OCIO_LIBRARIES})
 
 install(FILES ${headers} DESTINATION "include/opendcc/ocio_color_widgets/")
 

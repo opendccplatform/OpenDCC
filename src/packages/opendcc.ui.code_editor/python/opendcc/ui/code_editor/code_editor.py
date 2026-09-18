@@ -1,7 +1,7 @@
 # Copyright Contributors to the OpenDCC project
 # SPDX-License-Identifier: Apache-2.0
 
-from PySide2 import QtCore, QtGui, QtWidgets
+from Qt import QtCore, QtGui, QtWidgets
 import keyword
 import ast
 import re
@@ -15,7 +15,7 @@ from opendcc.pygments_utils.usd_lexer import UsdLexer
 usd_lexer = UsdLexer()
 from pygments.lexers import get_lexer_by_name
 
-from PySide2 import QtCore
+from Qt import QtCore
 
 from . import osl_lexer
 from . import expand_vars_lexer
@@ -534,7 +534,7 @@ class CodeEditorWidget(QtWidgets.QPlainTextEdit):
         if digits < 3:
             digits = 3
 
-        space = 3 + self.fontMetrics().width("9") * digits
+        space = 3 + self.fontMetrics().horizontalAdvance("9") * digits
 
         return space
 

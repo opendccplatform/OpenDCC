@@ -1,11 +1,11 @@
 function(setup_update_translations OUT_VAR)
     set(ts_files "${CMAKE_SOURCE_DIR}/i18n/i18n.en.ts")
 
-    set(Qt_PATH "${_qt5Core_install_prefix}/bin")
+    set(Qt_PATH "${DCC_QT_INSTALL_PREFIX}/bin")
 
-    get_target_property(pyside_dir Shiboken2::shiboken2 IMPORTED_LOCATION_RELEASE)
+    get_target_property(pyside_dir ${DCC_SHIBOKEN_BIN_TARGET} IMPORTED_LOCATION_RELEASE)
     if(NOT pyside_dir)
-        get_target_property(pyside_dir Shiboken2::shiboken2 IMPORTED_LOCATION_RELWITHDEBINFO)
+        get_target_property(pyside_dir ${DCC_SHIBOKEN_BIN_TARGET} IMPORTED_LOCATION_RELWITHDEBINFO)
     endif()
     get_filename_component(pyside_dir ${pyside_dir} DIRECTORY)
 
@@ -24,7 +24,7 @@ function(setup_update_translations OUT_VAR)
             ${CMAKE_COMMAND} -E env
             "${OS_LIBRARY_ENV_NAME}=${Qt_PATH}${OS_ENV_SEPARATOR}${pyside_dir}${OS_ENV_SEPARATOR}$ENV{${OS_LIBRARY_ENV_NAME}}"
             "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/cmake/macros/make_i18n.py" make_ts --src_dir
-            "${CMAKE_SOURCE_DIR}/src" --output_dir "${CMAKE_SOURCE_DIR}/i18n" --qt_path "${_qt5Core_install_prefix}"
+            "${CMAKE_SOURCE_DIR}/src" --output_dir "${CMAKE_SOURCE_DIR}/i18n" --qt_path "${DCC_QT_INSTALL_PREFIX}"
             --lang ${DCC_LANG})
 
     if(${DCC_LANG} STREQUAL "all")
@@ -40,7 +40,7 @@ function(setup_update_translations OUT_VAR)
             ${CMAKE_COMMAND} -E env
             "${OS_LIBRARY_ENV_NAME}=${Qt_PATH}${OS_ENV_SEPARATOR}${pyside_dir}${OS_ENV_SEPARATOR}$ENV{${OS_LIBRARY_ENV_NAME}}"
             "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/cmake/macros/make_i18n.py" make_qm --qt_path
-            "${_qt5Core_install_prefix}" --inputs ${ts_files} --output_dir "${CMAKE_CURRENT_BINARY_DIR}/i18n")
+            "${DCC_QT_INSTALL_PREFIX}" --inputs ${ts_files} --output_dir "${CMAKE_CURRENT_BINARY_DIR}/i18n")
 
     install(FILES ${qm_files} DESTINATION i18n)
 
@@ -49,15 +49,25 @@ function(setup_update_translations OUT_VAR)
         file(
             GLOB _qt_qms
             LIST_DIRECTORIES false
-            "${_qt5Core_install_prefix}/translations/qt*_${CMAKE_MATCH_1}.qm")
+            "${DCC_QT_INSTALL_PREFIX}/translations/qt*_${CMAKE_MATCH_1}.qm")
         set(_lang ${CMAKE_MATCH_1})
-        install(
-            FILES "${_qt5Core_install_prefix}/translations/qt_${_lang}.qm"
-                  "${_qt5Core_install_prefix}/translations/qtbase_${_lang}.qm"
-                  "${_qt5Core_install_prefix}/translations/qtscript_${_lang}.qm"
-                  "${_qt5Core_install_prefix}/translations/qtmultimedia_${_lang}.qm"
-                  "${_qt5Core_install_prefix}/translations/qtxmlpatterns_${_lang}.qm"
-            DESTINATION i18n)
+        # install(FILES) on a missing file is a hard error, and which .qm files a Qt ships varies.
+        # Install only the catalogues this one has.
+        set(_qt_qm_candidates
+            "${DCC_QT_INSTALL_PREFIX}/translations/qt_${_lang}.qm"
+            "${DCC_QT_INSTALL_PREFIX}/translations/qtbase_${_lang}.qm"
+            "${DCC_QT_INSTALL_PREFIX}/translations/qtscript_${_lang}.qm"
+            "${DCC_QT_INSTALL_PREFIX}/translations/qtmultimedia_${_lang}.qm"
+            "${DCC_QT_INSTALL_PREFIX}/translations/qtxmlpatterns_${_lang}.qm")
+        set(_qt_qm_present)
+        foreach(_qm ${_qt_qm_candidates})
+            if(EXISTS "${_qm}")
+                list(APPEND _qt_qm_present "${_qm}")
+            endif()
+        endforeach()
+        if(_qt_qm_present)
+            install(FILES ${_qt_qm_present} DESTINATION i18n)
+        endif()
     endforeach()
 
     # Return qm_files to caller

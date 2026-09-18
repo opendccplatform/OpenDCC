@@ -8,17 +8,11 @@
   <primitive-type name="size_t"/>
 
   <namespace-type name="OpenDCC" generate="no">
-    <enum-type name="TimelineLayout">
-      <include file-name="timeline_widget.h" location="global"/>
-    </enum-type>
+    <enum-type name="TimelineLayout"/>
 
-    <enum-type name="CurrentTimeIndicator">
-      <include file-name="timeline_widget.h" location="global"/>
-    </enum-type>
+    <enum-type name="CurrentTimeIndicator"/>
 
-    <enum-type name="TimeDisplay">
-      <include file-name="timeline_widget.h" location="global"/>
-    </enum-type>
+    <enum-type name="TimeDisplay"/>
 
     <object-type name="TimelineWidget"/>
     <object-type name="TimeBarWidget"/>

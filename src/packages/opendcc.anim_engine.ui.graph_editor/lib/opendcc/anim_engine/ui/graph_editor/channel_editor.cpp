@@ -107,7 +107,7 @@ ComponentTreeItem::ComponentTreeItem(OPENDCC_NAMESPACE::AnimEngine::CurveId curv
         text += component_postfix(m_component, attribute_class(curve->attribute()));
     setText(0, text.c_str());
     if (num_components_in_attribute(m_attribute) > 1)
-        setTextColor(0, color_for_component(curve->component_idx()));
+        setForeground(0, QBrush(color_for_component(curve->component_idx())));
 }
 
 ComponentTreeItem::ComponentTreeItem(UsdAttribute& attribute, uint32_t component_idx, QTreeWidgetItem* parent)
@@ -316,18 +316,18 @@ void ChannelEditor::update_prim_item(QTreeWidgetItem* prim_item, SdfPath path)
             bool ok = get_usd_attribute_component(attribute, component_idx, value, Application::instance().get_current_time());
 
             curve_item->setText(1, QString::number(value, 'g', num_digits));
-            curve_item->setTextColor(1, Qt::white);
+            curve_item->setForeground(1, QBrush(Qt::white));
 
             if (attribute.GetNumTimeSamples() > 0)
             {
-                curve_item->setBackgroundColor(1, keyed_item_color);
+                curve_item->setBackground(1, QBrush(keyed_item_color));
             }
             else
             {
                 if (engine && engine->is_attribute_animated(attribute, component_idx))
-                    curve_item->setBackgroundColor(1, animated_item_color);
+                    curve_item->setBackground(1, QBrush(animated_item_color));
                 else
-                    curve_item->setBackgroundColor(1, default_item_color);
+                    curve_item->setBackground(1, QBrush(default_item_color));
             }
             curve_item->setFlags(curve_item->flags() | Qt::ItemIsEditable);
             curve_item->setTextAlignment(0, Qt::AlignRight);

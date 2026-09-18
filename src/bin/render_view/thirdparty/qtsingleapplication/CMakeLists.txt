@@ -17,4 +17,9 @@ source_group("MOC" FILES ${qtsingleapplication_moc})
 include_directories(src)
 
 add_library(qtsingleapplication ${qtsingleapplication_headers} ${qtsingleapplication_moc} ${qtsingleapplication_src})
-target_link_libraries(qtsingleapplication Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
+target_link_libraries(
+    qtsingleapplication
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Network)

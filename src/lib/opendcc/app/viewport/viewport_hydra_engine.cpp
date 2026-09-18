@@ -165,6 +165,15 @@ ViewportHydraEngine::ViewportHydraEngine(const std::shared_ptr<SceneIndexManager
 ViewportHydraEngine::~ViewportHydraEngine()
 {
     delete_hydra_resources();
+    if (m_gl_arena)
+    {
+        if (auto* gl_hgi = dynamic_cast<HgiGL*>(m_hgi.get()))
+        {
+            // must be unset before it can be destroyed
+            gl_hgi->SetContextArena(HgiGLContextArenaHandle());
+            gl_hgi->DestroyContextArena(&m_gl_arena);
+        }
+    }
 #if PXR_VERSION >= 2008
     if (--s_engine_count == 0)
         m_hgi = nullptr;
@@ -176,6 +185,9 @@ ViewportHydraEngine::~ViewportHydraEngine()
 }
 void ViewportHydraEngine::delete_hydra_resources(bool clean_render_plugin)
 {
+    // Destroying Hgi objects clears framebuffer-cache entries in the arena that is currently bound,
+    // which is another engine's arena unless we bind ours first.
+    _bind_context_arena();
     m_scene_delegates.clear();
     m_engine = HdEngine();
 #if PXR_VERSION >= 2005
@@ -296,6 +308,21 @@ bool ViewportHydraEngine::use_hydra2() const
 
 #if PXR_VERSION >= 2008
 std::unique_ptr<Hgi> ViewportHydraEngine::m_hgi;
+
+void ViewportHydraEngine::_bind_context_arena()
+{
+    // m_hgi is process-wide, but framebuffer objects are not shareable between GL contexts
+    // (AA_ShareOpenGLContexts covers textures and buffers only). hgiGL/hgi.h requires one context
+    // arena per context, otherwise cached FBOs from one context get reused in another.
+    if (!m_hgi)
+        return;
+    auto* gl_hgi = dynamic_cast<HgiGL*>(m_hgi.get());
+    if (!gl_hgi)
+        return; // non-GL backend: nothing to do
+    if (!m_gl_arena)
+        m_gl_arena = gl_hgi->CreateContextArena();
+    gl_hgi->SetContextArena(m_gl_arena);
+}
 
 Hgi* ViewportHydraEngine::get_hgi()
 {
@@ -533,6 +560,7 @@ bool ViewportHydraEngine::use_aovs() const
 }
 void ViewportHydraEngine::compose_aovs()
 {
+    _bind_context_arena();
     GLint app_draw_fbo = 0;
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &app_draw_fbo);
     HgiTextureHandle color_handle, intermediate_depth_handle, depth_handle;
@@ -592,9 +620,10 @@ void ViewportHydraEngine::compose_aovs()
 #endif
     }
 
-    HgiInterop interop;
 #if PXR_VERSION < 2108
-    interop.TransferToApp(m_hgi.get(), HgiTokens->OpenGL, color_handle, depth_handle);
+    if (!m_interop)
+        m_interop = std::make_unique<HgiInterop>();
+    m_interop->TransferToApp(m_hgi.get(), HgiTokens->OpenGL, color_handle, depth_handle);
 #else
 
     GfVec4i region;
@@ -610,7 +639,10 @@ void ViewportHydraEngine::compose_aovs()
                          m_framing.displayWindow.GetSize()[1]);
     }
 
-    interop.TransferToApp(m_hgi.get(), color_handle, depth_handle, HgiTokens->OpenGL, VtValue(static_cast<uint32_t>(app_draw_fbo)), region);
+    if (!m_interop)
+        m_interop = std::make_unique<HgiInterop>();
+    m_interop->TransferToApp(m_hgi.get(), color_handle, depth_handle, HgiTokens->OpenGL,
+                             VtValue(static_cast<uint32_t>(app_draw_fbo)), region);
 #endif
 }
 
@@ -879,6 +911,7 @@ void ViewportHydraEngine::update_render_settings()
 
 void ViewportHydraEngine::init_hydra_resources()
 {
+    _bind_context_arena();
     HdSelectionSharedPtr selection = m_sel_tracker->GetSelectionMap();
     if (!selection)
     {
@@ -1083,6 +1116,7 @@ void ViewportHydraEngine::compute_render_tags(ViewportHydraEngineParams const& p
 
 void ViewportHydraEngine::execute(const ViewportHydraEngineParams& params, HdTaskSharedPtrVector tasks)
 {
+    _bind_context_arena();
     // User is responsible for initializing GL context and glew
     bool isCoreProfileContext = GlfContextCaps::GetInstance().coreProfile;
 

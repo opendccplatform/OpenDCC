@@ -181,8 +181,16 @@ void ViewportGLWidget::initializeGL()
 #endif
     GlfRegisterDefaultDebugOutputMessageCallback();
 
-    register_callbacks();
+    // Qt calls initializeGL() again whenever the widget's GL context is recreated, which happens
+    // when the panel is reparented into another top-level window. Register the application callbacks
+    // once, and replace the draw manager instead of leaking the previous one.
+    if (!m_callbacks_registered)
+    {
+        register_callbacks();
+        m_callbacks_registered = true;
+    }
 
+    delete m_ui_draw_manager;
     m_ui_draw_manager = new ViewportUiDrawManager(width() * devicePixelRatio(), height() * devicePixelRatio());
     const auto background_gradient_enable = Application::instance().get_settings()->get("viewport.background.gradient_enable", false);
     m_enable_background_gradient = background_gradient_enable;
@@ -361,6 +369,10 @@ void ViewportGLWidget::resizeEvent(QResizeEvent* e)
 {
     m_camera_controller->set_display_size(e->size().width() * devicePixelRatio(), e->size().height() * devicePixelRatio());
     QOpenGLWidget::resizeEvent(e);
+
+    // The resize paint lands while HdSt is still reallocating AOVs, so it renders empty and
+    // is_converged() schedules no follow-up. Qt5 issued an extra paint of its own, Qt6 does not.
+    update();
 }
 
 std::pair<PXR_NS::HdxPickHitVector, bool> ViewportGLWidget::intersect_impl(const PXR_NS::GfVec2f& start, const PXR_NS::GfVec2f& end,
@@ -597,6 +609,10 @@ void ViewportGLWidget::register_callbacks()
     m_def_cam_settings_dispatcher_handle = DefCamSettings::instance().register_event_callback([this](const GfCamera& camera) { update(); });
 
     m_current_stage_changed_cid = Application::instance().register_event_callback(Application::EventType::CURRENT_STAGE_CHANGED, [this] {
+        // Rebuilding the engine here is GL work outside paintGL. Qt 6.4+ composites through RHI and
+        // leaves RHI's context current, so without this the new GL objects land in the wrong context.
+        makeCurrent();
+
         get_engine()->reset();
 
         if (m_scene_context->get_context_name() == TfToken("USD"))
@@ -621,6 +637,8 @@ void ViewportGLWidget::register_callbacks()
                     m_params.current_stage_root.AppendChild(TfToken(TfMakeValidIdentifier(stage->GetRootLayer()->GetIdentifier())));
         }
         update_stage_watcher();
+
+        doneCurrent();
     });
 
     m_current_time_changed_cid = Application::instance().register_event_callback(Application::EventType::CURRENT_TIME_CHANGED, [this] {

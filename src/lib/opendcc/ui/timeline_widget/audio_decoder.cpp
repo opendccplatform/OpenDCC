@@ -4,6 +4,8 @@
 #include "audio_decoder.h"
 
 #include <QDebug>
+#include <QUrl>
+#include <climits>
 #include <cmath>
 
 AudioDecoder::AudioDecoder(QObject* parent /*= nullptr*/)
@@ -18,7 +20,11 @@ void AudioDecoder::set_source_filename(const QString& path)
 {
     m_levels.clear();
     m_ready = false;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    m_audio_decoder->setSource(QUrl::fromLocalFile(path));
+#else
     m_audio_decoder->setSourceFilename(path);
+#endif
     m_audio_decoder->start();
 }
 
@@ -89,6 +95,24 @@ inline qreal get_peak_value(const QAudioFormat& format)
     if (!format.isValid())
         return qreal(0);
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // Qt6 dropped codec()/sampleType()/sampleSize(): QAudioDecoder only ever emits PCM and the
+    // layout is described by a single sampleFormat() enum.
+    switch (format.sampleFormat())
+    {
+    case QAudioFormat::UInt8:
+        return qreal(UCHAR_MAX);
+    case QAudioFormat::Int16:
+        return qreal(SHRT_MAX);
+    case QAudioFormat::Int32:
+        return qreal(INT_MAX);
+    case QAudioFormat::Float:
+        return qreal(1.00003);
+    default:
+        break;
+    }
+    return qreal(0);
+#else
     if (format.codec() != "audio/pcm")
         return qreal(0);
 
@@ -119,6 +143,7 @@ inline qreal get_peak_value(const QAudioFormat& format)
     }
 
     return qreal(0);
+#endif
 }
 
 template <class T>
@@ -134,17 +159,20 @@ void AudioDecoder::process_buffer()
 {
     m_audio_buffer = m_audio_decoder->read();
 
-    if (!m_audio_buffer.format().isValid() || m_audio_buffer.format().byteOrder() != QAudioFormat::LittleEndian)
+    if (!m_audio_buffer.format().isValid())
     {
         m_ready = false;
         return;
     }
 
-    if (m_audio_buffer.format().codec() != "audio/pcm")
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    // Qt6 has no byteOrder()/codec(): decoded PCM is always host byte order.
+    if (m_audio_buffer.format().byteOrder() != QAudioFormat::LittleEndian || m_audio_buffer.format().codec() != "audio/pcm")
     {
         m_ready = false;
         return;
     }
+#endif
 
     int channel_count = m_audio_buffer.format().channelCount();
     int levels_start = m_levels.size();
@@ -159,6 +187,34 @@ void AudioDecoder::process_buffer()
         return;
     }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    // Qt6: one sampleFormat() enum replaces the sampleType()/sampleSize() pair.
+    switch (m_audio_buffer.format().sampleFormat())
+    {
+    case QAudioFormat::UInt8:
+        get_buffer_levels(m_audio_buffer.constData<quint8>(), frames, channel_count, m_levels);
+        for (int i = 0; i < frames; ++i)
+            m_levels[levels_start + i] = qAbs(m_levels.at(levels_start + i) - peak_value / 2) / (peak_value / 2);
+        break;
+    case QAudioFormat::Int16:
+        get_buffer_levels(m_audio_buffer.constData<qint16>(), frames, channel_count, m_levels);
+        for (int i = 0; i < frames; ++i)
+            m_levels[levels_start + i] /= peak_value;
+        break;
+    case QAudioFormat::Int32:
+        get_buffer_levels(m_audio_buffer.constData<qint32>(), frames, channel_count, m_levels);
+        for (int i = 0; i < frames; ++i)
+            m_levels[levels_start + i] /= peak_value;
+        break;
+    case QAudioFormat::Float:
+        get_buffer_levels(m_audio_buffer.constData<float>(), frames, channel_count, m_levels);
+        for (int i = 0; i < frames; ++i)
+            m_levels[levels_start + i] /= peak_value;
+        break;
+    default:
+        break;
+    }
+#else
     switch (m_audio_buffer.format().sampleType())
     {
     case QAudioFormat::Unknown:
@@ -191,6 +247,7 @@ void AudioDecoder::process_buffer()
             m_levels[levels_start + i] /= peak_value;
         break;
     }
+#endif
 }
 
 void AudioDecoder::finish()

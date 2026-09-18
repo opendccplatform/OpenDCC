@@ -206,6 +206,9 @@ function(opendcc_make_library TARGET_NAME)
 
     if(args_QT_AUTOMOC)
         set_property(TARGET ${TARGET_NAME} PROPERTY AUTOMOC ON)
+        # Windows MAX_PATH: the default autogen path runs past 260 chars in a deep tree and cl.exe
+        # then cannot open moc_<header>.cpp. Keep it short rather than depend on the checkout depth.
+        set_property(TARGET ${TARGET_NAME} PROPERTY AUTOGEN_BUILD_DIR "${CMAKE_BINARY_DIR}/ag/${TARGET_NAME}")
     endif()
 
     target_include_directories(${TARGET_NAME} PUBLIC ${args_INCLUDE_DIRS})
@@ -625,13 +628,13 @@ function(opendcc_make_shiboken_bindings TARGET_NAME)
     endif()
 
     # gather include paths for generation wrap files
-    get_target_property(PySide2_INCLUDE_DIR PySide2::pyside2 INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(PYSIDE_INCLUDE_DIR ${DCC_PYSIDE_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
     set(_gen_side_config_includes
         "${PROJECT_BINARY_DIR}/include"
         "${PROJECT_SOURCE_DIR}/src/lib"
         "${PYTHON_INCLUDE_DIR}"
-        "${PySide2_INCLUDE_DIR}"
-        "${Qt5Widgets_INCLUDE_DIRS}"
+        "${PYSIDE_INCLUDE_DIR}"
+        "${DCC_QT_INCLUDE_DIRS}"
         "${PXR_INCLUDE_DIRS}"
         "${Boost_INCLUDE_DIRS}"
         "${TBB_INCLUDE_DIRS}"
@@ -684,6 +687,13 @@ function(opendcc_make_shiboken_bindings TARGET_NAME)
     endforeach()
 
     set(_output_dir "${CMAKE_CURRENT_BINARY_DIR}")
+
+    # The typesystem differs between Qt5 and Qt6 (DCC_QT_SEQ_CONTAINER), so configure it into the
+    # build tree and point shiboken and PYSIDE_TYPESYSTEM_PATH at that copy.
+    set(_typesystem_source "${CMAKE_CURRENT_SOURCE_DIR}/${_typesystem_filepath}")
+    get_filename_component(_typesystem_name "${_typesystem_filepath}" NAME)
+    set(_typesystem_generated "${_output_dir}/${_typesystem_name}")
+    configure_file("${_typesystem_source}" "${_typesystem_generated}" @ONLY)
     # generate side_config.txt.in with all dependent typesystem and includes
     if(args_CUSTOM_PROJECT_FILE)
         message(STATUS "Using custom project file ${args_CUSTOM_PROJECT_FILE}...")
@@ -716,7 +726,7 @@ function(opendcc_make_shiboken_bindings TARGET_NAME)
             message(STATUS ${result})
         endif()
 
-        set(TYPESYSTEM_FILE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${_typesystem_filepath}")
+        set(TYPESYSTEM_FILE_PATH "${_typesystem_generated}")
         set(HEADER_FILE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${_shiboken_header_filepath}")
         configure_file("${_output_dir}/side_config.txt.in" "${_output_dir}/side_config.txt" @ONLY)
         set(_side_config_file "${_output_dir}/side_config.txt")
@@ -724,11 +734,11 @@ function(opendcc_make_shiboken_bindings TARGET_NAME)
 
     set(_generator_dependencies "${args_GLUE_FILES}" "${CMAKE_CURRENT_SOURCE_DIR}/${_shiboken_header_filepath}"
                                 "${CMAKE_CURRENT_SOURCE_DIR}/${_typesystem_filepath}")
-    get_target_property(shiboken_bin Shiboken2::shiboken2 LOCATION)
+    get_target_property(shiboken_bin ${DCC_SHIBOKEN_BIN_TARGET} LOCATION)
     if(WIN32)
-        set(_qt_bin "${_qt5Core_install_prefix}/bin")
+        set(_qt_bin "${DCC_QT_INSTALL_PREFIX}/bin")
     else()
-        set(_qt_bin "${_qt5Core_install_prefix}/lib")
+        set(_qt_bin "${DCC_QT_INSTALL_PREFIX}/lib")
     endif()
     add_custom_command(
         OUTPUT ${_headers} ${_sources}
@@ -741,7 +751,7 @@ function(opendcc_make_shiboken_bindings TARGET_NAME)
     add_library(${TARGET_NAME} SHARED ${_headers} ${_sources} ${_generator_dependencies})
 
     set_target_properties(
-        ${TARGET_NAME} PROPERTIES PYSIDE_TYPESYSTEM_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${_typesystem_filepath}"
+        ${TARGET_NAME} PROPERTIES PYSIDE_TYPESYSTEM_PATH "${_typesystem_generated}"
                                   PYSIDE_SOURCES_DIR "${_output_dir}/wrap/${_src_path}")
 
     # Since we have no guarantees how #includes in generated file will be look like add source dir of dependent
@@ -753,10 +763,10 @@ function(opendcc_make_shiboken_bindings TARGET_NAME)
         PUBLIC "${_target_source_dir}"
                "${_typesystem_includes}"
                "${PYTHON_INCLUDE_DIR}"
-               "${PySide2_INCLUDE_DIR}"
-               "${PySide2_INCLUDE_DIR}/QtCore"
-               "${PySide2_INCLUDE_DIR}/QtWidgets"
-               "${PySide2_INCLUDE_DIR}/QtGui")
+               "${PYSIDE_INCLUDE_DIR}"
+               "${PYSIDE_INCLUDE_DIR}/QtCore"
+               "${PYSIDE_INCLUDE_DIR}/QtWidgets"
+               "${PYSIDE_INCLUDE_DIR}/QtGui")
 
     if(args_INCLUDE_DIRS)
         target_include_directories(${TARGET_NAME} PUBLIC "${args_INCLUDE_DIRS}")
@@ -764,8 +774,8 @@ function(opendcc_make_shiboken_bindings TARGET_NAME)
     target_link_libraries(
         ${TARGET_NAME}
         ${args_TARGET}
-        Shiboken2::libshiboken
-        PySide2::pyside2
+        ${DCC_SHIBOKEN_LIB_TARGET}
+        ${DCC_PYSIDE_TARGET}
         pybind11::pybind11
         ${PYTHON_LIBRARY}
         ${_dependent_pyside_modules}

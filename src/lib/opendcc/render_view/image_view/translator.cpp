@@ -4,6 +4,7 @@
 #include "opendcc/render_view/image_view/translator.h"
 
 #include <QApplication>
+#include <QRegularExpression>
 #include <QTranslator>
 
 #include <iostream>
@@ -21,14 +22,15 @@ Translator::Translator()
     const auto size = list.size();
     m_supported_languages.reserve(size);
 
-    QRegExp reg("i18n\\.(.*)\\.qm");
+    QRegularExpression reg("i18n\\.(.*)\\.qm");
     for (const auto& entry : list)
     {
-        if (reg.indexIn(entry.fileName()) == -1)
+        const auto match = reg.match(entry.fileName());
+        if (!match.hasMatch())
         {
             continue;
         }
-        const auto lang = reg.capturedTexts()[1];
+        const auto lang = match.captured(1);
         m_supported_languages.push_back(lang);
     }
 

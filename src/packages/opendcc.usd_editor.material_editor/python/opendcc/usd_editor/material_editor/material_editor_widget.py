@@ -13,7 +13,7 @@ from opendcc.usd_editor.usd_node_editor.node_editor_preform import (
 )
 import opendcc.usd_fallback_proxy as ufp
 
-import shiboken2
+from Qt import QtCompat
 from pxr import Usd, UsdShade, Sdr
 
 GraphicsItemType = node_editor.NodeEditorScene.GraphicsItemType

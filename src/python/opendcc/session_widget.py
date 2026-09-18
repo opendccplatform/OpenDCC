@@ -6,7 +6,7 @@ import opendcc.core as dcc_core
 from pxr import Usd
 
 # not supported by Qt.py
-from PySide2.QtCore import QSignalBlocker
+from Qt.QtCore import QSignalBlocker
 
 from opendcc.i18n import i18n
 

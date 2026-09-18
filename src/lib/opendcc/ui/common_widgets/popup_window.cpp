@@ -1,8 +1,11 @@
 // Copyright Contributors to the OpenDCC project
 // SPDX-License-Identifier: Apache-2.0
 
+#include "opendcc/ui/common_widgets/qt_compat.h"
+
+#include <QScreen>
+#include <QGuiApplication>
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QBoxLayout>
 
 #include "opendcc/ui/common_widgets/popup_window.h"
@@ -31,7 +34,7 @@ PopupWindow::PopupWindow(QWidget* parent /*= 0*/)
 
 void PopupWindow::show()
 {
-    QRect rec = QApplication::desktop()->screenGeometry();
+    QRect rec = primary_screen_geometry();
     auto h = rec.height();
     auto w = rec.width();
     int x = QCursor::pos().x() - width() / 2;
@@ -50,7 +53,7 @@ void PopupWindow::show()
 
 void PopupWindow::show(int x, int y)
 {
-    QRect rec = QApplication::desktop()->screenGeometry();
+    QRect rec = primary_screen_geometry();
     auto h = rec.height();
     auto w = rec.width();
 

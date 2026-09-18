@@ -34,11 +34,11 @@ opendcc_make_library(
     ${_src_dir}/thumbnail_cache.cpp
     ${_src_dir}/node_snapper.cpp
     LIBRARY_DEPENDENCIES
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Widgets
-    Qt5::OpenGL
-    Qt5::Svg
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Widgets
+    ${DCC_QT_OPENGL_TARGETS}
+    ${DCC_QT_SVG_TARGETS}
     Graphviz
     PRIVATE_DEFINITIONS
     OPENDCC_UI_NODE_EDITOR_EXPORT

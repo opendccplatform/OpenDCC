@@ -58,7 +58,7 @@ namespace
         for (int t = startTile; t <= endTile; ++t)
         {
             QString path;
-            path.sprintf(formatString.toLocal8Bit().data(), t);
+            path = QString::asprintf(formatString.toLocal8Bit().data(), t);
             if (QFileInfo::exists(path))
                 ret.emplace_back(t - startTile, path);
         }

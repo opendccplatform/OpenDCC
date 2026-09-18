@@ -8,7 +8,7 @@ from opendcc.ui import node_editor
 from opendcc.usd_editor import usd_node_editor
 import opendcc.core as dcc_core
 from opendcc.i18n import i18n
-import shiboken2
+from Qt import QtCompat
 from pxr import UsdUI, Gf
 
 
@@ -169,7 +169,7 @@ class CommonNodeEditorWidgetPreform(QtWidgets.QWidget):
         is_vertical_layout = self.is_vertical_layout()
         layout_graph_cmd.triggered.connect(
             lambda: cmds.node_editor_layout2(
-                shiboken2.getCppPointer(self.scene)[0], vertical=is_vertical_layout
+                QtCompat.getCppPointer(self.scene)[0], vertical=is_vertical_layout
             )
         )
         layout_selected = self.edit_menu.addAction(
@@ -177,7 +177,7 @@ class CommonNodeEditorWidgetPreform(QtWidgets.QWidget):
         )
         layout_selected.triggered.connect(
             lambda: cmds.node_editor_layout2(
-                shiboken2.getCppPointer(self.scene)[0],
+                QtCompat.getCppPointer(self.scene)[0],
                 vertical=is_vertical_layout,
                 only_selected=True,
             )
@@ -349,10 +349,10 @@ class CommonNodeEditorWidgetPreform(QtWidgets.QWidget):
             hint.clear_text()
 
     def _show_tool_tip(self, text):
+        # QApplication.desktop() was removed in Qt6; QGuiApplication.screens() is in both
         app_width = 0
-        desktop = QtWidgets.QApplication.desktop()
-        for screen_num in range(0, desktop.screenCount()):
-            app_width += desktop.screen(screen_num).geometry().width()
+        for screen in QtGui.QGuiApplication.screens():
+            app_width += screen.geometry().width()
 
         tooltip_pos = QtGui.QCursor.pos() + QtCore.QPoint(15, -15)
         if tooltip_pos.x() > app_width:

@@ -66,7 +66,7 @@ void GLWidgetPanZoomTool::mouse_release(QMouseEvent* mouse_event)
 
 void GLWidgetPanZoomTool::wheel_event(QWheelEvent* event)
 {
-    m_glwidget->m_zoom += event->delta() / 1500.0 * m_glwidget->m_zoom;
+    m_glwidget->m_zoom += event->angleDelta().y() / 1500.0 * m_glwidget->m_zoom;
     if (m_glwidget->m_zoom > 60)
     {
         m_glwidget->m_zoom = 60;

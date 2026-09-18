@@ -20,7 +20,7 @@ KeySequenceEdit::KeySequenceEdit(QWidget *parent, int sequence_length)
     m_line_edit = new QLineEdit(this);
     QHBoxLayout *layout = new QHBoxLayout(this);
     layout->addWidget(m_line_edit);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     m_line_edit->installEventFilter(this);
     m_line_edit->setReadOnly(true);
     m_line_edit->setFocusProxy(this);
@@ -187,7 +187,7 @@ void KeySequenceEdit::keyReleaseEvent(QKeyEvent *event)
 void KeySequenceEdit::paintEvent(QPaintEvent *)
 {
     QStyleOption style_option;
-    style_option.init(this);
+    style_option.initFrom(this);
     QPainter painter(this);
     style()->drawPrimitive(QStyle::PE_Widget, &style_option, &painter, this);
 }

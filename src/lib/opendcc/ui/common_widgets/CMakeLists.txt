@@ -28,7 +28,8 @@ set(headers
     double_widget.h
     help_button_widget.h
     search_widget.h
-    precision_slider.h)
+    precision_slider.h
+    qt_compat.h)
 
 set(src
     canvas_widget.cpp
@@ -58,9 +59,9 @@ target_compile_definitions(common_widgets PRIVATE -DOPENDCC_UI_COMMON_WIDGETS_EX
 set_property(TARGET common_widgets PROPERTY AUTOMOC ON)
 target_link_libraries(
     common_widgets
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Widgets
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Widgets
     ${PYTHON_LIBRARY}
     ${Boost_PYTHON_LIBRARY}
     vt)

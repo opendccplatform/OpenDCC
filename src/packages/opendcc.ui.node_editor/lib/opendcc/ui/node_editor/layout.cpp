@@ -28,7 +28,7 @@ bool layout_items(const QVector<NodeItem*>& items, bool vertical)
     const auto dot_path = QString("dot");
 #endif
 
-    Agraph_t* graph = agopen("G", Agdirected, nullptr);
+    Agraph_t* graph = agopen(const_cast<char*>("G"), Agdirected, nullptr);
 
     std::unordered_map<NodeItem*, Agnode_t*> vertices;
 

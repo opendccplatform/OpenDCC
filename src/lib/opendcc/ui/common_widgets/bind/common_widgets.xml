@@ -8,7 +8,12 @@
   <primitive-type name="size_t"/>
 
   <namespace-type name="OpenDCC" generate="no">
-  <object-type name="ColorWidget"/>
+  <!-- shiboken6 exposes public/protected static fields as class attributes from the module
+       init function, which sits outside the class and therefore cannot reach a protected
+       member. ColorWidget::m_palette is protected static, so suppress it. -->
+  <object-type name="ColorWidget">
+    @DCC_TS_COLORWIDGET_FIELDS@
+  </object-type>
   <object-type name="ColorButton"/>
   <object-type name="ColorPickDialog"/>
   <object-type name="GradientEditor"/>

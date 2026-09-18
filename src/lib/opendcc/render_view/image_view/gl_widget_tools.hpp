@@ -4,7 +4,7 @@
 #pragma once
 #include "opendcc/opendcc.h"
 #include <QtCore/QObject>
-#include <QtWidgets/QAction>
+#include <QAction>
 
 class QMouseEvent;
 class QWheelEvent;

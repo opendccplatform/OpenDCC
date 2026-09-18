@@ -57,7 +57,10 @@ GfCamera ViewportView::get_camera() const
 
 ViewportDimensions ViewportView::get_viewport_dimensions() const
 {
-    return { 0, 0, m_gl_widget->width() * m_gl_widget->devicePixelRatio(), m_gl_widget->height() * m_gl_widget->devicePixelRatio() };
+    // devicePixelRatio() is qreal and ViewportDimensions holds ints; Qt6 build flags treat
+    // the implicit narrowing in a braced initialiser as an error.
+    return { 0, 0, static_cast<int>(m_gl_widget->width() * m_gl_widget->devicePixelRatio()),
+             static_cast<int>(m_gl_widget->height() * m_gl_widget->devicePixelRatio()) };
 }
 
 void ViewportView::set_selected(const SelectionList& selection_list, const RichSelection& rich_selection)

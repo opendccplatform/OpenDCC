@@ -20,7 +20,7 @@ class DuplicateAction(CustomAction):
         CustomAction.__init__(self, i18n("edit_menu.duplicate_action", "Duplicate"), parent=parent)
         self.custom_triggered.connect(self.do)
 
-        shortcut = QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_D)
+        shortcut = QtGui.QKeySequence(QtCore.Qt.CTRL | QtCore.Qt.Key_D)
         self.setShortcut(shortcut, self.do)
         self.on_checkbox_clicked(self.show_options)
 

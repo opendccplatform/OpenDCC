@@ -197,9 +197,18 @@ set(BUILD_SHARED_LIBS OFF)
 
 find_package(OpenGL REQUIRED)
 find_package(OpenMesh REQUIRED)
-find_package(
-    Qt5
-    REQUIRED
+# CMAKE_PREFIX_PATH decides Qt5 or Qt6. Everything below uses Qt${QT_VERSION_MAJOR}::.
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
+# PySide2 binds Qt5 and PySide6 binds Qt6. There is no PySide5, so this is not QT_VERSION_MAJOR.
+if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+    set(DCC_PYSIDE_VERSION 6)
+else()
+    set(DCC_PYSIDE_VERSION 2)
+endif()
+
+message(STATUS "Building against Qt ${QT_VERSION} (PySide${DCC_PYSIDE_VERSION})")
+
+set(DCC_QT_COMPONENTS
     Core
     Gui
     Widgets
@@ -208,13 +217,90 @@ find_package(
     Multimedia
     Network
     LinguistTools)
+if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+    # Qt6 split QOpenGLWidget out of QtOpenGL, and QSvgWidget out of QtSvg
+    list(APPEND DCC_QT_COMPONENTS OpenGLWidgets SvgWidgets)
+endif()
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${DCC_QT_COMPONENTS})
+
+# Qt6 has no _qt5Core_install_prefix, so take the Qt root from the Core target.
+# Used for the shiboken generator's PATH and for lupdate/lrelease.
+get_target_property(_dcc_qt_core_loc Qt${QT_VERSION_MAJOR}::Core IMPORTED_LOCATION_RELEASE)
+if(NOT _dcc_qt_core_loc)
+    get_target_property(_dcc_qt_core_loc Qt${QT_VERSION_MAJOR}::Core IMPORTED_LOCATION_RELWITHDEBINFO)
+endif()
+if(NOT _dcc_qt_core_loc)
+    get_target_property(_dcc_qt_core_loc Qt${QT_VERSION_MAJOR}::Core LOCATION)
+endif()
+get_filename_component(_dcc_qt_core_dir "${_dcc_qt_core_loc}" DIRECTORY)
+get_filename_component(DCC_QT_INSTALL_PREFIX "${_dcc_qt_core_dir}" DIRECTORY)
+message(STATUS "Qt install prefix: ${DCC_QT_INSTALL_PREFIX}")
+
+# Qt6 does not populate Qt5Widgets_INCLUDE_DIRS et al, and shiboken's clang parser needs
+# real -I paths.
+set(DCC_QT_INCLUDE_DIRS)
+foreach(_dcc_qt_mod Core Gui Widgets)
+    get_target_property(_dcc_qt_mod_inc Qt${QT_VERSION_MAJOR}::${_dcc_qt_mod} INTERFACE_INCLUDE_DIRECTORIES)
+    if(_dcc_qt_mod_inc)
+        list(APPEND DCC_QT_INCLUDE_DIRS ${_dcc_qt_mod_inc})
+    endif()
+endforeach()
+list(REMOVE_DUPLICATES DCC_QT_INCLUDE_DIRS)
+
+# Link instead of Qt::OpenGL where QOpenGLWidget is used; Qt6 moved it to QtOpenGLWidgets.
+# Qt6 makes QVector an alias of QList, so shiboken6 registers only QList. Typesystem XMLs are
+# configure_file'd with this placeholder.
+if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+    set(DCC_QT_SEQ_CONTAINER QList)
+else()
+    set(DCC_QT_SEQ_CONTAINER QVector)
+endif()
+
+# pxr is a using-directive into PXR_INTERNAL_NS, not an alias, so clang reports the internal
+# name. shiboken6 matches on that and silently drops methods spelled pxr::; shiboken2 did not.
+if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+    file(STRINGS "${USD_ROOT}/include/pxr/pxr.h" _pxr_internal_ns_line REGEX "^#define PXR_INTERNAL_NS ")
+    string(REGEX REPLACE "^#define PXR_INTERNAL_NS[ 	]+" "" DCC_PXR_TS_NS "${_pxr_internal_ns_line}")
+    string(STRIP "${DCC_PXR_TS_NS}" DCC_PXR_TS_NS)
+    if(NOT DCC_PXR_TS_NS)
+        message(FATAL_ERROR "Could not read PXR_INTERNAL_NS from ${USD_ROOT}/include/pxr/pxr.h")
+    endif()
+else()
+    set(DCC_PXR_TS_NS pxr)
+endif()
+message(STATUS "Typesystem PXR namespace: ${DCC_PXR_TS_NS}")
+
+# shiboken6 emits protected static fields from module init, where they are unreachable.
+# shiboken2 does not, and rejects modify-field, so suppress on Qt6 only.
+if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+    set(DCC_TS_COLORWIDGET_FIELDS "<modify-field name=\"m_palette\" remove=\"yes\"/>")
+else()
+    set(DCC_TS_COLORWIDGET_FIELDS "")
+endif()
+
+set(DCC_QT_SVG_TARGETS Qt${QT_VERSION_MAJOR}::Svg)
+if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+    list(APPEND DCC_QT_SVG_TARGETS Qt6::SvgWidgets)
+endif()
+
+set(DCC_QT_OPENGL_TARGETS Qt${QT_VERSION_MAJOR}::OpenGL)
+if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+    list(APPEND DCC_QT_OPENGL_TARGETS Qt6::OpenGLWidgets)
+endif()
 
 # forbid usage of macros slots signals (use Q_SIGNALS/Q_SLOTS instead) to avoid collitions with python/pybind11
-target_compile_definitions(Qt5::Core INTERFACE QT_NO_SIGNALS_SLOTS_KEYWORDS)
+target_compile_definitions(Qt${QT_VERSION_MAJOR}::Core INTERFACE QT_NO_SIGNALS_SLOTS_KEYWORDS)
 
 include_directories(${QT_INCLUDES})
 
-find_package(qtadvanceddocking REQUIRED)
+# ADS 4.x (used by the Qt6 deps) renamed the package and target; Qt5 stays on 3.8.4.
+if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+    find_package(qtadvanceddocking-qt6 REQUIRED)
+    set(DCC_ADS_TARGET ads::qtadvanceddocking-qt6)
+else()
+    find_package(qtadvanceddocking REQUIRED)
+    set(DCC_ADS_TARGET ads::qtadvanceddocking)
+endif()
 
 if(DCC_BUILD_EDITORIAL)
     find_package(OpenTimelineIO REQUIRED)
@@ -224,11 +310,24 @@ find_package(Imath REQUIRED)
 find_package(OpenEXR REQUIRED)
 
 if(DCC_PYSIDE_CMAKE_FIND)
-    find_package(Shiboken2 REQUIRED)
-    find_package(PySide2 REQUIRED)
+    find_package(Shiboken${DCC_PYSIDE_VERSION} REQUIRED)
+    if(DCC_PYSIDE_VERSION GREATER_EQUAL 6)
+        # PySide6 ships the generator in a separate Shiboken6Tools package.
+        find_package(Shiboken${DCC_PYSIDE_VERSION}Tools REQUIRED)
+    endif()
+    find_package(PySide${DCC_PYSIDE_VERSION} REQUIRED)
 else()
+    # PySideConfig shells out to pyside2_config.py and is Qt5 only.
+    if(QT_VERSION_MAJOR GREATER_EQUAL 6)
+        message(FATAL_ERROR "Qt6 requires DCC_PYSIDE_CMAKE_FIND=ON (PySideConfig is PySide2-only)")
+    endif()
     include(PySideConfig)
 endif()
+
+# Target names carry the version: PySide6::pyside6, Shiboken6::shiboken6
+set(DCC_PYSIDE_TARGET PySide${DCC_PYSIDE_VERSION}::pyside${DCC_PYSIDE_VERSION})
+set(DCC_SHIBOKEN_LIB_TARGET Shiboken${DCC_PYSIDE_VERSION}::libshiboken)
+set(DCC_SHIBOKEN_BIN_TARGET Shiboken${DCC_PYSIDE_VERSION}::shiboken${DCC_PYSIDE_VERSION})
 
 find_package(sentry REQUIRED)
 if(NOT DEFINED SHIBOKEN_CLANG_INSTALL_DIR)

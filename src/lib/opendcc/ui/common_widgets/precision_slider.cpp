@@ -229,7 +229,7 @@ void PrecisionSlider::paintEvent(QPaintEvent* ev)
     for (const auto& tick : m_ticks)
     {
         const int current_x = tick->m_position;
-        const int str_width = font_metrics.width(tick->m_str);
+        const int str_width = font_metrics.horizontalAdvance(tick->m_str);
         const int text_x = tick->m_value == m_min   ? current_x // first
                            : tick->m_value == m_max ? current_x - str_width // last
                                                     : current_x - str_width / 2; // others
@@ -422,7 +422,7 @@ QString PrecisionSlider::get_value_string(double value, bool beautify /* = true*
         if (beautify)
             result = QString::number(value, 'g', int(std::log10(1 + std::abs(value)) + 3));
         else
-            result.sprintf("%0.3f", value);
+            result = QString::asprintf("%0.3f", value);
     }
     return result;
 }

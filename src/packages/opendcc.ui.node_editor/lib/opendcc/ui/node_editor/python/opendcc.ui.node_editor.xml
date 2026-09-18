@@ -24,7 +24,7 @@
     <object-type name="NodeItem"/>
 	<object-type name="NodeEditorScene">
     <enum-type name="GraphicsItemType"/>
-		<modify-function signature="get_selection(QVector&lt;OpenDCC::NodeId&gt;&amp;, QVector&lt;OpenDCC::ConnectionId&gt;&amp;)const">
+		<modify-function signature="get_selection(@DCC_QT_SEQ_CONTAINER@&lt;OpenDCC::NodeId&gt;&amp;, @DCC_QT_SEQ_CONTAINER@&lt;OpenDCC::ConnectionId&gt;&amp;)const">
 			<modify-argument index="return">
 				<replace-type modified-type="PyObject"/>
 			</modify-argument>
@@ -35,12 +35,12 @@
 				<remove-argument/>
 			</modify-argument>
 			<inject-code class="target">
-				QVector&lt;OpenDCC::NodeId&gt; nodes;
-				QVector&lt;OpenDCC::ConnectionId&gt; connections;
+				@DCC_QT_SEQ_CONTAINER@&lt;OpenDCC::NodeId&gt; nodes;
+				@DCC_QT_SEQ_CONTAINER@&lt;OpenDCC::ConnectionId&gt; connections;
 				%CPPSELF.%FUNCTION_NAME(nodes, connections);
 				%PYARG_0 = PyTuple_New(2);
-				PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[QVector&lt;OpenDCC::NodeId&gt;](nodes));
-				PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[QVector&lt;OpenDCC::ConnectionId&gt;](connections));
+				PyTuple_SET_ITEM(%PYARG_0, 0, %CONVERTTOPYTHON[@DCC_QT_SEQ_CONTAINER@&lt;OpenDCC::NodeId&gt;](nodes));
+				PyTuple_SET_ITEM(%PYARG_0, 1, %CONVERTTOPYTHON[@DCC_QT_SEQ_CONTAINER@&lt;OpenDCC::ConnectionId&gt;](connections));
 			</inject-code>"
 		</modify-function>
 	</object-type>

@@ -202,7 +202,7 @@ void PathWidget::update_path(const QString& path)
     int total_width = 0;
     int content_width = this->width();
 
-    QStringList token_list = m_current_path.split('/', QString::SkipEmptyParts);
+    QStringList token_list = m_current_path.split('/', Qt::SkipEmptyParts);
 
     auto root_icon = new QPushButton(QIcon(":/icons/home"), "", this);
     root_icon->setFixedSize(20, 20);
@@ -363,7 +363,7 @@ PathTokenWidget::PathTokenWidget(const QString& text, const QString& path, bool 
     {
         const int dist_between_text_and_menu_indicator = 8;
         QFontMetrics fm(m_font);
-        m_text_width = fontMetrics().width(m_text) + dist_between_text_and_menu_indicator;
+        m_text_width = fontMetrics().horizontalAdvance(m_text) + dist_between_text_and_menu_indicator;
         setFixedSize(m_icon.width() + m_text_width + show_next * ARROW_WIDTH, 21);
     }
     setIconSize(QSize(17, 21));

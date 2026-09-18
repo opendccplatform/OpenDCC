@@ -66,7 +66,7 @@ ViewportWidget::ViewportWidget(std::shared_ptr<ViewportSceneContext> scene_conte
         m_live_widgets.emplace(this);
     setProperty("unfocusedKeyEvent_enable", true);
     QVBoxLayout* opengl_layout = new QVBoxLayout;
-    opengl_layout->setMargin(0);
+    opengl_layout->setContentsMargins(0, 0, 0, 0);
     opengl_layout->setSpacing(0);
     m_viewport_view = std::make_shared<ViewportView>();
     m_glwidget = new ViewportGLWidget(m_viewport_view, m_scene_context, this);
@@ -102,7 +102,7 @@ ViewportWidget::ViewportWidget(std::shared_ptr<ViewportSceneContext> scene_conte
     toolbar_add_action(m_select_camera_action);
 
     m_create_camera_from_view = new QAction(i18n("viewport.menu_bar.view", "Create Camera from View"), this);
-    m_create_camera_from_view->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_C));
+    m_create_camera_from_view->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C));
     utils::action_set_object_name_from_text(m_create_camera_from_view, "viewport_set", "create_camera_from_view");
     connect(m_create_camera_from_view, &QAction::triggered, [this](bool checked) {
         auto stage = Application::instance().get_session()->get_current_stage();
@@ -204,7 +204,7 @@ ViewportWidget::ViewportWidget(std::shared_ptr<ViewportSceneContext> scene_conte
     m_toolbar->addWidget(m_aov_combobox);
     m_toolbar->addSeparator();
 
-    m_aov_combobox->connect(m_aov_combobox, qOverload<const QString&>(&QComboBox::activated), this, [this](const QString& aov_name) {
+    m_aov_combobox->connect(m_aov_combobox, &QComboBox::textActivated, this, [this](const QString& aov_name) {
         get_gl_widget()->get_engine()->set_renderer_aov(TfToken(aov_name.toStdString()));
         get_gl_widget()->update();
     });

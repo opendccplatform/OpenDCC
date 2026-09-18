@@ -144,8 +144,9 @@ void NodeEditorView::wheelEvent(QWheelEvent* event)
     const float new_w = m_scene_range.width() * delta;
     const float new_h = m_scene_range.height() * delta;
 
-    const float pos_x = event->pos().x();
-    const float pos_y = event->pos().y();
+    // QWheelEvent::pos() was removed in Qt6; position() is QPointF, present since Qt 5.14
+    const float pos_x = event->position().x();
+    const float pos_y = event->position().y();
     const float w = width();
     const float h = height();
 
