@@ -528,7 +528,8 @@ void SelectionData::add_properties(const std::unordered_set<TfToken, TfHash>& pr
 
 void OPENDCC_NAMESPACE::SelectionData::remove_properties(const std::unordered_set<TfToken, TfHash>& props_to_remove)
 {
-    m_properties.erase(props_to_remove.begin(), props_to_remove.end());
+    for (const auto& property : props_to_remove)
+        m_properties.erase(property);
 }
 
 void OPENDCC_NAMESPACE::SelectionData::remove_instance_indices(const IndexIntervals& instance_indices)

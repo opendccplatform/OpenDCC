@@ -602,8 +602,8 @@ class SecondEntryPoint(PackageEntryPoint):
             {
                 PyLock l;
 
-                DOCTEST_CHECK_EQ(module_::import("packaging_tests.a").attr("entry_point_checker")().cast<uint32_t>(), 1);
-                DOCTEST_CHECK_EQ(module_::import("packaging_tests.b").attr("entry_point_checker")().cast<uint32_t>(), 1);
+                DOCTEST_CHECK_EQ(module_::import("packaging_tests.a").attr("entry_point_checker").cast<uint32_t>(), 1);
+                DOCTEST_CHECK_EQ(module_::import("packaging_tests.b").attr("entry_point_checker").cast<uint32_t>(), 1);
             }
             DOCTEST_CHECK(package_loader->unload("test_name"));
 

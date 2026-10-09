@@ -48,11 +48,13 @@ IntervalVector<IndexType> extract_intervals(const pybind11::object& object)
     else if (auto iterable = list(object))
     {
         const auto length = len(iterable);
+        if (length == 0)
+            return {};
         std::vector<IntervalVector<IndexType>::Interval> intervals;
         intervals.reserve(length);
         for (size_t i = 0; i < length; i++)
         {
-            if (isinstance<IndexType>(iterable[i]))
+            if (isinstance<int_>(iterable[i]))
             {
                 intervals.emplace_back(iterable[i].cast<IndexType>());
             }
