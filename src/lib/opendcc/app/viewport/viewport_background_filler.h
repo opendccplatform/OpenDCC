@@ -20,10 +20,21 @@ public:
     {
     }
     virtual void draw() = 0;
-    virtual ~ViewportBackgroundFiller() = default;
+    virtual void draw_display() = 0;
+    virtual ~ViewportBackgroundFiller();
 
 protected:
+    void draw_display_quad(const PXR_NS::GfVec3f& top_color, const PXR_NS::GfVec3f& bottom_color);
+
     ViewportGLWidget* m_gl_widget = nullptr;
+
+private:
+    void init_display_resources();
+
+    uint32_t m_display_shader = 0;
+    uint32_t m_display_vao = 0;
+    uint32_t m_display_vbo = 0;
+    int32_t m_display_colors_loc = -1;
 };
 
 class SolidBackgroundFiller : public ViewportBackgroundFiller
@@ -34,10 +45,11 @@ public:
     ~SolidBackgroundFiller();
 
     virtual void draw() override;
+    virtual void draw_display() override;
     void update(const PXR_NS::GfVec3f& color);
 
 private:
-    PXR_NS::GfVec3f m_color;
+    PXR_NS::GfVec3f m_display_color = PXR_NS::GfVec3f(0.0f);
     Settings::SettingChangedHandle m_cid;
     static const std::string s_background_color_key;
 };
@@ -49,6 +61,7 @@ public:
     ~GradientBackgroundFiller();
 
     virtual void draw() override;
+    virtual void draw_display() override;
 
 private:
     std::array<PXR_NS::GfVec3f, 2> m_gradient_colors;

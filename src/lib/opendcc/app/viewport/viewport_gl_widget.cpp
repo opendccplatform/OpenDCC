@@ -304,6 +304,10 @@ void ViewportGLWidget::paintGL()
     m_color_correction->apply(m_viewport_view);
     glPopDebugGroup();
 
+    glPushDebugGroup(GL_DEBUG_SOURCE_THIRD_PARTY, 0, -1, "ViewportBackgroundDisplay");
+    m_background_drawer->draw_display();
+    glPopDebugGroup();
+
     if (!engine->is_converged())
     {
         QTimer::singleShot(5, this, qOverload<>(&QOpenGLWidget::update));
