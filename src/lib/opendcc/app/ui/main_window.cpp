@@ -334,9 +334,20 @@ void MainWindow::closeEvent(QCloseEvent* evt)
 
 void MainWindow::arrange_splitters(ads::CDockWidget* dock_widget, const std::vector<double>& proportion)
 {
+    if (!dock_widget)
+    {
+        OPENDCC_WARN_CHANNEL("Application", "Cannot arrange splitters: dock widget is null.");
+        return;
+    }
+
     qApp->processEvents(); // forces the ui to update, not gonna work without it
 
     auto dock_area = dock_widget->dockAreaWidget();
+    if (!dock_area)
+    {
+        OPENDCC_WARN_CHANNEL("Application", "Cannot arrange splitters: dock widget '{}' has no dock area.", dock_widget->objectName().toStdString());
+        return;
+    }
     QList<int> sizes = m_main_container_widget->splitterSizes(dock_area);
     if (sizes.length() != proportion.size())
     {
