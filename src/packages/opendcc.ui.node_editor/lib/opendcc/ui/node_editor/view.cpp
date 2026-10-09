@@ -16,6 +16,7 @@
 #include <QStyleOption>
 #include <QApplication>
 #include <QVBoxLayout>
+#include <algorithm>
 
 OPENDCC_NAMESPACE_OPEN
 
@@ -150,7 +151,7 @@ void NodeEditorView::wheelEvent(QWheelEvent* event)
     const float w = width();
     const float h = height();
 
-    if (new_w / w < 0.55 || new_h / h < 0.55)
+    if (std::max(new_w / w, new_h / h) < 0.55f)
         return;
 
     const float new_x = (float)m_scene_range.x() + ((m_scene_range.width() - new_w) * pos_x / w);
