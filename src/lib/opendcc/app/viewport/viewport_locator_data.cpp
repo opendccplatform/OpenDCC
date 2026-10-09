@@ -65,7 +65,13 @@ extern const std::string usd_locator_domelight_source =
 
 	vec4 surfaceShader(vec4 Peye, vec3 Neye, vec4 color, vec4 patchCoord)
 	{
-	#ifdef HD_HAS_texture
+)#"
+#if PXR_VERSION >= 2011
+    "#ifdef HD_HAS_COORD_texture\n"
+#else
+    "#ifdef HD_HAS_texture\n"
+#endif
+    R"#(
 		vec3 n = normalize(HdGet_points().xyz);
 		vec2 uv = latlong(n);
 		color = vec4(HdGet_texture(uv).xyz, 1);
@@ -142,7 +148,8 @@ HdMaterialNetworkMap ViewportLocatorData::get_material_resource(const SdfPath& m
         const auto texture_path = rprim_path.AppendProperty(TfToken("texture"));
         HdMaterialNode domelight_shader_node = { rprim_path, domelight_source_id };
         domelight_shader_node.parameters[TfToken("texture")] = VtValue(GfVec3f(1, 1, 1));
-        HdMaterialNode texture_sampler = { texture_path, SdrRegistry::GetInstance().GetShaderNodeByIdentifier(TfToken("UsdUVTexture"))->GetIdentifier() };
+        HdMaterialNode texture_sampler = { texture_path,
+                                           SdrRegistry::GetInstance().GetShaderNodeByIdentifier(TfToken("UsdUVTexture"))->GetIdentifier() };
         texture_sampler.parameters[TfToken("file")] = VtValue(SdfAssetPath(texture_iter->second));
         HdMaterialRelationship rel;
         rel.inputId = texture_path;
