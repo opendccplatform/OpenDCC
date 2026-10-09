@@ -3,7 +3,7 @@
 
 #include "shader_node_registry.h"
 #include "pxr/base/plug/registry.h"
-#if PXR_VERSION >= 2508
+#if PXR_VERSION >= 2505
 #include "pxr/usd/sdr/discoveryPlugin.h"
 #else
 #include "pxr/usd/ndr/discoveryPlugin.h"
@@ -127,6 +127,18 @@ void OPENDCC_NAMESPACE::ShaderNodeRegistry::init()
             const auto discovery_plug = discovery_plug_factory->New();
 #if PXR_VERSION >= 2508
             auto nodes = discovery_plug->DiscoverShaderNodes(ctx);
+#elif PXR_VERSION >= 2505
+            // USD 25.05 uses an Ndr factory for both Sdr and legacy Ndr plugins.
+            SdrShaderNodeDiscoveryResultVec nodes;
+            if (const auto sdr_plug = TfDynamic_cast<SdrDiscoveryPluginRefPtr>(discovery_plug))
+            {
+                nodes = sdr_plug->DiscoverShaderNodes(ctx);
+            }
+            else
+            {
+                for (const auto& ndr_node : discovery_plug->DiscoverNodes(ctx))
+                    nodes.push_back(SdrShaderNodeDiscoveryResult::FromNdrNodeDiscoveryResult(ndr_node));
+            }
 #else
             auto nodes = discovery_plug->DiscoverNodes(ctx);
 #endif

@@ -23,7 +23,7 @@
 #include <pxr/base/gf/matrix3d.h>
 #include <pxr/base/gf/matrix4d.h>
 #include <pxr/base/gf/matrix4f.h>
-#if PXR_VERSION >= 2508
+#if PXR_VERSION >= 2505
 #include <pxr/usd/sdr/shaderNodeDiscoveryResult.h>
 #else
 #include <pxr/usd/ndr/nodeDiscoveryResult.h>
@@ -65,7 +65,7 @@ OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::SdfLayerRefPtr, "pxr.Sdf.Layer")
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::UsdTimeCode, "pxr.Usd.TimeCode")
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::SdfPath, "pxr.Sdf.Path")
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::SdfSpecType, "pxr.Sdf.SpecType")
-#if PXR_VERSION >= 2508
+#if PXR_VERSION >= 2505
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::SdrShaderNodeDiscoveryResult, "pxr.Sdr.ShaderNodeDiscoveryResult");
 #else
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::NdrNodeDiscoveryResult, "pxr.Ndr.NodeDiscoveryResult");

@@ -8,7 +8,7 @@
 #include "opendcc/opendcc.h"
 #include "opendcc/app/core/api.h"
 #include <pxr/base/tf/token.h>
-#if PXR_VERSION >= 2508
+#if PXR_VERSION >= 2505
 #include <pxr/usd/sdr/shaderNodeDiscoveryResult.h>
 #else
 #include <pxr/usd/ndr/nodeDiscoveryResult.h>
