@@ -10,7 +10,9 @@ function(get_usd_env EXTRA_ENVIRONMENT USD_ENVIRONMENT_VAR)
     set(_result "")
     list(APPEND _result "${USD_LIBRARY_DIR}")
     list(APPEND _result "${Boost_LIBRARY_DIR_RELEASE}")
+    # oneTBB installs runtime DLLs in bin; older TBB installs them in lib.
     list(APPEND _result "${TBB_INCLUDE_DIRS}/../lib")
+    list(APPEND _result "${TBB_INCLUDE_DIRS}/../bin")
     list(APPEND _result "${USD_GENSCHEMA_DIR}")
     list(APPEND _result "${EXTRA_ENVIRONMENT}") # ????
     if(WIN32)
@@ -206,8 +208,8 @@ function(opendcc_make_library TARGET_NAME)
 
     if(args_QT_AUTOMOC)
         set_property(TARGET ${TARGET_NAME} PROPERTY AUTOMOC ON)
-        # Windows MAX_PATH: the default autogen path runs past 260 chars in a deep tree and cl.exe
-        # then cannot open moc_<header>.cpp. Keep it short rather than depend on the checkout depth.
+        # Windows MAX_PATH: the default autogen path runs past 260 chars in a deep tree and cl.exe then cannot open
+        # moc_<header>.cpp. Keep it short rather than depend on the checkout depth.
         set_property(TARGET ${TARGET_NAME} PROPERTY AUTOGEN_BUILD_DIR "${CMAKE_BINARY_DIR}/ag/${TARGET_NAME}")
     endif()
 
@@ -688,8 +690,8 @@ function(opendcc_make_shiboken_bindings TARGET_NAME)
 
     set(_output_dir "${CMAKE_CURRENT_BINARY_DIR}")
 
-    # The typesystem differs between Qt5 and Qt6 (DCC_QT_SEQ_CONTAINER), so configure it into the
-    # build tree and point shiboken and PYSIDE_TYPESYSTEM_PATH at that copy.
+    # The typesystem differs between Qt5 and Qt6 (DCC_QT_SEQ_CONTAINER), so configure it into the build tree and point
+    # shiboken and PYSIDE_TYPESYSTEM_PATH at that copy.
     set(_typesystem_source "${CMAKE_CURRENT_SOURCE_DIR}/${_typesystem_filepath}")
     get_filename_component(_typesystem_name "${_typesystem_filepath}" NAME)
     set(_typesystem_generated "${_output_dir}/${_typesystem_name}")
@@ -740,19 +742,26 @@ function(opendcc_make_shiboken_bindings TARGET_NAME)
     else()
         set(_qt_bin "${DCC_QT_INSTALL_PREFIX}/lib")
     endif()
+
+    # Shiboken does not inherit compiler flags; include profiling before Qt's emit macro.
+    set(_shiboken_clang_args "")
+    if(TBB_INCLUDE_DIRS AND EXISTS "${TBB_INCLUDE_DIRS}/oneapi/tbb/profiling.h")
+        set(_shiboken_clang_args "--clang-options=-include,${TBB_INCLUDE_DIRS}/oneapi/tbb/profiling.h")
+    endif()
+
     add_custom_command(
         OUTPUT ${_headers} ${_sources}
         COMMAND
             ${CMAKE_COMMAND} -E env
             "${OS_LIBRARY_ENV_NAME}=${_qt_bin}${OS_ENV_SEPARATOR}${SHIBOKEN_CLANG_INSTALL_DIR}/bin${OS_ENV_SEPARATOR}$ENV{${OS_LIBRARY_ENV_NAME}}"
-            "${shiboken_bin}" "--output-directory=${_output_dir}/wrap" "--project-file=${_side_config_file}"
+            "${shiboken_bin}" "--output-directory=${_output_dir}/wrap" ${_shiboken_clang_args}
+            "--project-file=${_side_config_file}"
         DEPENDS ${_generator_dependencies})
 
     add_library(${TARGET_NAME} SHARED ${_headers} ${_sources} ${_generator_dependencies})
 
-    set_target_properties(
-        ${TARGET_NAME} PROPERTIES PYSIDE_TYPESYSTEM_PATH "${_typesystem_generated}"
-                                  PYSIDE_SOURCES_DIR "${_output_dir}/wrap/${_src_path}")
+    set_target_properties(${TARGET_NAME} PROPERTIES PYSIDE_TYPESYSTEM_PATH "${_typesystem_generated}"
+                                                    PYSIDE_SOURCES_DIR "${_output_dir}/wrap/${_src_path}")
 
     # Since we have no guarantees how #includes in generated file will be look like add source dir of dependent
     # typesystems to include paths, it also simplifies search for other module that will link with current target

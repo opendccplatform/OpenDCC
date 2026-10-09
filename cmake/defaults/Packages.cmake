@@ -13,9 +13,18 @@ if(DCC_KATANA_SUPPORT)
     add_definitions(-DBOOST_ALL_DYN_LINK -D__TBB_NO_IMPLICIT_LINKAGE -DBOOST_ALL_NO_LIB)
 endif()
 
-
 find_package(doctest REQUIRED)
 find_package(TBB REQUIRED)
+
+# Qt's emit macro conflicts with oneTBB; include profiling first, including in AUTOMOC output.
+if(TBB_INCLUDE_DIRS AND EXISTS "${TBB_INCLUDE_DIRS}/oneapi/tbb/profiling.h")
+    if(MSVC)
+        add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/FI${TBB_INCLUDE_DIRS}/oneapi/tbb/profiling.h>")
+    else()
+        add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-include${TBB_INCLUDE_DIRS}/oneapi/tbb/profiling.h>")
+    endif()
+endif()
+
 find_package(GLEW REQUIRED)
 find_package(ZMQ REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -29,8 +38,7 @@ if(DCC_BUILD_BULLET_PHYSICS)
     find_package(Bullet3 REQUIRED)
 endif()
 find_package(Embree 3 REQUIRED)
-if(DCC_BUILD_ARNOLD_SUPPORT
-   OR DCC_USD_FALLBACK_PROXY_BUILD_ARNOLD_USD)
+if(DCC_BUILD_ARNOLD_SUPPORT OR DCC_USD_FALLBACK_PROXY_BUILD_ARNOLD_USD)
     find_package(Arnold REQUIRED)
     find_package(ArnoldUsd REQUIRED)
 endif()
@@ -114,9 +122,8 @@ find_package(
     REQUIRED)
 
 # USD 24.11+ can be built with a vendored boost.python (pxr_boost::python, baked into pxr.h as
-# PXR_USE_INTERNAL_BOOST_PYTHON); newer USD defines it unconditionally. In that mode real
-# boost.python must not be found or linked. A '#if 0'-guarded define means USD was built against
-# real boost.python.
+# PXR_USE_INTERNAL_BOOST_PYTHON); newer USD defines it unconditionally. In that mode real boost.python must not be found
+# or linked. A '#if 0'-guarded define means USD was built against real boost.python.
 set(USD_USES_INTERNAL_BOOST_PYTHON FALSE)
 if(USD_PXR_VERSION GREATER_EQUAL 2411 AND EXISTS "${USD_INCLUDE_DIR}/pxr/pxr.h")
     file(READ "${USD_INCLUDE_DIR}/pxr/pxr.h" _pxr_h_text)
@@ -128,8 +135,8 @@ if(USD_PXR_VERSION GREATER_EQUAL 2411 AND EXISTS "${USD_INCLUDE_DIR}/pxr/pxr.h")
 endif()
 
 if(USD_USES_INTERNAL_BOOST_PYTHON)
-    # USD exports its vendored boost.python as the imported target 'python' (libpython);
-    # route all ${Boost_PYTHON_LIBRARY} link references to it.
+    # USD exports its vendored boost.python as the imported target 'python' (libpython); route all
+    # ${Boost_PYTHON_LIBRARY} link references to it.
     message(STATUS "USD uses internal pxr boost.python; skipping boost.python")
     set(Boost_PYTHON_LIBRARY python)
 elseif(${boost_version_string} VERSION_GREATER_EQUAL "1.67")
@@ -223,8 +230,8 @@ if(QT_VERSION_MAJOR GREATER_EQUAL 6)
 endif()
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS ${DCC_QT_COMPONENTS})
 
-# Qt6 has no _qt5Core_install_prefix, so take the Qt root from the Core target.
-# Used for the shiboken generator's PATH and for lupdate/lrelease.
+# Qt6 has no _qt5Core_install_prefix, so take the Qt root from the Core target. Used for the shiboken generator's PATH
+# and for lupdate/lrelease.
 get_target_property(_dcc_qt_core_loc Qt${QT_VERSION_MAJOR}::Core IMPORTED_LOCATION_RELEASE)
 if(NOT _dcc_qt_core_loc)
     get_target_property(_dcc_qt_core_loc Qt${QT_VERSION_MAJOR}::Core IMPORTED_LOCATION_RELWITHDEBINFO)
@@ -236,8 +243,7 @@ get_filename_component(_dcc_qt_core_dir "${_dcc_qt_core_loc}" DIRECTORY)
 get_filename_component(DCC_QT_INSTALL_PREFIX "${_dcc_qt_core_dir}" DIRECTORY)
 message(STATUS "Qt install prefix: ${DCC_QT_INSTALL_PREFIX}")
 
-# Qt6 does not populate Qt5Widgets_INCLUDE_DIRS et al, and shiboken's clang parser needs
-# real -I paths.
+# Qt6 does not populate Qt5Widgets_INCLUDE_DIRS et al, and shiboken's clang parser needs real -I paths.
 set(DCC_QT_INCLUDE_DIRS)
 foreach(_dcc_qt_mod Core Gui Widgets)
     get_target_property(_dcc_qt_mod_inc Qt${QT_VERSION_MAJOR}::${_dcc_qt_mod} INTERFACE_INCLUDE_DIRECTORIES)
@@ -247,17 +253,16 @@ foreach(_dcc_qt_mod Core Gui Widgets)
 endforeach()
 list(REMOVE_DUPLICATES DCC_QT_INCLUDE_DIRS)
 
-# Link instead of Qt::OpenGL where QOpenGLWidget is used; Qt6 moved it to QtOpenGLWidgets.
-# Qt6 makes QVector an alias of QList, so shiboken6 registers only QList. Typesystem XMLs are
-# configure_file'd with this placeholder.
+# Link instead of Qt::OpenGL where QOpenGLWidget is used; Qt6 moved it to QtOpenGLWidgets. Qt6 makes QVector an alias of
+# QList, so shiboken6 registers only QList. Typesystem XMLs are configure_file'd with this placeholder.
 if(QT_VERSION_MAJOR GREATER_EQUAL 6)
     set(DCC_QT_SEQ_CONTAINER QList)
 else()
     set(DCC_QT_SEQ_CONTAINER QVector)
 endif()
 
-# pxr is a using-directive into PXR_INTERNAL_NS, not an alias, so clang reports the internal
-# name. shiboken6 matches on that and silently drops methods spelled pxr::; shiboken2 did not.
+# pxr is a using-directive into PXR_INTERNAL_NS, not an alias, so clang reports the internal name. shiboken6 matches on
+# that and silently drops methods spelled pxr::; shiboken2 did not.
 if(QT_VERSION_MAJOR GREATER_EQUAL 6)
     file(STRINGS "${USD_ROOT}/include/pxr/pxr.h" _pxr_internal_ns_line REGEX "^#define PXR_INTERNAL_NS ")
     string(REGEX REPLACE "^#define PXR_INTERNAL_NS[ 	]+" "" DCC_PXR_TS_NS "${_pxr_internal_ns_line}")
@@ -270,8 +275,8 @@ else()
 endif()
 message(STATUS "Typesystem PXR namespace: ${DCC_PXR_TS_NS}")
 
-# shiboken6 emits protected static fields from module init, where they are unreachable.
-# shiboken2 does not, and rejects modify-field, so suppress on Qt6 only.
+# shiboken6 emits protected static fields from module init, where they are unreachable. shiboken2 does not, and rejects
+# modify-field, so suppress on Qt6 only.
 if(QT_VERSION_MAJOR GREATER_EQUAL 6)
     set(DCC_TS_COLORWIDGET_FIELDS "<modify-field name=\"m_palette\" remove=\"yes\"/>")
 else()
@@ -347,15 +352,12 @@ endif()
 find_package(OSL REQUIRED)
 find_package(OpenSubdiv REQUIRED)
 
-
 if(NOT ALEMBIC_FOUND AND DCC_INSTALL_ALEMBIC)
     find_package(Alembic REQUIRED)
 endif()
 
-
 find_package(OpenColorIO REQUIRED)
 find_package(OpenImageIO REQUIRED)
-
 
 if(DCC_KATANA_SUPPORT)
     string(REGEX REPLACE "^([0-9]+)\.([0-9]+)\.([0-9]+)$" "\\1_\\2" OIIO_MAJOR_MINOR ${OIIO_VERSION})

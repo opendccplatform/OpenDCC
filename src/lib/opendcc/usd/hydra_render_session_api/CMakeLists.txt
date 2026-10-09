@@ -11,7 +11,9 @@ endif()
 set(_USD_DEPS_ENV "")
 list(APPEND _USD_DEPS_ENV "${USD_LIBRARY_DIR}")
 list(APPEND _USD_DEPS_ENV "${Boost_LIBRARY_DIR_RELEASE}")
+# Keep the schema generator runtime paths in sync with get_usd_env().
 list(APPEND _USD_DEPS_ENV "${TBB_INCLUDE_DIRS}/../lib")
+list(APPEND _USD_DEPS_ENV "${TBB_INCLUDE_DIRS}/../bin")
 list(APPEND _USD_DEPS_ENV "${USD_GENSCHEMA_DIR}")
 
 if(WIN32)
