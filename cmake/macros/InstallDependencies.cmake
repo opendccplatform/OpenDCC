@@ -86,7 +86,6 @@ if(DCC_INSTALL_OPENVDB AND NOT DCC_HOUDINI_SUPPORT)
     endif()
 endif()
 
-
 # install linux shell script to setup runtime env
 if(NOT WIN32)
     if(DCC_HOUDINI_SUPPORT)
@@ -131,8 +130,8 @@ if(DCC_INSTALL_QT5)
     # install to prevent our pyside2 builds import errors this is ugly and should be fixed then we improve our build
     # system
     #
-    # Qt6 dropped XmlPatterns, MacExtras and X11Extras, so build the list instead of keeping
-    # three near-identical find_package calls.
+    # Qt6 dropped XmlPatterns, MacExtras and X11Extras, so build the list instead of keeping three near-identical
+    # find_package calls.
     set(_qt_extra_components
         PrintSupport
         UiTools
@@ -277,8 +276,7 @@ if(DCC_INSTALL_OCIO AND NOT DCC_HOUDINI_SUPPORT)
     else()
         if(${OCIO_VERSION} VERSION_LESS "2.1" OR APPLE)
             set(OCIO_PYTHON_MODULE
-                ${OCIO_LOCATION}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/PyOpenColorIO
-            )
+                ${OCIO_LOCATION}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/PyOpenColorIO)
         else()
             set(OCIO_PYTHON_MODULE
                 ${OCIO_LOCATION}/lib64/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/PyOpenColorIO
@@ -476,6 +474,20 @@ if(WIN32)
     if(DCC_INSTALL_ALEMBIC)
         get_filename_component(_alembic_library_dir ${ALEMBIC_LIBRARY} DIRECTORY)
         list(APPEND _search_dirs ${_alembic_library_dir})
+        # Install Alembic explicitly for the dynamically loaded usdAbc plugin.
+        get_filename_component(_alembic_library_name ${ALEMBIC_LIBRARY} NAME_WE)
+        unset(_alembic_runtime_dll CACHE)
+        find_file(
+            _alembic_runtime_dll
+            NAMES "${_alembic_library_name}.dll"
+            PATHS "${_alembic_library_dir}" "${_alembic_library_dir}/../bin"
+            NO_DEFAULT_PATH)
+        if(_alembic_runtime_dll)
+            list(APPEND INSTALL_SHARED_LIBS "${_alembic_runtime_dll}")
+        else()
+            message(WARNING "DCC_INSTALL_ALEMBIC is ON but the Alembic runtime DLL was not found next "
+                            "to ${ALEMBIC_LIBRARY}; the usdAbc (.abc) plugin may fail to load.")
+        endif()
     endif()
     if(DCC_INSTALL_BOOST)
         list(APPEND _search_dirs ${Boost_LIBRARY_DIR_RELEASE})
@@ -738,14 +750,12 @@ else()
     endif()
 endif()
 
-
 if(WIN32)
     install(CODE "file(INSTALL ${INSTALL_SHARED_LIBS} DESTINATION \"${CMAKE_INSTALL_PREFIX}/bin\")")
 else()
     install(
         CODE "file(INSTALL ${INSTALL_SHARED_LIBS} DESTINATION \"${CMAKE_INSTALL_PREFIX}/lib\" FOLLOW_SYMLINK_CHAIN)")
 endif()
-
 
 install(
     CODE "
