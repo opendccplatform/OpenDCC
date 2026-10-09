@@ -14,7 +14,7 @@ from opendcc.usd_editor.usd_node_editor.node_editor_preform import (
 import opendcc.usd_fallback_proxy as ufp
 
 from Qt import QtCompat
-from pxr import Usd, UsdShade, Sdr
+from pxr import Usd, UsdShade, Sdr, Tf
 
 GraphicsItemType = node_editor.NodeEditorScene.GraphicsItemType
 
@@ -84,7 +84,10 @@ def init_material_menu(menu, item_registry, scene, init_node_item, create_node):
                 node_identifier = dcc_core.ShaderNodeRegistry.get_node_identifier(node)
             else:
                 node_identifier = node.identifier
-            shader_node = sdr_registry.GetShaderNodeByIdentifier(node_identifier)
+            try:
+                shader_node = sdr_registry.GetShaderNodeByIdentifier(node_identifier)
+            except Tf.ErrorException:
+                continue
             if not shader_node:
                 continue
             if display_name == "renderman" and shader_node.GetContext() in blocklist:
@@ -297,12 +300,10 @@ class MaterialEditorWidget(QtWidgets.QWidget):
             editor_name, model, view, scene, editor, item_registry, parent=self
         )
 
-
         self.splitter.addWidget(self.material_node_editor)
 
 
 class MaterialEditor(CommonNodeEditorWidgetPreform):
-
     def __init__(self, editor_name, model, view, scene, editor, item_registry, parent=None):
         CommonNodeEditorWidgetPreform.__init__(
             self, editor_name, model, view, scene, editor, item_registry, parent
