@@ -123,8 +123,9 @@ ViewportGLWidget::ViewportGLWidget(std::shared_ptr<ViewportView> viewport_view, 
     m_params.frame = UsdTimeCode(app.get_current_time());
     m_params.enable_sample_alpha_to_coverage = true;
     m_params.color_correction_mode = TfToken(settings->get("colormanagement.color_management", "openColorIO"));
-    m_params.input_color_space = settings->get("colormanagement.ocio_rendering_space", "linear");
-    m_params.view_OCIO = settings->get("colormanagement.ocio_view_transform", "sRGB");
+    // Empty preferences let color correction use the active OCIO config defaults.
+    m_params.input_color_space = settings->get("colormanagement.ocio_rendering_space", "");
+    m_params.view_OCIO = settings->get("colormanagement.ocio_view_transform", "");
     m_params.current_stage_root = SdfPath::AbsoluteRootPath();
     m_ui_draw_manager = nullptr;
     m_drag_and_drop_controller = std::make_unique<ViewportDndController>(scene_context->get_context_name());

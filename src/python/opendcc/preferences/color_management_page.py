@@ -35,14 +35,19 @@ class ColorManagementPage(QtWidgets.QWidget):
             )
         )
 
-        rendering_spaces, view_transforms = Application.instance().get_ocio_config()
+        (
+            rendering_spaces,
+            view_transforms,
+            default_rendering_space,
+            default_view,
+        ) = Application.instance().get_ocio_config()
 
         self.options.append(
             make_option(
                 i18n("preferences.color_management", "OpenColorIO Rendering Space:"),
                 "colormanagement.ocio_rendering_space",
                 {"type": "option", "options": rendering_spaces},
-                "linear",
+                default_rendering_space,
             )
         )
 
@@ -51,7 +56,7 @@ class ColorManagementPage(QtWidgets.QWidget):
                 i18n("preferences.color_management", "OpenColorIO View Transform:"),
                 "colormanagement.ocio_view_transform",
                 {"type": "option", "options": view_transforms},
-                "sRGB",
+                default_view,
             )
         )
 

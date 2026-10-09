@@ -352,7 +352,7 @@ std::string ViewportColorCorrection::get_ocio_shader_text()
     transform->setView(view);
     transform->setSrc(color_space.c_str());
     float gain = powf(2.0f, m_exposure);
-    const double slope4d[] = { gain, gain, gain, 0.0 };
+    const double slope4d[] = { gain, gain, gain, 1.0 };
     double m44[16];
     double offset4[4];
     OCIO::MatrixTransform::Scale(m44, offset4, slope4d);
@@ -367,7 +367,7 @@ std::string ViewportColorCorrection::get_ocio_shader_text()
     // gamma
 
     double exponent = qBound(0.01, 1.0 / m_gamma, 100.0);
-    const double exponent4d[] = { exponent, exponent, exponent, exponent };
+    const double exponent4d[] = { exponent, exponent, exponent, 1.0 };
     OCIO::ExponentTransformRcPtr cc = OCIO::ExponentTransform::Create();
     cc->setValue(exponent4d);
     vpt->setDisplayCC(cc);
@@ -483,7 +483,7 @@ std::string ViewportColorCorrection::get_ocio_shader_text()
     transform->setLooksOverrideEnabled(false);
 
     float gain = powf(2.0f, m_exposure);
-    const float slope4f[] = { gain, gain, gain, 0.0 };
+    const float slope4f[] = { gain, gain, gain, 1.0 };
     float m44[16];
     float offset4[4];
     OCIO::MatrixTransform::Scale(m44, offset4, slope4f);
@@ -494,7 +494,7 @@ std::string ViewportColorCorrection::get_ocio_shader_text()
     // gamma
 
     float exponent = 1.0f / std::max(1e-6f, m_gamma);
-    const float exponent4f[] = { exponent, exponent, exponent, 0.0 };
+    const float exponent4f[] = { exponent, exponent, exponent, 1.0 };
     OCIO::ExponentTransformRcPtr cc = OCIO::ExponentTransform::Create();
     cc->setValue(exponent4f);
     transform->setDisplayCC(cc);

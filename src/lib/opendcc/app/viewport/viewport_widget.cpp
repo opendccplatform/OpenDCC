@@ -131,7 +131,7 @@ ViewportWidget::ViewportWidget(std::shared_ptr<ViewportSceneContext> scene_conte
     m_toolbar->addSeparator();
 
     auto settings = Application::instance().get_settings();
-    auto default_view_transform = settings->get("colormanagement.ocio_view_transform", "sRGB");
+    auto default_view_transform = settings->get("colormanagement.ocio_view_transform", "");
 
     const double default_gamma = 1.0;
     const double default_exposure = 0.0;
@@ -191,6 +191,8 @@ ViewportWidget::ViewportWidget(std::shared_ptr<ViewportSceneContext> scene_conte
     {
         m_view_transform->addItem(config->getView(default_display, i));
     }
+    if (default_view_transform.empty() && default_display)
+        default_view_transform = config->getDefaultView(default_display);
     m_view_transform->setCurrentText(QString(default_view_transform.c_str()));
     m_view_transform->connect(m_view_transform, qOverload<int>(&QComboBox::activated), this,
                               [&](int index) { get_gl_widget()->set_view_OCIO(m_view_transform->itemText(index).toStdString()); });

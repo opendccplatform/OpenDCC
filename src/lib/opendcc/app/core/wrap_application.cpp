@@ -103,10 +103,17 @@ static tuple get_ocio_config(Application* self)
         rendering_spaces[i] = spaces->getColorSpaceNameByIndex(i);
 #endif
 
-    std::vector<std::string> view_transforms(config->getNumViews(config->getDefaultDisplay()));
+    const auto default_display = config->getDefaultDisplay();
+    std::vector<std::string> view_transforms(config->getNumViews(default_display));
     for (int i = 0; i < view_transforms.size(); i++)
-        view_transforms[i] = config->getView(config->getDefaultDisplay(), i);
-    return pybind11::make_tuple(rendering_spaces, view_transforms);
+        view_transforms[i] = config->getView(default_display, i);
+
+    std::string default_rendering_space;
+    if (auto cs = config->getColorSpace(OCIO::ROLE_SCENE_LINEAR))
+        default_rendering_space = cs->getName();
+    const std::string default_view = default_display ? config->getDefaultView(default_display) : std::string();
+
+    return pybind11::make_tuple(rendering_spaces, view_transforms, default_rendering_space, default_view);
 }
 
 class PythonUsdEditsUndoBlock
