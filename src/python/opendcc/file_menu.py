@@ -72,7 +72,8 @@ def on_open_stage_action(action_name, close_current_stage=False):
 
 def get_extensions():
     extensions = Sdf.FileFormat.FindAllFileFormatExtensions()
-    extensions.remove("sdf")
+    if "sdf" in extensions:
+        extensions.remove("sdf")
     extensions = sorted(extensions, key=lambda x: "" if x.startswith("usd") else x)
 
     all_file_extensions = []
