@@ -209,48 +209,65 @@ void py_interp::init_shell()
     Py_Finalize();
 }
 
+namespace
+{
+    template <class Execute>
+    int run_python(const Execute& execute)
+    {
+        using namespace pybind11;
+        TfPyInitialize();
+        TfPyLock py_lock;
+        try
+        {
+            object main_module = module_::import("__main__");
+            object default_globals = main_module.attr("__dict__");
+            execute(default_globals);
+        }
+        catch (const error_already_set& exc)
+        {
+            if (exc.matches(PyExc_SystemExit))
+            {
+                auto exc_val = exc.value();
+                if (pybind11::hasattr(exc_val, "code"))
+                {
+                    auto code_attr = exc_val.attr("code");
+                    if (code_attr.is_none())
+                        return 0;
+                    if (pybind11::isinstance<pybind11::int_>(code_attr))
+                    {
+                        const auto code = code_attr.cast<int>();
+                        if (code != 0)
+                        {
+                            py_log_error(exc.what());
+                        }
+                        return code;
+                    }
+                }
+                py_log_error(exc.what());
+                return 1;
+            }
+            else
+            {
+                py_log_error(exc.what());
+                return -1;
+            }
+        }
+        return 0;
+    }
+}
+
 int py_interp::run_script(const std::string& filepath)
 {
-    using namespace pybind11;
     if (!ghc::filesystem::exists(filepath))
     {
         TF_CODING_ERROR("Could not open file '%s'!", filepath.c_str());
         return -1;
     }
+    return run_python([&filepath](const pybind11::object& globals) { pybind11::eval_file(pybind11::str(filepath), globals, globals); });
+}
 
-    TfPyInitialize();
-    TfPyLock py_lock;
-    try
-    {
-        object main_module = module_::import("__main__");
-        object default_globals = main_module.attr("__dict__");
-        pybind11::eval_file(str(filepath), default_globals, default_globals);
-    }
-    catch (const error_already_set& exc)
-    {
-        if (exc.matches(PyExc_SystemExit))
-        {
-            auto exc_val = exc.value();
-            if (pybind11::hasattr(exc_val, "code"))
-            {
-                if (auto code_attr = exc_val.attr("code"))
-                {
-                    const auto code = code_attr.cast<int>();
-                    if (code != 0)
-                    {
-                        py_log_error(exc.what());
-                    }
-                    return code;
-                }
-            }
-            return -1;
-        }
-        else
-        {
-            py_log_error(exc.what());
-            return -1;
-        }
-    }
-    return 0;
+int py_interp::run_command(const std::string& code)
+{
+    return run_python([&code](const pybind11::object& globals) { pybind11::exec(code, globals, globals); });
 }
 OPENDCC_NAMESPACE_CLOSE

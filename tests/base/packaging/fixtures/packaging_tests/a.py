@@ -10,10 +10,10 @@ class FirstEntryPoint(PackageEntryPoint):
     def __init__(self):
         PackageEntryPoint.__init__(self)
 
-    def initialize(self):
+    def initialize(self, package):
         global entry_point_checker
         entry_point_checker = 1
 
-    def uninitialize(self):
+    def uninitialize(self, package):
         global entry_point_checker
         entry_point_checker = 2

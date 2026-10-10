@@ -9,10 +9,10 @@ option(DCC_EMBEDDED_PYTHON_HOME "" ON)
 option(DCC_PYSIDE_CMAKE_FIND
        "PySide2 could be build via setup.py build or cmake. Option will look for cmake exports file" OFF)
 option(DCC_BUILD_ARNOLD_SUPPORT "" ON)
-option(DCC_BUILD_TESTS "" OFF)
+option(DCC_BUILD_TESTS "Build C++ doctest tests and register Python unittest tests with CTest" OFF)
+option(DCC_TESTS_GUI "Enable tests that launch the application GUI (requires DCC_BUILD_TESTS)" OFF)
 # needs the crashpad client libraries and headers, which only a crashpad-backend sentry-native ships
 option(DCC_BUILD_CRASH_REPORTER "Build the crash reporter" ON)
-
 
 option(DCC_USD_FALLBACK_PROXY_BUILD_ARNOLD_USD "" ON)
 option(DCC_USD_FALLBACK_PROXY_BUILD_MOONRAY "" OFF)
@@ -61,7 +61,6 @@ option(DCC_TESTS_USD_RENDER
 set(DCC_LANG
     "all"
     CACHE STRING "Specify language to build app with (en, all)")
-
 
 option(DCC_BUILD_HYDRA_OP "" OFF)
 

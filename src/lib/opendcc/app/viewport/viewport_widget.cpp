@@ -58,6 +58,12 @@ void ViewportWidget::setup_toolbar_action(QAction* action)
     tool_widget->setMaximumSize(QSize(20, 20));
 }
 
+ViewportWidget::ViewportWidget(QWidget* parent)
+    : ViewportWidget(ViewportSceneContextRegistry::get_instance().create_scene_context(TfToken("USD")))
+{
+    setParent(parent);
+}
+
 ViewportWidget::ViewportWidget(std::shared_ptr<ViewportSceneContext> scene_context, FeatureFlags feature)
     : m_scene_context(scene_context)
     , m_feature_flags(feature)

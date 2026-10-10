@@ -7,8 +7,12 @@
 #include "opendcc/opendcc.h"
 #include <pxr/base/gf/camera.h>
 #include <memory>
+#include <QImage>
+#include <QPointer>
 #include "opendcc/app/core/rich_selection.h"
 #include "opendcc/app/viewport/viewport_scene_context.h"
+
+class QWidget;
 
 PXR_NAMESPACE_OPEN_SCOPE
 class GfVec2f;
@@ -50,13 +54,18 @@ public:
     void look_through(const PXR_NS::SdfPath& path);
     PXR_NS::GfCamera get_camera() const;
     ViewportDimensions get_viewport_dimensions() const;
+    /** @brief Return the viewport widget, owned by the application UI. */
+    QWidget* get_widget() const;
+    /** @brief Capture the rendered viewport framebuffer. Requires a GUI thread and a valid GL context. */
+    QImage grab_framebuffer() const;
     void set_selected(const SelectionList& selection_list, const RichSelection& rich_selection = RichSelection());
     PXR_NS::TfToken get_scene_context_type() const;
     static PXR_NS::TfTokenVector get_render_plugins();
     static std::string get_render_display_name(const PXR_NS::TfToken& plugin_name);
 
 private:
-    ViewportGLWidget* m_gl_widget;
+    ViewportGLWidget* get_gl_widget() const;
+    QPointer<ViewportGLWidget> m_gl_widget;
 };
 
 using ViewportViewPtr = std::shared_ptr<ViewportView>;

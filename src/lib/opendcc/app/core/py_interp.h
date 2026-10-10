@@ -15,5 +15,6 @@ namespace py_interp
     void run_init_ui();
     void init_shell();
     int run_script(const std::string& filepath);
+    int run_command(const std::string& code);
 }
 OPENDCC_NAMESPACE_CLOSE

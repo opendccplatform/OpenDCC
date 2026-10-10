@@ -43,6 +43,8 @@ public:
         SEQUENCE_VIEW
     };
     ViewportWidget(std::shared_ptr<ViewportSceneContext> scene_context, FeatureFlags feature = FeatureFlags::VIEWPORT);
+    /** @brief Construct a USD viewport with normal Qt parent ownership. */
+    explicit ViewportWidget(QWidget* parent = nullptr);
     virtual ~ViewportWidget();
 
     inline ViewportGLWidget* get_gl_widget() { return m_glwidget; }

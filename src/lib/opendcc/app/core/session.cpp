@@ -112,7 +112,8 @@ PXR_NS::UsdStageRefPtr Session::open_stage(const std::string &asset_path)
 
 bool Session::close_stage(UsdStageCache::Id id)
 {
-    if (id == m_current_stage_id)
+    const bool was_current = id == m_current_stage_id;
+    if (was_current)
     {
         Application::instance().m_event_dispatcher.dispatch(Application::EventType::BEFORE_CURRENT_STAGE_CLOSED);
         m_current_stage_id = UsdStageCache::Id();
@@ -137,7 +138,7 @@ bool Session::close_stage(UsdStageCache::Id id)
             std::remove_if(m_stage_list_ids.begin(), m_stage_list_ids.end(), [&](const UsdStageCache::Id &found_id) { return id == found_id; }),
             m_stage_list_ids.end());
         auto stages = get_stage_list();
-        if (stages.size() > 0)
+        if (was_current && stages.size() > 0)
         {
             m_current_stage_id = get_stage_cache().GetId(stages[0]);
             update_watcher();

@@ -12,7 +12,12 @@ void py_interp::bind::wrap_session(pybind11::module &m)
 {
     using namespace pybind11;
     class_<Session, std::unique_ptr<Session, nodelete>>(m, "Session")
-        .def("get_stage_cache", &Session::get_stage_cache, return_value_policy::reference)
+        .def("get_stage_cache",
+             [](Session *self) {
+                 namespace bp = PXR_BOOST_PYTHON_NAMESPACE;
+                 bp::object cache(bp::ptr(&self->get_stage_cache()));
+                 return reinterpret_borrow<object>(cache.ptr());
+             })
         .def("set_current_stage", overload_cast<UsdStageCache::Id>(&Session::set_current_stage), arg("id"))
         .def("set_current_stage", overload_cast<const UsdStageRefPtr &>(&Session::set_current_stage), arg("stage"))
         .def("get_stage_id", &Session::get_stage_id)

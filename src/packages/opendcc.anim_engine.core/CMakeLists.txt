@@ -24,7 +24,6 @@ opendcc_make_library(
     ${_src_dir}/anim_engine_curve.cpp
     ${_src_dir}/commands.cpp
     ${_src_dir}/engine.cpp
-    ${_src_dir}/anim_engine_tests.cpp
     PRIVATE_DEFINITIONS
     USE_ANIM_ENGINE
     ANIM_ENGINE_EXPORT
@@ -52,3 +51,7 @@ install(
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/pxr_plugins/plugInfo.json DESTINATION ${PLUGIN_DIR}/pxr_plugins)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/package.toml DESTINATION ${PLUGIN_DIR})
+
+if(DCC_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()

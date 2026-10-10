@@ -40,11 +40,15 @@ include(VsStudioUtils)
 include(InstallCmakeConfig)
 include(UpdateTranslations)
 
-add_subdirectory(src)
-
-
 if(DCC_BUILD_TESTS)
+    include(MakeTests)
     enable_testing()
 endif()
+
+add_subdirectory(src)
+if(DCC_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
+
 include(InstallDependencies)
 include(InstallStartupConfigs)

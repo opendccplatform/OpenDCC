@@ -46,7 +46,3 @@ install(
     EXPORT packaging-targets
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/packaging
     NAMESPACE opendcc::)
-
-if(DCC_BUILD_TESTS)
-    add_subdirectory(tests)
-endif()

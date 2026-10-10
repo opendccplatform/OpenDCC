@@ -1,0 +1,19 @@
+add_subdirectory(base/commands_api/core)
+add_subdirectory(base/packaging)
+add_subdirectory(usd/layer_tree_watcher)
+add_subdirectory(usd/usd_ipc_serialization)
+add_subdirectory(app/core)
+if(DCC_TESTS_GUI)
+    add_subdirectory(app/viewport)
+endif()
+add_subdirectory(bin/dcc_base)
+
+opendcc_add_python_test(
+    TestHarnessTests
+    SOURCE
+    test_harness.py
+    STANDALONE
+    ARGS
+    "${CMAKE_COMMAND}"
+    "${PROJECT_BINARY_DIR}"
+    "$<CONFIG>")

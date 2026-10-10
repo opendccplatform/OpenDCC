@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<typesystem package="opendcc._viewport">
+  <load-typesystem name="typesystem_core.xml" generate="no"/>
+  <load-typesystem name="typesystem_gui.xml" generate="no"/>
+  <load-typesystem name="typesystem_widgets.xml" generate="no"/>
+
+  <namespace-type name="OpenDCC" generate="no">
+    <object-type name="ViewportWidget">
+      <extra-includes>
+        <include file-name="opendcc/base/pybind_bridge/pybind11.h" location="global"/>
+        <include file-name="opendcc/app/viewport/viewport_view.h" location="global"/>
+      </extra-includes>
+      <modify-function signature="ViewportWidget(std::shared_ptr&lt;OpenDCC::ViewportSceneContext&gt;,OpenDCC::ViewportWidget::FeatureFlags)" remove="all"/>
+      <modify-function signature="get_viewport_view()const" remove="all"/>
+      <add-function signature="get_viewport_view()" return-type="PyObject">
+        <inject-code class="target">
+          %PYARG_0 = pybind11::cast(%CPPSELF.get_viewport_view()).release().ptr();
+        </inject-code>
+      </add-function>
+    </object-type>
+  </namespace-type>
+</typesystem>

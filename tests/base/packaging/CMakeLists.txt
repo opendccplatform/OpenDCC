@@ -1,0 +1,45 @@
+target_compile_definitions(packaging PRIVATE OPENDCC_PACKAGING_TEST_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+if(WIN32)
+    opendcc_add_cpp_test(
+        PackageLoaderTests
+        SOURCE
+        test_package_loader.cpp
+        TARGET
+        packaging
+        SUITES
+        PackagingPackageLoader)
+endif()
+opendcc_add_cpp_test(
+    TomlParserTests
+    SOURCE
+    test_toml_parser.cpp
+    TARGET
+    packaging
+    SUITES
+    PackagingTOMLParserTests)
+
+opendcc_make_library(
+    packaging_tests_a
+    TYPE
+    SHARED
+    CPPFILES
+    fixtures/entry_point.cpp
+    LIBRARY_DEPENDENCIES
+    packaging
+    PRIVATE_DEFINITIONS
+    OPENDCC_PACKAGING_TESTS_EXPORT
+    VS_FOLDER
+    base/packaging)
+
+opendcc_make_library(
+    packaging_tests_b
+    TYPE
+    SHARED
+    CPPFILES
+    fixtures/entry_point.cpp
+    LIBRARY_DEPENDENCIES
+    packaging
+    PRIVATE_DEFINITIONS
+    OPENDCC_PACKAGING_TESTS_EXPORT
+    VS_FOLDER
+    base/packaging)

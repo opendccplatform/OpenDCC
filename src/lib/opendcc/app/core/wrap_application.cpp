@@ -180,10 +180,12 @@ void py_interp::bind::wrap_application(pybind11::module& m)
                          .def("set_selection", &Application::set_selection)
                          .def("get_selection_mode", &Application::get_selection_mode)
                          .def("set_selection_mode", &Application::set_selection_mode)
+                         .def("enable_soft_selection", &Application::enable_soft_selection)
+                         .def("is_soft_selection_enabled", &Application::is_soft_selection_enabled)
                          .def("clear_prim_selection", &Application::clear_prim_selection)
                          .def("register_event_callback",
                               [](Application* self, const Application::EventType& event_type, std::function<void()> callback) {
-                                  self->register_event_callback(event_type, pybind_safe_callback(callback));
+                                  return self->register_event_callback(event_type, pybind_safe_callback(callback));
                               })
                          .def("register_event_callback",
                               [](Application* self, const std::string& event_type, std::function<void()> callback) {
@@ -223,6 +225,7 @@ void py_interp::bind::wrap_application(pybind11::module& m)
     enum_<Application::EventType>(app_scope, "EventType")
         .value("SELECTION_CHANGED", Application::EventType::SELECTION_CHANGED)
         .value("SELECTION_MODE_CHANGED", Application::EventType::SELECTION_MODE_CHANGED)
+        .value("ACTIVE_VIEW_CHANGED", Application::EventType::ACTIVE_VIEW_CHANGED)
         .value("ACTIVE_VIEW_SCENE_CONTEXT_CHANGED", Application::EventType::ACTIVE_VIEW_SCENE_CONTEXT_CHANGED)
         .value("CURRENT_STAGE_CHANGED", Application::EventType::CURRENT_STAGE_CHANGED)
         .value("SESSION_STAGE_LIST_CHANGED", Application::EventType::SESSION_STAGE_LIST_CHANGED)

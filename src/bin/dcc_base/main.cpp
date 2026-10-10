@@ -5,6 +5,7 @@
 
 #include "opendcc/base/defines.h"
 #include "opendcc/base/qt_python.h"
+#include "opendcc/base/logging/logger.h"
 #include "opendcc/base/vendor/spdlog/spdlog.h"
 
 #include "opendcc/app/core/session.h"
@@ -35,6 +36,11 @@
 #include <QHostInfo>
 
 #include <iostream>
+#include <algorithm>
+
+OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("Application");
+OPENDCC_NAMESPACE_CLOSE
 
 OPENDCC_NAMESPACE_USING
 PXR_NAMESPACE_USING_DIRECTIVE
@@ -53,20 +59,6 @@ QDir get_configs_path()
     configs_path.cd("configs");
 
     return configs_path;
-}
-
-std::vector<std::string> get_vec_args(const QStringList& app_args)
-{
-    std::vector<std::string> args;
-    args.push_back(app_args[0].toStdString());
-    if (app_args.length() > 3)
-    {
-        for (int i = 3; i < app_args.length(); i++)
-        {
-            args.push_back(app_args[i].toStdString());
-        }
-    }
-    return args;
 }
 
 void configure_crash_reporter(const ApplicationConfig& cfg)
@@ -196,30 +188,86 @@ void release_resources()
 
 int main(int argc, char* argv[])
 {
-    auto raii = qScopeGuard(&release_resources);
-
     QCommandLineParser parser;
     parser.addPositionalArgument("stage", "stage path to open on start");
     QCommandLineOption shell_option("shell", "init python shell");
     parser.addOption(shell_option);
     QCommandLineOption config_option("config", "application config .toml file", "<config-file>", get_configs_path().filePath("default.toml"));
     parser.addOption(config_option);
-    QCommandLineOption script_option("script", "run python script", "filepath");
+    QCommandLineOption script_option("script", "run Python file, then exit; trailing arguments go to Python", "filepath");
     parser.addOption(script_option);
+    QCommandLineOption exec_option("exec", "run inline Python after UI startup and keep the application open; trailing arguments go to Python",
+                                   "code");
+    parser.addOption(exec_option);
+    QCommandLineOption gui_option("gui", "initialize the UI before running a Python file");
+    parser.addOption(gui_option);
+    QCommandLineOption keep_open_option("keep-open", "keep the UI open after running a Python file; requires --gui");
+    parser.addOption(keep_open_option);
+    QCommandLineOption exit_after_exec_option("exit-after-exec", "exit with the inline Python result; requires --exec");
+    parser.addOption(exit_after_exec_option);
     QCommandLineOption test_option("with-tests", "run registered tests");
     parser.addOption(test_option);
 
     QStringList app_args;
-    // pass any non option arguments as python interpreter args
-    // that can be used in --script mode
-    // we pass any more than 3 args (including app name)
-    // auto app_args = qt_app.arguments();
     for (int i = 0; i < argc; i++)
     {
         app_args << QString::fromLocal8Bit(argv[i]);
     }
 
-    parser.parse(app_args);
+    int application_arg_count = app_args.size();
+    for (int i = 1; i < app_args.size(); i++)
+    {
+        if (app_args[i] == "--")
+            break;
+        if (app_args[i] == "--script" || app_args[i] == "--exec")
+        {
+            application_arg_count = std::min<int>(i + 2, app_args.size());
+            break;
+        }
+        if (app_args[i].startsWith("--script=") || app_args[i].startsWith("--exec="))
+        {
+            application_arg_count = i + 1;
+            break;
+        }
+    }
+    const auto parsed = parser.parse(app_args.mid(0, application_arg_count));
+    if (!parsed && !parser.isSet(test_option))
+    {
+        OPENDCC_ERROR("{}", parser.errorText().toStdString());
+        return 1;
+    }
+
+    if (parser.isSet(exec_option) && (parser.isSet(script_option) || parser.isSet(shell_option) || parser.isSet(test_option)))
+    {
+        OPENDCC_ERROR("--exec cannot be combined with --script, --shell or --with-tests.");
+        return 1;
+    }
+    if (parser.isSet(script_option) && (parser.isSet(shell_option) || parser.isSet(test_option)))
+    {
+        OPENDCC_ERROR("--script cannot be combined with --shell or --with-tests.");
+        return 1;
+    }
+    if (parser.isSet(gui_option) && !parser.isSet(script_option) && !parser.isSet(exec_option))
+    {
+        OPENDCC_ERROR("--gui requires --script or --exec.");
+        return 1;
+    }
+    if (parser.isSet(keep_open_option) && (!parser.isSet(script_option) || !parser.isSet(gui_option)))
+    {
+        OPENDCC_ERROR("--keep-open requires --gui and --script.");
+        return 1;
+    }
+    if (parser.isSet(exit_after_exec_option) && !parser.isSet(exec_option))
+    {
+        OPENDCC_ERROR("--exit-after-exec requires --exec.");
+        return 1;
+    }
+
+    // Qt may consume its own options; Python's trailing arguments must stay outside that parser.
+    auto qt_arg_count = application_arg_count;
+    std::vector<char*> qt_args(argv, argv + qt_arg_count);
+    qt_args.push_back(nullptr);
+    auto raii = qScopeGuard(&release_resources);
 
     const auto app_config = ApplicationConfig(parser.value(config_option).toLocal8Bit().toStdString());
     CrashHandlerSession crash_handler_session(app_config, "dcc_base");
@@ -228,7 +276,9 @@ int main(int argc, char* argv[])
     Application::set_app_config(app_config);
     Application::create_command_server();
 
-    auto args = get_vec_args(app_args);
+    std::vector<std::string> args { app_args[0].toStdString() };
+    for (auto i = application_arg_count; i < app_args.size(); i++)
+        args.push_back(app_args[i].toStdString());
     Application& app = Application::instance();
     if (parser.isSet(test_option))
     {
@@ -243,13 +293,10 @@ int main(int argc, char* argv[])
     }
     Logger::set_log_level(LogLevel::Info);
 
-    // if we dont pass script flag, ignore all positional arguments assuming its script args
-    // TODO in future I think we should allow mixing stage list and script flag(i.e open stage list and modify it via script), assuming that script
-    // arguments should be anything after --script flag, but that's hard to do with current CommandLineParser
-    if (!parser.isSet(script_option) && !parser.isSet(shell_option))
+    if ((!parser.isSet(script_option) || parser.isSet(gui_option)) && !parser.isSet(shell_option))
     {
         setup_attributes();
-        s_qapp = new QApplication(argc, argv);
+        s_qapp = new QApplication(qt_arg_count, qt_args.data());
 
         auto& app = Application::instance();
         const auto default_ui_language = app.get_app_config().get<std::string>("settings.ui.language", "en");
@@ -276,6 +323,18 @@ int main(int argc, char* argv[])
         for (int i = 0; i < stage_list.size(); i++)
         {
             app_session->open_stage(stage_list[i].toStdString());
+        }
+
+        if (parser.isSet(exec_option) || parser.isSet(script_option))
+        {
+            const auto inline_code = parser.isSet(exec_option);
+            const auto source = parser.value(inline_code ? exec_option : script_option).toStdString();
+            const auto exit_after = inline_code ? parser.isSet(exit_after_exec_option) : !parser.isSet(keep_open_option);
+            QTimer::singleShot(0, s_qapp, [&app, inline_code, source, exit_after]() {
+                const auto result = inline_code ? app.run_python_command(source) : app.run_python_script(source);
+                if (exit_after)
+                    s_qapp->exit(result);
+            });
         }
 
         return s_qapp->exec();

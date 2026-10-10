@@ -13,7 +13,6 @@ add_library(
 target_compile_definitions(${TARGET_NAME} PRIVATE -DUSD_LAYER_TREE_WATCHER_EXPORT)
 
 target_link_libraries(${TARGET_NAME} ${PYTHON_LIBRARY} ${Boost_PYTHON_LIBRARY} usd test_runner logging)
-
 target_include_directories(
     ${TARGET_NAME} PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/lib/>" "$<INSTALL_INTERFACE:include>"
                           ${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS})

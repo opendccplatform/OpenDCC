@@ -1,0 +1,17 @@
+opendcc_add_cpp_test(
+    SerializationTests
+    SOURCE
+    test_serialization.cpp
+    TARGET
+    usd_ipc_serialization
+    SUITES
+    serialization)
+opendcc_add_cpp_test(
+    UsdEditsTests
+    SOURCE
+    test_usd_edits.cpp
+    TARGET
+    usd_ipc_serialization
+    SUITES
+    apply_usd_edits
+    usd_edits_serialization)

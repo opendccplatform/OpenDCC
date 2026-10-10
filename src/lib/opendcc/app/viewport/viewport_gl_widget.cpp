@@ -730,8 +730,11 @@ void ViewportGLWidget::register_callbacks()
                 m_grid->set_enabled(m_grid_settings.enable);
             update();
         });
-    m_before_stage_closed_cid =
-        Application::instance().register_event_callback(Application::EventType::BEFORE_CURRENT_STAGE_CLOSED, [this] { get_engine()->reset(); });
+    m_before_stage_closed_cid = Application::instance().register_event_callback(Application::EventType::BEFORE_CURRENT_STAGE_CLOSED, [this] {
+        // Stage closing can run before paintGL, with no viewport context current.
+        makeCurrent();
+        get_engine()->reset();
+    });
 
     m_selection_mode_changed_cid = Application::instance().register_event_callback(Application::EventType::SELECTION_MODE_CHANGED, [this] {
         if (Application::instance().get_selection_mode() == Application::SelectionMode::UV)

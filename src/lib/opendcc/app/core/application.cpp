@@ -56,6 +56,7 @@
 
 #include <string>
 #include <algorithm>
+#include <stdexcept>
 #include "opendcc/app/core/sentry_logging_delegate.h"
 
 OPENDCC_NAMESPACE_OPEN
@@ -232,6 +233,9 @@ const std::string Application::event_type_to_string(const EventType& event_type)
     case EventType::UI_ESCAPE_KEY_ACTION:
         result = "ui_escape_key_action";
         break;
+    case EventType::BEFORE_APP_QUIT:
+        result = "before_app_quit";
+        break;
     case EventType::LAYER_SELECTION_CHANGED:
         result = "layer_selection_changed";
         break;
@@ -243,8 +247,6 @@ const std::string Application::event_type_to_string(const EventType& event_type)
 
 OPENDCC_API Application::EventType Application::string_to_event_type(const std::string& event_type)
 {
-    EventType result;
-
     static std::unordered_map<std::string, EventType> types_map;
     types_map["selection_mode_changed"] = EventType::SELECTION_MODE_CHANGED;
     types_map["selection_changed"] = EventType::SELECTION_CHANGED;
@@ -255,6 +257,7 @@ OPENDCC_API Application::EventType Application::string_to_event_type(const std::
     types_map["edit_target_dirtiness_changed"] = EventType::EDIT_TARGET_DIRTINESS_CHANGED;
     types_map["session_stage_list_changed"] = EventType::SESSION_STAGE_LIST_CHANGED;
     types_map["current_viewport_tool_changed"] = EventType::CURRENT_VIEWPORT_TOOL_CHANGED;
+    types_map["before_app_quit"] = EventType::BEFORE_APP_QUIT;
     types_map["after_ui_load"] = EventType::AFTER_UI_LOAD;
     types_map["active_view_changed"] = EventType::ACTIVE_VIEW_CHANGED;
     types_map["active_view_scene_context_changed"] = EventType::ACTIVE_VIEW_SCENE_CONTEXT_CHANGED;
@@ -264,10 +267,10 @@ OPENDCC_API Application::EventType Application::string_to_event_type(const std::
     auto find_it = types_map.find(event_type);
     if (find_it != types_map.end())
     {
-        result = find_it->second;
+        return find_it->second;
     }
 
-    return result;
+    throw std::invalid_argument("Unknown application event: " + event_type);
 }
 
 Session* Application::get_session()
@@ -861,6 +864,11 @@ OPENDCC_API const std::string Application::get_commit_hash()
 int Application::run_python_script(const std::string& filepath)
 {
     return py_interp::run_script(filepath);
+}
+
+int Application::run_python_command(const std::string& code)
+{
+    return py_interp::run_command(code);
 }
 
 OPENDCC_NAMESPACE_CLOSE

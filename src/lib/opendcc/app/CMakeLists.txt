@@ -193,7 +193,6 @@ set(src_core
     core/half_edge_cache.cpp
     core/point_cloud_bvh.cpp
     core/mesh_bvh.cpp
-    core/interval_vector.cpp
     core/sentry_logging_delegate.cpp
     core/py_interp.cpp)
 
@@ -215,7 +214,6 @@ set(src_ui
     ui/qt_utils.cpp
     ui/node_icon_registry.cpp
     ui/shader_node_registry.cpp)
-
 
 list(APPEND viewport_cpp viewport/viewport_overlay.cpp)
 
@@ -469,3 +467,5 @@ endif()
 install(
     CODE "file(WRITE \"${CMAKE_INSTALL_PREFIX}/plugin/opendcc/plugInfo.json\" \"{\n    \\\"Includes\\\": [ \\\"*/resources/\\\" ]\n}\")"
 )
+
+add_subdirectory(viewport/bind)

@@ -1,0 +1,12 @@
+opendcc_make_shiboken_bindings(
+    opendcc_viewport_python
+    TARGET
+    opendcc_lib
+    SOURCE_DIR
+    .
+    LEGACY_HEADER_FILEPATH
+    viewport.h
+    VS_FOLDER
+    app
+    PRIVATE_DEFINITIONS
+    QT_NOT_GEN)

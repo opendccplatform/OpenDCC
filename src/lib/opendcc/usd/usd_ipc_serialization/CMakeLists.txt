@@ -12,7 +12,6 @@ add_library(
     usd_ipc_utils.cpp)
 
 target_compile_definitions(${TARGET_NAME} PUBLIC -DUSD_IPC_SERIALIZATION_EXPORT)
-
 target_link_libraries(
     ${TARGET_NAME}
     ${ZMQ_LIBRARIES}

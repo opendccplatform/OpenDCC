@@ -1,0 +1,26 @@
+#usda 1.0
+# Copyright Contributors to the OpenDCC project
+# SPDX-License-Identifier: Apache-2.0
+
+(
+    defaultPrim = "Cube"
+)
+
+def Mesh "Cube"
+{
+    point3f[] points = [
+        (-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1),
+        (-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)
+    ]
+    int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+    int[] faceVertexIndices = [
+        0, 3, 2, 1,
+        4, 5, 6, 7,
+        0, 1, 5, 4,
+        3, 7, 6, 2,
+        0, 4, 7, 3,
+        1, 2, 6, 5
+    ]
+    float3[] extent = [(-1, -1, -1), (1, 1, 1)]
+    uniform token subdivisionScheme = "none"
+}

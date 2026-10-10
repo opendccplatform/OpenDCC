@@ -273,6 +273,12 @@ public:
     OPENDCC_API int run_python_script(const std::string& filepath);
 
     /**
+     * @brief Runs inline Python in the main module.
+     * @return The execution completion code.
+     */
+    OPENDCC_API int run_python_command(const std::string& code);
+
+    /**
      * @brief Returns the application root path.
      *
      */
