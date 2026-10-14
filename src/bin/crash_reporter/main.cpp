@@ -10,7 +10,7 @@
 #include <QMessageBox>
 #include "crash_reporter_window.h"
 #include "opendcc/base/app_config/config.h"
-#include "opendcc/base/utils/file_system.h"
+#include "opendcc/base/fs_utils/defines.h"
 #include <QProcess>
 #include <QStyleFactory>
 #include <QFile>

@@ -16,7 +16,7 @@ class PackageProvider
 public:
     virtual ~PackageProvider() = default;
     virtual void fetch() = 0;
-    virtual const std::vector<PackageData>& get_cached_packages() const = 0;
+    virtual const PackageDataList& get_cached_packages() const = 0;
 };
 
 OPENDCC_NAMESPACE_CLOSE

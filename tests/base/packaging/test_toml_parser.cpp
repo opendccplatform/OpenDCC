@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/base/packaging/toml_parser.h"
-#include <pxr/base/vt/array.h>
 #include <algorithm>
 #include <cstdint>
 #include "package_test_utils.h"
@@ -12,7 +11,6 @@
 #define DOCTEST_CONFIG_IMPLEMENTATION_IN_DLL
 #include <doctest/doctest.h>
 OPENDCC_NAMESPACE_OPEN
-PXR_NAMESPACE_USING_DIRECTIVE
 
 DOCTEST_TEST_SUITE("PackagingTOMLParserTests")
 {
@@ -21,13 +19,13 @@ DOCTEST_TEST_SUITE("PackagingTOMLParserTests")
 
         packaging_tests::TemporaryDirectory directory;
         PackageData actual;
-        auto assert_attribute = [&actual](const std::string& name, const VtValue& expected) {
+        auto assert_attribute = [&actual](const std::string& name, const std::any& expected) {
             DOCTEST_INFO("Manifest attribute: " << name);
             const auto attr = std::find_if(actual.raw_attributes.begin(), actual.raw_attributes.end(),
                                            [&name](const PackageAttribute& attr) { return attr.name == name; });
             DOCTEST_REQUIRE(attr != actual.raw_attributes.end());
-            DOCTEST_CHECK(attr->value.GetTypeid() == expected.GetTypeid());
-            DOCTEST_CHECK_EQ(attr->value, expected);
+            DOCTEST_CHECK(attr->value.type() == expected.type());
+            DOCTEST_CHECK(packaging_tests::values_equal(attr->value, expected));
         };
         auto parser = TOMLParser();
 
@@ -62,25 +60,25 @@ c = 'c'
 
             actual = parser.parse(test_file);
             DOCTEST_CHECK_EQ(actual.name, std::string("asdf"));
-            assert_attribute("base", VtValue(VtDictionary { { "name", VtValue("asdf") } }));
-            assert_attribute("bool", VtValue(true));
-            assert_attribute("int", VtValue(int64_t { 1 }));
-            assert_attribute("float", VtValue(3.1415));
-            assert_attribute("str", VtValue("some str"));
-            assert_attribute("arr", VtValue(VtArray<VtValue> { VtValue(int64_t { 1 }), VtValue(int64_t { 2 }), VtValue(int64_t { 3 }) }));
-            assert_attribute("mixed_arr", VtValue(VtArray<VtValue> { VtValue(3.41), VtValue(int64_t { 0 }) }));
+            assert_attribute("base", std::any(PackageAnyDictionary { { "name", std::any(std::string("asdf")) } }));
+            assert_attribute("bool", std::any(true));
+            assert_attribute("int", std::any(int64_t { 1 }));
+            assert_attribute("float", std::any(3.1415));
+            assert_attribute("str", std::any(std::string("some str")));
+            assert_attribute("arr", std::any(PackageAnyArray { std::any(int64_t { 1 }), std::any(int64_t { 2 }), std::any(int64_t { 3 }) }));
+            assert_attribute("mixed_arr", std::any(PackageAnyArray { std::any(3.41), std::any(int64_t { 0 }) }));
 
-            const VtDictionary expected_inline_table = { { "a", VtValue("a") }, { "b", VtValue("c") } };
-            const VtDictionary expected_table = { { "val1", VtValue("cx") },
-                                                  { "val2", VtValue(int64_t { 3 }) },
-                                                  { "inline", VtValue(expected_inline_table) } };
-            assert_attribute("table", VtValue(expected_table));
+            const PackageAnyDictionary expected_inline_table = { { "a", std::any(std::string("a")) }, { "b", std::any(std::string("c")) } };
+            const PackageAnyDictionary expected_table = { { "val1", std::any(std::string("cx")) },
+                                                          { "val2", std::any(int64_t { 3 }) },
+                                                          { "inline", std::any(expected_inline_table) } };
+            assert_attribute("table", std::any(expected_table));
 
-            const VtArray<VtDictionary> expected_nested_tables = { VtDictionary { { "a.b", VtValue(int64_t { 64 }) } } };
-            const VtArray<VtDictionary> expected_table_array = {
-                VtDictionary { { "a", VtValue(int64_t { 42 }) }, { "val", VtValue(expected_nested_tables) } }, VtDictionary { { "c", VtValue("c") } }
-            };
-            assert_attribute("table_arr", VtValue(expected_table_array));
+            const PackageAnyArray expected_nested_tables = { PackageAnyDictionary { { "a.b", std::any(int64_t { 64 }) } } };
+            const PackageAnyArray expected_table_array = { PackageAnyDictionary { { "a", std::any(int64_t { 42 }) },
+                                                                                  { "val", std::any(expected_nested_tables) } },
+                                                           PackageAnyDictionary { { "c", std::any(std::string("c")) } } };
+            assert_attribute("table_arr", std::any(expected_table_array));
         }
     }
 

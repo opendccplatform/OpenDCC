@@ -5,9 +5,7 @@
 
 #pragma once
 
-#include "opendcc/opendcc.h"
-
-#include "opendcc/base/utils/api.h"
+#include "opendcc/base/defines.h"
 
 #if defined(OPENDCC_OS_LINUX)
 #include <limits.h>

@@ -5,6 +5,7 @@ opendcc_make_library(
     PUBLIC_HEADERS
     api.h
     package.h
+    package_attributes.h
     package_parser.h
     toml_parser.h
     package_provider.h
@@ -17,6 +18,7 @@ opendcc_make_library(
     package_loader.h
     CPPFILES
     package.cpp
+    package_attributes.cpp
     filesystem_package_provider.cpp
     toml_parser.cpp
     package_entry_point.cpp
@@ -27,12 +29,13 @@ opendcc_make_library(
     LIBRARY_DEPENDENCIES
     logging
     test_runner
-    vt
-    sdf
+    py_utils
+    Python3::Python
     utils
     pybind11::pybind11
     PRIVATE_DEFINITIONS
     OPENDCC_PACKAGING_EXPORT
+    PYMODULE_NO_BOOST_PYTHON
     PYMODULE_NAME
     packaging
     PYMODULE_SOURCES

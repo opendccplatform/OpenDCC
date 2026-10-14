@@ -2,22 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/base/packaging/core_properties.h"
-#include "pxr/base/vt/array.h"
-#include "pxr/base/vt/dictionary.h"
 
 OPENDCC_NAMESPACE_OPEN
-PXR_NAMESPACE_USING_DIRECTIVE
 
-std::unordered_map<std::string, PXR_NS::VtValue> s_core_property_defaults = {
-    { "base.name", VtValue("") },
-    { "base.first_entry_point", VtValue("cpp") },
-    { "base.root", VtValue(".") },
-    { "base.unloadable", VtValue(false) },
-    { "dependencies", VtValue(VtDictionary()) },
-    { "native.entry_point", VtValue(VtArray<VtDictionary>()) },
-    { "native.load", VtValue(VtArray<VtDictionary>()) },
-    { "python.entry_point", VtValue(VtArray<VtDictionary>()) },
-    { "python.import", VtValue(VtArray<VtDictionary>()) },
+std::unordered_map<std::string, std::any> s_core_property_defaults = {
+    { "base.name", std::any(std::string("")) },           { "base.first_entry_point", std::any(std::string("cpp")) },
+    { "base.root", std::any(std::string(".")) },          { "base.unloadable", std::any(false) },
+    { "dependencies", std::any(PackageAnyDictionary()) }, { "native.entry_point", std::any(PackageAnyArray()) },
+    { "native.load", std::any(PackageAnyArray()) },       { "python.entry_point", std::any(PackageAnyArray()) },
+    { "python.import", std::any(PackageAnyArray()) },
 };
 
 OPENDCC_NAMESPACE_CLOSE

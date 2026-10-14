@@ -4,7 +4,6 @@
 #include "opendcc/base/packaging/package.h"
 #include "opendcc/base/packaging/core_properties.h"
 
-PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
 
 const std::string& Package::get_name() const
@@ -12,7 +11,7 @@ const std::string& Package::get_name() const
     return m_data->name;
 }
 
-const VtDictionary& Package::get_all_attributes() const
+const PackageAnyDictionary& Package::get_all_attributes() const
 {
     return m_data->resolved_attributes;
 }
@@ -22,15 +21,15 @@ Package::Package(const std::shared_ptr<PackageSharedData>& data)
 {
 }
 
-const VtValue& Package::get_attribute(const std::string& name) const
+const std::any& Package::get_attribute(const std::string& name) const
 {
-    auto it = m_data->resolved_attributes.GetValueAtPath(name, ".");
-    if (it == nullptr)
+    auto it = find_package_attribute(m_data->resolved_attributes, name);
+    if (!it)
     {
-        static const VtValue empty;
+        static const std::any empty;
         return empty;
     }
-    return *it;
+    return it->get();
 }
 
 bool Package::is_loaded() const
@@ -38,7 +37,7 @@ bool Package::is_loaded() const
     return m_data->loaded;
 }
 
-const VtDictionary& Package::get_direct_dependencies() const
+const PackageAnyDictionary& Package::get_direct_dependencies() const
 {
     return m_data->direct_dependencies;
 }

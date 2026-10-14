@@ -6,7 +6,6 @@
 #include "opendcc/base/packaging/package_resolver.h"
 #include <filesystem>
 #include "opendcc/base/utils/library.h"
-#include <pxr/base/vt/array.h>
 #include <cstdio>
 #ifdef OPENDCC_OS_WINDOWS
 #include <Windows.h>
@@ -18,7 +17,6 @@
 #define DOCTEST_CONFIG_IMPLEMENTATION_IN_DLL
 #include <doctest/doctest.h>
 OPENDCC_NAMESPACE_OPEN
-PXR_NAMESPACE_USING_DIRECTIVE
 
 using namespace pybind11;
 
@@ -54,24 +52,22 @@ DOCTEST_TEST_SUITE("PackagingPackageLoader")
         test_package_data->name = "test_name";
         test_package_data->loaded = false;
         test_package_data->root_dir = tmp_dir.lexically_normal().generic_u8string();
-        VtDictionary dict;
-        dict.SetValueAtPath("base.name", VtValue("test_name"), ".");
-        dict.SetValueAtPath("base.unloadable", VtValue(true), ".");
-        dict.SetValueAtPath("native.entry_point",
-                            VtValue(VtArray<VtDictionary>({
-                                VtDictionary({ { "path", VtValue("packaging_tests_a.dll") } }),
-                                VtDictionary({ { "path", VtValue("packaging_tests_b.dll") } }),
-                            })),
-                            ".");
-        dict.SetValueAtPath("python.entry_point",
-                            VtValue(VtArray<VtDictionary>({
-                                VtDictionary({ { "module", VtValue("packaging_tests.a") } }),
-                                VtDictionary({ { "module", VtValue("packaging_tests.b") } }),
-                            })),
-                            ".");
+        PackageAnyDictionary dict;
+        DOCTEST_REQUIRE(set_package_attribute(dict, "base.name", std::any(std::string("test_name"))));
+        DOCTEST_REQUIRE(set_package_attribute(dict, "base.unloadable", std::any(true)));
+        DOCTEST_REQUIRE(set_package_attribute(dict, "native.entry_point",
+                                              std::any(PackageAnyArray({
+                                                  PackageAnyDictionary({ { "path", std::any(std::string("packaging_tests_a.dll")) } }),
+                                                  PackageAnyDictionary({ { "path", std::any(std::string("packaging_tests_b.dll")) } }),
+                                              }))));
+        DOCTEST_REQUIRE(set_package_attribute(dict, "python.entry_point",
+                                              std::any(PackageAnyArray({
+                                                  PackageAnyDictionary({ { "module", std::any(std::string("packaging_tests.a")) } }),
+                                                  PackageAnyDictionary({ { "module", std::any(std::string("packaging_tests.b")) } }),
+                                              }))));
 
         test_package_data->resolved_attributes = dict;
-        test_package_data->direct_dependencies = VtDictionary();
+        test_package_data->direct_dependencies = PackageAnyDictionary();
         pkg_shared_data[test_package_data->name] = test_package_data;
         auto package_resolver = std::make_shared<PackageResolver>();
         auto package_loader = std::make_shared<PackageLoader>(package_resolver, pkg_shared_data);

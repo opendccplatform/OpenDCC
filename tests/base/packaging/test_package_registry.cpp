@@ -10,7 +10,6 @@
 #include "opendcc/base/packaging/package_resolver.h"
 #include "opendcc/base/vendor/spdlog/fmt/fmt.h"
 #include "package_test_utils.h"
-#include <pxr/base/vt/array.h>
 #include <algorithm>
 
 #define DOCTEST_CONFIG_NO_SHORT_MACRO_NAMES
@@ -19,7 +18,6 @@
 #include <doctest/doctest.h>
 
 OPENDCC_NAMESPACE_OPEN
-PXR_NAMESPACE_USING_DIRECTIVE
 
 namespace
 {
@@ -55,7 +53,7 @@ namespace
         auto data = std::make_shared<PackageSharedData>();
         data->name = name;
         for (const auto& dependency : dependencies)
-            data->direct_dependencies[dependency] = VtValue(VtDictionary());
+            data->direct_dependencies[dependency] = std::any(PackageAnyDictionary());
         return data;
     }
 }
@@ -74,12 +72,12 @@ DOCTEST_TEST_SUITE("PackagingRegistry")
         DOCTEST_REQUIRE(first.is_valid());
         DOCTEST_CHECK_FALSE(first.is_loaded());
         DOCTEST_CHECK(std::filesystem::equivalent(std::filesystem::u8path(first.get_root_dir()), directory.path() / "first"));
-        DOCTEST_CHECK(first.get_attribute("base.first_entry_point") == VtValue("cpp"));
-        DOCTEST_CHECK(first.get_attribute("base.unloadable") == VtValue(false));
+        DOCTEST_CHECK(packaging_tests::values_equal(first.get_attribute("base.first_entry_point"), std::any(std::string("cpp"))));
+        DOCTEST_CHECK(packaging_tests::values_equal(first.get_attribute("base.unloadable"), std::any(false)));
         DOCTEST_CHECK(first.get_direct_dependencies().empty());
-        DOCTEST_CHECK(first.get_attribute("native.entry_point") == VtValue(VtArray<VtDictionary>()));
-        DOCTEST_CHECK(first.get_attribute("python.entry_point") == VtValue(VtArray<VtDictionary>()));
-        DOCTEST_CHECK(first.get_attribute("not_defined").IsEmpty());
+        DOCTEST_CHECK(packaging_tests::values_equal(first.get_attribute("native.entry_point"), std::any(PackageAnyArray())));
+        DOCTEST_CHECK(packaging_tests::values_equal(first.get_attribute("python.entry_point"), std::any(PackageAnyArray())));
+        DOCTEST_CHECK(!first.get_attribute("not_defined").has_value());
         DOCTEST_CHECK(registry.get_package("second").get_root_dir() == (directory.path() / "shared").generic_u8string());
         DOCTEST_CHECK_FALSE(registry.get_package("unknown").is_valid());
         DOCTEST_CHECK_FALSE(registry.load("unknown"));
@@ -96,21 +94,22 @@ DOCTEST_TEST_SUITE("PackagingRegistry")
         registry.fetch_packages();
         const auto package = registry.get_package("tokens");
         DOCTEST_REQUIRE(package.is_valid());
-        DOCTEST_CHECK(package.get_attribute("test.text") == VtValue("pre-resolved-resolved-post"));
-        DOCTEST_CHECK(package.get_attribute("test.nested.resolved") == VtValue("resolved"));
-        DOCTEST_CHECK(package.get_attribute("test.unknown") == VtValue("${UNDEFINED_TEST_TOKEN}"));
-        DOCTEST_CHECK(package.get_attribute("test.values") == VtValue(VtArray<VtValue> { VtValue("resolved"), VtValue("literal") }));
+        DOCTEST_CHECK(packaging_tests::values_equal(package.get_attribute("test.text"), std::any(std::string("pre-resolved-resolved-post"))));
+        DOCTEST_CHECK(packaging_tests::values_equal(package.get_attribute("test.nested.resolved"), std::any(std::string("resolved"))));
+        DOCTEST_CHECK(packaging_tests::values_equal(package.get_attribute("test.unknown"), std::any(std::string("${UNDEFINED_TEST_TOKEN}"))));
+        DOCTEST_CHECK(packaging_tests::values_equal(
+            package.get_attribute("test.values"), std::any(PackageAnyArray { std::any(std::string("resolved")), std::any(std::string("literal")) })));
         DOCTEST_CHECK(package.get_root_dir() == (directory.path() / "tokens" / "resolved").generic_u8string());
-        const auto entries = package.get_attribute("native.entry_point").Get<VtArray<VtDictionary>>();
+        const auto entries = std::any_cast<PackageAnyArray>(package.get_attribute("native.entry_point"));
         DOCTEST_REQUIRE(entries.size() == 1);
-        const auto library_path = entries[0].GetValueAtPath("path");
+        const auto library_path = find_package_attribute(std::any_cast<const PackageAnyDictionary&>(entries[0]), "path");
         DOCTEST_REQUIRE(library_path);
 #ifdef OPENDCC_OS_WINDOWS
-        DOCTEST_CHECK(*library_path == VtValue("plugin.dll"));
+        DOCTEST_CHECK(packaging_tests::values_equal(library_path->get(), std::any(std::string("plugin.dll"))));
 #elif defined(OPENDCC_OS_MAC)
-        DOCTEST_CHECK(*library_path == VtValue("libplugin.dylib"));
+        DOCTEST_CHECK(packaging_tests::values_equal(library_path->get(), std::any(std::string("libplugin.dylib"))));
 #else
-        DOCTEST_CHECK(*library_path == VtValue("libplugin.so"));
+        DOCTEST_CHECK(packaging_tests::values_equal(library_path->get(), std::any(std::string("libplugin.so"))));
 #endif
         DOCTEST_CHECK(registry.undefine_token("TEST_ROOT"));
         DOCTEST_CHECK_FALSE(registry.undefine_token("TEST_ROOT"));
@@ -232,7 +231,7 @@ DOCTEST_TEST_SUITE("PackagingPackageRegistry")
             expected = root;
         }
 
-        data.raw_attributes.push_back({ "base", VtValue(VtDictionary { { "root", VtValue(root) } }) });
+        data.raw_attributes.push_back({ "base", std::any(PackageAnyDictionary { { "root", std::any(root) } }) });
         PackageRegistry registry;
         registry.add_package_provider(std::make_shared<TestPackageProvider>(data));
         registry.fetch_packages();

@@ -3,12 +3,10 @@
 
 #include "opendcc/base/packaging/filesystem_package_provider.h"
 #include <opendcc/base/packaging/toml_parser.h>
-#include <pxr/base/tf/fileUtils.h>
-#include "pxr/base/tf/pathUtils.h"
 #include <filesystem>
+#include "opendcc/base/fs_utils/glob.h"
 #include "opendcc/base/logging/logger.h"
 
-PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
 
 FileSystemPackageProvider::FileSystemPackageProvider()
@@ -46,7 +44,13 @@ void FileSystemPackageProvider::fetch()
 
     OPENDCC_INFO("Fetching packages from the following directories: {}", glob_patterns_str);
 
-    const auto found_package_paths = TfGlob(glob_patterns, ARCH_GLOB_MARK);
+    const auto discovery = glob_paths(glob_patterns);
+    if (!discovery)
+    {
+        for (const auto& diagnostic : discovery.error().diagnostics)
+            OPENDCC_WARN("Unable to discover packages at '{}': {}", diagnostic.path, diagnostic.system_error.message());
+    }
+    const auto& found_package_paths = discovery ? *discovery : discovery.error().partial_matches;
 
     std::unordered_map<std::string, std::string> unique_packages;
     for (const auto& path : found_package_paths)
@@ -73,7 +77,7 @@ void FileSystemPackageProvider::fetch()
     }
 }
 
-const std::vector<PackageData>& FileSystemPackageProvider::get_cached_packages() const
+const PackageDataList& FileSystemPackageProvider::get_cached_packages() const
 {
     return m_cached_packages;
 }

@@ -8,60 +8,58 @@
 #include "opendcc/base/logging/logger.h"
 #include <unordered_map>
 #include <vector>
-#include "pxr/base/vt/array.h"
 #include <filesystem>
 
-PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
 using namespace cpptoml;
 
 namespace
 {
-    VtValue parse_val(base& val)
+    std::any parse_val(base& val)
     {
         switch (val.type())
         {
         case base_type::STRING:
-            return VtValue(val.as<std::string>()->get());
+            return std::any(val.as<std::string>()->get());
         case base_type::INT:
-            return VtValue(val.as<int64_t>()->get());
+            return std::any(val.as<int64_t>()->get());
         case base_type::FLOAT:
-            return VtValue(val.as<double>()->get());
+            return std::any(val.as<double>()->get());
         case base_type::BOOL:
-            return VtValue(val.as<bool>()->get());
+            return std::any(val.as<bool>()->get());
         case base_type::ARRAY:
         {
             const auto& vals_array = val.as_array()->get();
-            VtArray<VtValue> res_array;
+            PackageAnyArray res_array;
             for (const auto& val : vals_array)
             {
                 res_array.push_back(parse_val(*val));
             }
-            return VtValue(res_array);
+            return std::any(res_array);
         }
         case base_type::TABLE:
         {
             const auto& vals_table = val.as_table();
-            VtDictionary res_table;
+            PackageAnyDictionary res_table;
             for (const auto& val : *vals_table)
             {
                 res_table[std::string(val.first)] = parse_val(*val.second);
             }
-            return VtValue(res_table);
+            return std::any(res_table);
         }
         case base_type::TABLE_ARRAY:
         {
             const auto& vals_table_arr = val.as_table_array();
-            VtArray<VtDictionary> res_table_arr;
+            PackageAnyArray res_table_arr;
             for (const auto& val : *vals_table_arr)
             {
-                res_table_arr.push_back(parse_val(*val).Get<VtDictionary>());
+                res_table_arr.push_back(parse_val(*val));
             }
-            return VtValue(std::move(res_table_arr));
+            return std::any(std::move(res_table_arr));
         }
             // rest not implemented yet: date
         default:
-            return VtValue();
+            return std::any();
         }
     }
 };
@@ -86,14 +84,13 @@ PackageData TOMLParser::parse(const std::string& path)
     }
 
     result.path = std::filesystem::u8path(path).parent_path().generic_u8string();
-    if (auto name_opt = table->get_qualified_as<std::string>("base.name"))
+    const auto name_opt = table->get_qualified_as<std::string>("base.name");
+    if (!name_opt || name_opt->empty())
     {
-        result.name = *name_opt;
-    }
-    else
-    {
+        OPENDCC_ERROR("Failed to parse package at path '{}': 'base.name' must be a non-empty string.", path);
         return result;
     }
+    result.name = *name_opt;
 
     for (const auto& val_entry : *table)
     {

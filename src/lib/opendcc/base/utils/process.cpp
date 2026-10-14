@@ -5,7 +5,7 @@
 
 #include "opendcc/base/defines.h"
 #include "opendcc/base/utils/allocation.h"
-#include "opendcc/base/utils/file_system.h"
+#include "opendcc/base/fs_utils/defines.h"
 #include "opendcc/base/utils/library.h"
 
 #include <limits>

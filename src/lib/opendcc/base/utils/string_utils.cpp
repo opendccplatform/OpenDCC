@@ -7,15 +7,22 @@ OPENDCC_NAMESPACE_OPEN
 
 std::vector<std::string> split(const std::string& string, char separator)
 {
+    return split(string, separator, false);
+}
+
+std::vector<std::string> split(const std::string& string, char separator, bool skip_empty)
+{
     std::vector<std::string> result;
     std::string::size_type last = 0;
     std::string::size_type find;
     while ((find = string.find(separator, last)) != std::string::npos)
     {
-        result.emplace_back(string, last, find - last);
+        if (!skip_empty || find != last)
+            result.emplace_back(string, last, find - last);
         last = find + 1;
     }
-    result.emplace_back(string, last);
+    if (!skip_empty || last != string.size())
+        result.emplace_back(string, last);
     return result;
 }
 

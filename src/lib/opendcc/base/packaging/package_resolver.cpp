@@ -6,16 +6,15 @@
 #include "opendcc/base/logging/logger.h"
 #include <unordered_set>
 
-PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
 
 std::vector<std::string> PackageResolver::get_dependees(const std::string& pkg_name) const
 {
-    return traverse(pkg_name, [this](const std::string& pkg_name) -> const VtStringArray& { return m_package_relations.at(pkg_name).dependees; });
+    return traverse(pkg_name,
+                    [this](const std::string& pkg_name) -> const std::vector<std::string>& { return m_package_relations.at(pkg_name).dependees; });
 }
 
-std::vector<std::string> PackageResolver::traverse(const std::string& pkg_name,
-                                                   const std::function<const VtStringArray&(const std::string&)>& get_deps_fn) const
+std::vector<std::string> PackageResolver::traverse(const std::string& pkg_name, const DependencyAccessor& get_deps_fn) const
 {
     auto it = m_package_relations.find(pkg_name);
     if (it == m_package_relations.end())
@@ -52,10 +51,11 @@ std::vector<std::string> PackageResolver::traverse(const std::string& pkg_name,
 
 std::vector<std::string> PackageResolver::get_dependencies(const std::string& pkg_name) const
 {
-    return traverse(pkg_name, [this](const std::string& pkg_name) -> const VtStringArray& { return m_package_relations.at(pkg_name).dependencies; });
+    return traverse(pkg_name,
+                    [this](const std::string& pkg_name) -> const std::vector<std::string>& { return m_package_relations.at(pkg_name).dependencies; });
 }
 
-void PackageResolver::set_packages(const std::unordered_map<std::string, std::shared_ptr<PackageSharedData>>& packages)
+void PackageResolver::set_packages(const PackageSharedDataMap& packages)
 {
     m_package_relations.clear();
 

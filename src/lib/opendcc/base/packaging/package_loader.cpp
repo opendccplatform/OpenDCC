@@ -11,14 +11,12 @@
 #else
 #include <dlfcn.h>
 #endif
-PXR_NAMESPACE_USING_DIRECTIVE
-#include "pxr/base/vt/array.h"
 
 #include "opendcc/base/utils/library.h"
 #include "package_entry_point.h"
 #include "opendcc/base/utils/string_utils.h"
 #include "opendcc/base/utils/env.h"
-#include "opendcc/base/utils/file_system.h"
+#include "opendcc/base/fs_utils/defines.h"
 
 using namespace pybind11;
 OPENDCC_NAMESPACE_OPEN
@@ -69,8 +67,7 @@ namespace
     };
 };
 
-PackageLoader::PackageLoader(std::shared_ptr<PackageResolver> pkg_resolver,
-                             std::unordered_map<std::string, std::shared_ptr<PackageSharedData>>& pkg_shared_data)
+PackageLoader::PackageLoader(std::shared_ptr<PackageResolver> pkg_resolver, PackageSharedDataMap& pkg_shared_data)
     : m_pkg_resolver(pkg_resolver)
     , m_pkg_shared_data(pkg_shared_data)
 {
@@ -145,51 +142,57 @@ bool PackageLoader::load(const std::string& pkg_name)
 
 void PackageLoader::apply_environment(const std::shared_ptr<PackageSharedData>& pkg_data)
 {
-    const auto environment = pkg_data->resolved_attributes.GetValueAtPath("environment", ".");
+    const auto environment = find_package_attribute(pkg_data->resolved_attributes, "environment");
     if (!environment)
         return;
-    if (!environment->IsHolding<VtDictionary>())
+    if (!std::any_cast<PackageAnyDictionary>(&environment->get()))
     {
         OPENDCC_WARN("Invalid environment table for package '{}'.", pkg_data->name);
         return;
     }
 
-    for (const auto& variable : environment->UncheckedGet<VtDictionary>())
+    for (const auto& variable : std::any_cast<const PackageAnyDictionary&>(environment->get()))
     {
         const auto& name = variable.first;
-        if (!variable.second.IsHolding<VtArray<VtDictionary>>())
+        if (!std::any_cast<PackageAnyArray>(&variable.second))
         {
             OPENDCC_WARN("Invalid environment entries for '{}' in package '{}'.", name, pkg_data->name);
             continue;
         }
         const bool path_variable = name == "PATH";
-        for (const auto& entry : variable.second.UncheckedGet<VtArray<VtDictionary>>())
+        for (const auto& entry_value : std::any_cast<const PackageAnyArray&>(variable.second))
         {
-            const auto value = entry.GetValueAtPath("value");
-            const auto operation_attr = entry.GetValueAtPath("operation");
-            const auto path_attr = entry.GetValueAtPath("is_path");
-            const auto expand_attr = entry.GetValueAtPath("expand_tokens");
-            const auto separator_attr = entry.GetValueAtPath("separator");
-            if (!value || !value->IsHolding<std::string>() || (operation_attr && !operation_attr->IsHolding<std::string>()) ||
-                (path_attr && !path_attr->IsHolding<bool>()) || (expand_attr && !expand_attr->IsHolding<bool>()) ||
-                (separator_attr && !separator_attr->IsHolding<std::string>()))
+            const auto entry = std::any_cast<PackageAnyDictionary>(&entry_value);
+            if (!entry)
             {
                 OPENDCC_WARN("Invalid environment entry for '{}' in package '{}'.", name, pkg_data->name);
                 continue;
             }
-            const auto operation = operation_attr ? operation_attr->UncheckedGet<std::string>() : path_variable ? "prepend" : "set";
+            const auto value = find_package_attribute(*entry, "value");
+            const auto operation_attr = find_package_attribute(*entry, "operation");
+            const auto path_attr = find_package_attribute(*entry, "is_path");
+            const auto expand_attr = find_package_attribute(*entry, "expand_tokens");
+            const auto separator_attr = find_package_attribute(*entry, "separator");
+            if (!value || !std::any_cast<std::string>(&value->get()) || (operation_attr && !std::any_cast<std::string>(&operation_attr->get())) ||
+                (path_attr && !std::any_cast<bool>(&path_attr->get())) || (expand_attr && !std::any_cast<bool>(&expand_attr->get())) ||
+                (separator_attr && !std::any_cast<std::string>(&separator_attr->get())))
+            {
+                OPENDCC_WARN("Invalid environment entry for '{}' in package '{}'.", name, pkg_data->name);
+                continue;
+            }
+            const auto operation = operation_attr ? std::any_cast<const std::string&>(operation_attr->get()) : path_variable ? "prepend" : "set";
             if (operation != "set" && operation != "append" && operation != "prepend")
             {
                 OPENDCC_WARN("Unknown environment operation '{}' for '{}' in package '{}'.", operation, name, pkg_data->name);
                 continue;
             }
-            const bool is_path = path_attr ? path_attr->UncheckedGet<bool>() : path_variable;
-            auto resolved_value = value->UncheckedGet<std::string>();
+            const bool is_path = path_attr ? std::any_cast<const bool&>(path_attr->get()) : path_variable;
+            auto resolved_value = std::any_cast<const std::string&>(value->get());
             if (is_path && !resolved_value.empty())
                 resolved_value = make_absolute_path(pkg_data->root_dir, resolved_value).lexically_normal().u8string();
             if (operation != "set" && resolved_value.empty())
                 continue;
-            const auto separator = separator_attr ? separator_attr->UncheckedGet<std::string>() : OPENDCC_PATH_LIST_SEPARATOR;
+            const auto separator = separator_attr ? std::any_cast<const std::string&>(separator_attr->get()) : OPENDCC_PATH_LIST_SEPARATOR;
             const auto previous = get_env(name);
             auto result = resolved_value;
             if (!previous.empty() && !resolved_value.empty())
@@ -249,34 +252,40 @@ void PackageLoader::remove_package_python_paths()
 
 void PackageLoader::apply_python_paths(const std::shared_ptr<PackageSharedData>& pkg_data, const std::string& dependent_package)
 {
-    const auto entries = pkg_data->resolved_attributes.GetValueAtPath("python.path", ".");
+    const auto entries = find_package_attribute(pkg_data->resolved_attributes, "python.path");
     if (!entries)
         return;
-    if (!entries->IsHolding<VtArray<VtDictionary>>())
+    if (!std::any_cast<PackageAnyArray>(&entries->get()))
     {
         OPENDCC_WARN("Invalid Python paths for package '{}'.", pkg_data->name);
         return;
     }
-    for (const auto& entry : entries->UncheckedGet<VtArray<VtDictionary>>())
+    for (const auto& entry_value : std::any_cast<const PackageAnyArray&>(entries->get()))
     {
-        const auto path = entry.GetValueAtPath("path");
-        const auto operation_attr = entry.GetValueAtPath("operation");
-        const auto path_attr = entry.GetValueAtPath("is_path");
-        const auto expand_attr = entry.GetValueAtPath("expand_tokens");
-        if (!path || !path->IsHolding<std::string>() || (operation_attr && !operation_attr->IsHolding<std::string>()) ||
-            (path_attr && !path_attr->IsHolding<bool>()) || (expand_attr && !expand_attr->IsHolding<bool>()))
+        const auto entry = std::any_cast<PackageAnyDictionary>(&entry_value);
+        if (!entry)
         {
             OPENDCC_WARN("Invalid Python path entry for package '{}'.", pkg_data->name);
             continue;
         }
-        const auto operation = operation_attr ? operation_attr->UncheckedGet<std::string>() : "append";
+        const auto path = find_package_attribute(*entry, "path");
+        const auto operation_attr = find_package_attribute(*entry, "operation");
+        const auto path_attr = find_package_attribute(*entry, "is_path");
+        const auto expand_attr = find_package_attribute(*entry, "expand_tokens");
+        if (!path || !std::any_cast<std::string>(&path->get()) || (operation_attr && !std::any_cast<std::string>(&operation_attr->get())) ||
+            (path_attr && !std::any_cast<bool>(&path_attr->get())) || (expand_attr && !std::any_cast<bool>(&expand_attr->get())))
+        {
+            OPENDCC_WARN("Invalid Python path entry for package '{}'.", pkg_data->name);
+            continue;
+        }
+        const auto operation = operation_attr ? std::any_cast<const std::string&>(operation_attr->get()) : "append";
         if (operation != "set" && operation != "append" && operation != "prepend")
         {
             OPENDCC_WARN("Unknown Python path operation '{}' for package '{}'.", operation, pkg_data->name);
             continue;
         }
-        auto value = path->UncheckedGet<std::string>();
-        if (!value.empty() && (!path_attr || path_attr->UncheckedGet<bool>()))
+        auto value = std::any_cast<const std::string&>(path->get());
+        if (!value.empty() && (!path_attr || std::any_cast<const bool&>(path_attr->get())))
             value = make_absolute_path(pkg_data->root_dir, value).lexically_normal().generic_u8string();
         update_python_path(value, operation, pkg_data->name, dependent_package);
     }
@@ -350,18 +359,24 @@ bool PackageLoader::load_python_modules(const std::shared_ptr<PackageSharedData>
 
     for (const auto& col : { python_loads, python_entry_points })
     {
-        const auto& modules = pkg_data->get_resolved<VtArray<VtDictionary>>(col);
-        for (const auto& module : modules)
+        const auto& modules = pkg_data->get_resolved<PackageAnyArray>(col);
+        for (const auto& value : modules)
         {
-            auto it = module.find("module");
-            if (it == module.end() || !it->second.IsHolding<std::string>())
+            const auto module = std::any_cast<PackageAnyDictionary>(&value);
+            if (!module)
+            {
+                OPENDCC_WARN("Invalid '{}' entry for package '{}'.", col, pkg_data->name);
+                continue;
+            }
+            auto it = module->find("module");
+            if (it == module->end() || !std::any_cast<std::string>(&it->second))
             {
                 OPENDCC_WARN("Failed to import module for package '{}': '{}' doesn't have 'module' entry or it is not a string.", pkg_data->name,
                              col);
                 continue;
             }
 
-            auto import_str = it->second.UncheckedGet<std::string>();
+            auto import_str = std::any_cast<const std::string&>(it->second);
             if (import_str.empty())
             {
                 OPENDCC_WARN("Failed to import module for package '{}': 'module' defined but is empty.", pkg_data->name);
@@ -491,18 +506,24 @@ bool PackageLoader::load_cpp_libs(const std::shared_ptr<PackageSharedData>& pkg_
 
     for (const auto& col : { native_loads, native_entry_points })
     {
-        const auto& libs = pkg_data->get_resolved<VtArray<VtDictionary>>(col);
-        for (const auto& lib : libs)
+        const auto& libs = pkg_data->get_resolved<PackageAnyArray>(col);
+        for (const auto& value : libs)
         {
-            auto it = lib.find("path");
-            if (it == lib.end() || !it->second.IsHolding<std::string>())
+            const auto lib = std::any_cast<PackageAnyDictionary>(&value);
+            if (!lib)
+            {
+                OPENDCC_WARN("Invalid '{}' entry for package '{}'.", col, pkg_data->name);
+                continue;
+            }
+            auto it = lib->find("path");
+            if (it == lib->end() || !std::any_cast<std::string>(&it->second))
             {
                 OPENDCC_WARN("Failed to load shared library for package '{}': '{}' doesn't have 'path' entry or it is not a string.", pkg_data->name,
                              col);
                 continue;
             }
 
-            const auto path = make_absolute_path(pkg_data->root_dir, it->second.Get<std::string>());
+            const auto path = make_absolute_path(pkg_data->root_dir, std::any_cast<const std::string&>(it->second));
 
             OPENDCC_INFO("Loading library '{}'...", path.u8string());
 #ifdef OPENDCC_OS_WINDOWS

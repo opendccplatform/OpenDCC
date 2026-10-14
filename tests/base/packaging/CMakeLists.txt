@@ -96,3 +96,49 @@ opendcc_make_library(
     OPENDCC_PACKAGING_TESTS_EXPORT
     VS_FOLDER
     base/packaging)
+
+opendcc_add_cpp_test(
+    PackageValueTests
+    SOURCE
+    test_package_values.cpp
+    TARGET
+    packaging
+    SUITES
+    PackagingValues)
+
+opendcc_add_python_test(
+    PackagingWithoutUsdTests
+    SOURCE
+    test_without_usd.py
+    STANDALONE
+    ARGS
+    "$<TARGET_FILE:packaging_py>"
+    "$<TARGET_FILE_DIR:packaging>"
+    "$<TARGET_FILE_DIR:logging>"
+    "$<TARGET_FILE_DIR:utils>"
+    "$<TARGET_FILE_DIR:test_runner>")
+
+opendcc_make_library(
+    packaging_value_tests
+    TYPE
+    SHARED
+    CPPFILES
+    fixtures/value_library.cpp
+    LIBRARY_DEPENDENCIES
+    packaging
+    VS_FOLDER
+    base/packaging)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Keep fixture-local any managers distinct so symbol interposition cannot mask unload failures.
+    set_target_properties(packaging_value_tests PROPERTIES CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
+    target_link_options(packaging_value_tests PRIVATE "-Wl,-Bsymbolic")
+endif()
+target_compile_definitions(packaging PRIVATE OPENDCC_PACKAGING_VALUE_LIBRARY="$<TARGET_FILE:packaging_value_tests>")
+opendcc_add_cpp_test(
+    PackageValueLibraryTests
+    SOURCE
+    test_package_value_library.cpp
+    TARGET
+    packaging
+    SUITES
+    PackagingValueLibrary)

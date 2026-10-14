@@ -22,6 +22,8 @@ OPENDCC_NAMESPACE_OPEN
  * @return The substrings.
  */
 UTILS_API std::vector<std::string> split(const std::string& string, char separator);
+/** @brief Split a string, optionally omitting empty substrings. */
+UTILS_API std::vector<std::string> split(const std::string& string, char separator, bool skip_empty);
 
 UTILS_API bool starts_with(const std::string_view& input, const std::string_view& prefix);
 

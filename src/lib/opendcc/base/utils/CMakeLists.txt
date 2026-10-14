@@ -11,8 +11,10 @@ add_library(
     library.cpp
     allocation.h
     allocation.cpp
-    file_system.h
-    file_system.cpp
+    expected.h
+    ../fs_utils/defines.h
+    ../fs_utils/glob.h
+    ../fs_utils/glob.cpp
     hash.h
     env.h
     env.cpp
@@ -50,3 +52,9 @@ install(
     EXPORT utils-targets
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/${TARGET_NAME}
     NAMESPACE opendcc::)
+
+install(
+    DIRECTORY ../fs_utils/
+    DESTINATION "include/opendcc/base/fs_utils"
+    FILES_MATCHING
+    PATTERN "*.h")

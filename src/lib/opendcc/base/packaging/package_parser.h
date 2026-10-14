@@ -15,11 +15,13 @@ struct PackageData
 {
     std::string name;
     std::string path;
-    std::vector<PackageAttribute> raw_attributes;
+    PackageAttributeList raw_attributes;
 
     bool is_valid() const { return !name.empty(); }
     operator bool() const { return is_valid(); }
 };
+
+using PackageDataList = std::vector<PackageData>;
 
 class OPENDCC_PACKAGING_API PackageParser
 {

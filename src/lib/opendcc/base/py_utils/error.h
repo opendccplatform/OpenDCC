@@ -6,13 +6,10 @@
 #pragma once
 
 #include "opendcc/opendcc.h"
-#include "opendcc/base/py_utils/api.h"
 #include <string>
 #include "opendcc/base/logging/logger.h"
 
 OPENDCC_NAMESPACE_OPEN
-
-OPENDCC_PY_UTILS_API std::string py_get_error_str();
 
 inline void py_log_error(const std::string& err_str)
 {

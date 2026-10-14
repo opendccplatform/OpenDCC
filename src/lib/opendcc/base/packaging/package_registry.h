@@ -39,12 +39,12 @@ public:
 
 private:
     void initialize_package_data();
-    std::tuple<std::string, PXR_NS::VtValue> resolve_tokens(const PackageAttribute& raw_attr, const std::string& package_root = "") const;
+    std::tuple<std::string, std::any> resolve_tokens(const PackageAttribute& raw_attr, const std::string& package_root = "") const;
 
     std::shared_ptr<PackageResolver> m_package_resolver;
     std::unique_ptr<PackageLoader> m_package_loader;
     std::vector<std::shared_ptr<PackageProvider>> m_package_providers;
-    mutable std::unordered_map<std::string, std::shared_ptr<PackageSharedData>> m_package_shared_data;
+    mutable PackageSharedDataMap m_package_shared_data;
     std::unordered_map<std::string, std::string> m_tokens;
 };
 

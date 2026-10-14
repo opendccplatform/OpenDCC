@@ -4,7 +4,7 @@
  */
 
 #include "package_lifecycle_fixture.h"
-#include "opendcc/base/utils/file_system.h"
+#include "opendcc/base/fs_utils/defines.h"
 #include <algorithm>
 #include <map>
 #include <optional>

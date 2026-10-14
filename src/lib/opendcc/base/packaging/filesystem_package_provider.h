@@ -23,7 +23,7 @@ public:
     FileSystemPackageProvider& operator=(FileSystemPackageProvider&&) = delete;
 
     void fetch() override;
-    const std::vector<PackageData>& get_cached_packages() const override;
+    const PackageDataList& get_cached_packages() const override;
 
     void register_package_parser(const std::string& extension, const std::shared_ptr<PackageParser>& parser);
     void add_path(const char* package_directory);
@@ -32,7 +32,7 @@ public:
 private:
     std::unordered_map<std::string, std::shared_ptr<PackageParser>> m_package_parsers;
     std::vector<std::string> m_package_directories;
-    std::vector<PackageData> m_cached_packages;
+    PackageDataList m_cached_packages;
 };
 
 OPENDCC_NAMESPACE_CLOSE

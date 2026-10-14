@@ -3,17 +3,13 @@
 
 #include "opendcc/base/packaging/package_registry.h"
 #include <opendcc/base/logging/logger.h>
-#include "pxr/base/vt/array.h"
 #include <filesystem>
-#include "pxr/base/tf/pyInterpreter.h"
 #include "opendcc/base/packaging/core_properties.h"
 #include "opendcc/base/packaging/filesystem_package_provider.h"
 #include "opendcc/base/packaging/toml_parser.h"
-#include "pxr/base/vt/dictionary.h"
 #include "opendcc/base/packaging/package_entry_point.h"
 #include <regex>
 
-PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
 
 OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.base.packaging");
@@ -72,37 +68,68 @@ void PackageRegistry::initialize_package_data()
 
         for (const auto& pkg_data : packages)
         {
-            VtDictionary attributes;
-            for (const auto& raw_attr : pkg_data.raw_attributes)
+            PackageAttributeList raw_attributes;
+            bool valid_values = true;
+            for (const auto& attribute : pkg_data.raw_attributes)
+            {
+                auto value = copy_package_value(attribute.value);
+                if (!value)
+                {
+                    OPENDCC_ERROR("Invalid values for package '{}': unsupported packaging value type.", pkg_data.name);
+                    valid_values = false;
+                    break;
+                }
+                raw_attributes.push_back({ attribute.name, std::move(*value) });
+            }
+            if (!valid_values)
+                continue;
+            PackageAnyDictionary attributes;
+            for (const auto& raw_attr : raw_attributes)
             {
                 // These paths can refer to the root computed from base.root.
                 if (raw_attr.name == "environment" || raw_attr.name == "python")
                     continue;
                 std::string resolved_name;
-                VtValue resolved_value;
+                std::any resolved_value;
                 std::tie(resolved_name, resolved_value) = resolve_tokens(raw_attr);
                 attributes[resolved_name] = resolved_value;
             }
 
             for (const auto& prop : s_core_property_defaults)
             {
-                auto it = attributes.GetValueAtPath(prop.first, ".");
-                if (it == nullptr)
+                auto it = find_package_attribute(attributes, prop.first);
+                if (!it)
                 {
                     PackageAttribute attr { prop.first, prop.second };
                     std::string resolved_name;
-                    VtValue resolved_value;
+                    std::any resolved_value;
                     std::tie(resolved_name, resolved_value) = resolve_tokens(attr);
-                    attributes.SetValueAtPath(resolved_name, resolved_value, ".");
+                    if (!set_package_attribute(attributes, resolved_name, resolved_value))
+                    {
+                        OPENDCC_ERROR("Invalid default attribute '{}' for package '{}'.", prop.first, pkg_data.name);
+                        valid_values = false;
+                        break;
+                    }
                 }
             }
-            auto root_dir = std::filesystem::u8path(attributes.GetValueAtPath("base.root", ".")->Get<std::string>());
+            if (!valid_values)
+                continue;
+            const auto root_value = find_package_attribute(attributes, "base.root");
+            const auto root = root_value ? std::any_cast<std::string>(&root_value->get()) : nullptr;
+            const auto dependencies_value = find_package_attribute(attributes, "dependencies");
+            const auto dependencies = dependencies_value ? std::any_cast<PackageAnyDictionary>(&dependencies_value->get()) : nullptr;
+            if (!root || !dependencies)
+            {
+                OPENDCC_ERROR("Invalid root or dependencies for package '{}'.", pkg_data.name);
+                continue;
+            }
+            auto root_dir = std::filesystem::u8path(*root);
             if (root_dir.is_relative())
             {
                 root_dir = std::filesystem::u8path(pkg_data.path) / root_dir;
             }
 
-            for (const auto& raw_attr : pkg_data.raw_attributes)
+            for (const auto& raw_attr : raw_attributes)
             {
                 if (raw_attr.name == "environment" || raw_attr.name == "python")
                 {
@@ -111,7 +138,7 @@ void PackageRegistry::initialize_package_data()
                 }
             }
 
-            const auto direct_dependencies = attributes.GetValueAtPath("dependencies", ".")->Get<VtDictionary>();
+            const auto direct_dependencies = *dependencies;
 
             auto data = std::make_shared<PackageSharedData>(
                 PackageSharedData { attributes, direct_dependencies, root_dir.lexically_normal().generic_u8string(), pkg_data.name });
@@ -120,7 +147,7 @@ void PackageRegistry::initialize_package_data()
     }
 }
 
-std::tuple<std::string, VtValue> PackageRegistry::resolve_tokens(const PackageAttribute& raw_attr, const std::string& package_root) const
+std::tuple<std::string, std::any> PackageRegistry::resolve_tokens(const PackageAttribute& raw_attr, const std::string& package_root) const
 {
     const std::regex re("\\$\\{([^}]+)\\}", std::regex_constants::ECMAScript | std::regex_constants::icase);
 
@@ -161,51 +188,32 @@ std::tuple<std::string, VtValue> PackageRegistry::resolve_tokens(const PackageAt
         return result;
     };
 
-    std::function<VtValue(const VtValue&)> resolve_value = [this, &resolve_token, &resolve_value, &raw_attr](const VtValue& val) {
-        VtValue resolved_value;
-        if (val.IsHolding<std::string>())
+    std::function<std::any(const std::any&)> resolve_value = [&resolve_token, &resolve_value, &raw_attr](const std::any& val) -> std::any {
+        if (const auto value = std::any_cast<std::string>(&val))
+            return resolve_token(*value);
+        if (const auto array = std::any_cast<PackageAnyArray>(&val))
         {
-            resolved_value = VtValue(resolve_token(val.UncheckedGet<std::string>()));
+            PackageAnyArray result;
+            result.reserve(array->size());
+            for (const auto& value : *array)
+                result.push_back(resolve_value(value));
+            return result;
         }
-        else if (val.IsHolding<VtArray<VtValue>>())
+        if (const auto dictionary = std::any_cast<PackageAnyDictionary>(&val))
         {
-            auto src = val.UncheckedGet<VtArray<VtValue>>();
-            VtArray<VtValue> arr;
-            for (const auto& val : src)
-            {
-                arr.push_back(resolve_value(val));
-            }
-            resolved_value = VtValue(arr);
-        }
-        else if (val.IsHolding<VtDictionary>())
-        {
-            const auto& src = val.UncheckedGet<VtDictionary>();
-            VtDictionary dict;
-            const auto expand = src.GetValueAtPath("expand_tokens");
-            const bool keep_literal = expand && expand->IsHolding<bool>() && !expand->UncheckedGet<bool>();
-            for (const auto& entry : src)
+            PackageAnyDictionary result;
+            const auto expand = find_package_attribute(*dictionary, "expand_tokens");
+            const auto expand_value = expand ? std::any_cast<bool>(&expand->get()) : nullptr;
+            const bool keep_literal = expand_value && !*expand_value;
+            for (const auto& entry : *dictionary)
             {
                 const bool literal_value = keep_literal && ((raw_attr.name == "environment" && entry.first == "value") ||
                                                             (raw_attr.name == "python" && entry.first == "path"));
-                dict[resolve_token(entry.first)] = literal_value ? entry.second : resolve_value(entry.second);
+                result[resolve_token(entry.first)] = literal_value ? entry.second : resolve_value(entry.second);
             }
-            resolved_value = VtValue(dict);
+            return result;
         }
-        else if (val.IsHolding<VtArray<VtDictionary>>())
-        {
-            auto src = val.UncheckedGet<VtArray<VtDictionary>>();
-            VtArray<VtDictionary> dict_arr;
-            for (const auto& val : src)
-            {
-                dict_arr.push_back(resolve_value(VtValue(val)).UncheckedGet<VtDictionary>());
-            }
-            resolved_value = VtValue(dict_arr);
-        }
-        else
-        {
-            resolved_value = val;
-        }
-        return resolved_value;
+        return val;
     };
 
     const auto resolved_name = resolve_token(raw_attr.name);

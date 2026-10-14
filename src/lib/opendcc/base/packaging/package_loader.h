@@ -16,8 +16,7 @@ OPENDCC_NAMESPACE_OPEN
 class PackageLoader
 {
 public:
-    PackageLoader(std::shared_ptr<PackageResolver> pkg_resolver,
-                  std::unordered_map<std::string, std::shared_ptr<PackageSharedData>>& pkg_shared_data);
+    PackageLoader(std::shared_ptr<PackageResolver> pkg_resolver, PackageSharedDataMap& pkg_shared_data);
     ~PackageLoader();
 
     bool load(const std::string& pkg_name);
@@ -36,7 +35,7 @@ private:
     bool extend_python_path(const std::string& path, const std::string& pkg_name, const std::string& dependent_package) const;
 
     std::shared_ptr<PackageResolver> m_pkg_resolver;
-    std::unordered_map<std::string, std::shared_ptr<PackageSharedData>>& m_pkg_shared_data;
+    PackageSharedDataMap& m_pkg_shared_data;
     struct PythonPathEntry
     {
         std::string value;

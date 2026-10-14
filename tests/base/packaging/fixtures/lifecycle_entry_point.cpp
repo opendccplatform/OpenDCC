@@ -21,14 +21,14 @@ public:
     }
     void initialize(const Package& package) override
     {
-        m_filename = package.get_attribute("test.event_log").Get<std::string>();
+        m_filename = std::any_cast<std::string>(package.get_attribute("test.event_log"));
         m_package_name = package.get_name();
         record("native:init", package);
         const auto environment_variable = package.get_attribute("test.environment_variable");
-        if (environment_variable.IsHolding<std::string>())
-            std::ofstream(m_filename, std::ios::app) << "native:environment:" << get_env(environment_variable.Get<std::string>()) << '\n';
+        if ((std::any_cast<std::string>(&environment_variable) != nullptr))
+            std::ofstream(m_filename, std::ios::app) << "native:environment:" << get_env(std::any_cast<std::string>(environment_variable)) << '\n';
         const auto fail = package.get_attribute("test.fail_initialize");
-        if (fail.IsHolding<bool>() && fail.Get<bool>())
+        if ((std::any_cast<bool>(&fail) != nullptr) && std::any_cast<bool>(fail))
             throw std::runtime_error("Native test initialization failed");
     }
     void uninitialize(const Package& package) override { record("native:uninit", package); }
@@ -39,8 +39,8 @@ private:
     void record(const char* event, const Package& package)
     {
         const auto filename = package.get_attribute("test.event_log");
-        if (filename.IsHolding<std::string>())
-            std::ofstream(filename.Get<std::string>(), std::ios::app) << event << ':' << package.get_name() << '\n';
+        if ((std::any_cast<std::string>(&filename) != nullptr))
+            std::ofstream(std::any_cast<std::string>(filename), std::ios::app) << event << ':' << package.get_name() << '\n';
     }
 };
 
