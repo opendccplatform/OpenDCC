@@ -398,6 +398,11 @@ std::pair<PXR_NS::HdxPickHitVector, bool> ViewportGLWidget::intersect_impl(const
 
     makeCurrent();
 
+    // Qt composition can disable depth writes, including the picking buffer's depth clear.
+    GLboolean depth_mask;
+    glGetBooleanv(GL_DEPTH_WRITEMASK, &depth_mask);
+    glDepthMask(GL_TRUE);
+
     ViewportHydraIntersectionParams pick_params;
     pick_params.engine_params = m_params;
     pick_params.engine_params.gamma_correct_colors = false;
@@ -457,6 +462,7 @@ std::pair<PXR_NS::HdxPickHitVector, bool> ViewportGLWidget::intersect_impl(const
     HdxPickHitVector out;
     const auto pick_result = get_engine()->test_intersection_batch(pick_params, out);
 
+    glDepthMask(depth_mask);
     doneCurrent();
 
     return { std::move(out), pick_result };

@@ -8,7 +8,7 @@ from Qt import QtCore, QtWidgets
 from pxr import Gf, Sdf, Usd, UsdGeom
 import opendcc.core as core
 from image_utils import ImageDiffingTestCase, compare_images
-from viewport_utils import project_to_viewport
+from viewport_utils import disabled_depth_writes, project_to_viewport
 
 
 class TestViewportSelection(ImageDiffingTestCase):
@@ -90,6 +90,19 @@ class TestViewportSelection(ImageDiffingTestCase):
 
         # A quiet background can precede Hydra's first populated frame.
         return self.capture_viewport(self.view, path, cubes_visible)
+
+    def test_picking_with_disabled_depth_writes(self):
+        self.capture_cubes("pick_depth_mask.png")
+        target = int(core.MergeFlags.FULL_SELECTION)
+        with disabled_depth_writes(self.view):
+            hit = self.view.pick_single_prim(project_to_viewport(self.view, (-2, 0, 0)), target)
+            self.assertEqual(list(hit.get_selected_paths()), [Sdf.Path("/Left")])
+        _, _, width, height = self.view.get_viewport_dimensions()
+        with disabled_depth_writes(self.view):
+            hits = self.view.pick_multiple_prims(Gf.Vec2f(0), Gf.Vec2f(width, height), target)
+            self.assertEqual(
+                set(hits.get_selected_paths()), {Sdf.Path("/Left"), Sdf.Path("/Right")}
+            )
 
     def test_selection_highlight_and_clear(self):
         app = self.app
