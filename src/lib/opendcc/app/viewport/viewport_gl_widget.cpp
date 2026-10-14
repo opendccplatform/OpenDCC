@@ -228,6 +228,8 @@ void ViewportGLWidget::paintGL()
     if (!m_engine_enabled)
         return;
 
+    // Qt's composition can leave depth writes disabled; glClear respects the depth mask.
+    glDepthMask(GL_TRUE);
     m_background_drawer->draw();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
