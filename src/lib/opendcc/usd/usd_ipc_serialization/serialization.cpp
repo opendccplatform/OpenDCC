@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "serialization.h"
+#include "opendcc/base/logging/logger.h"
 #include <array>
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.usd.ipc_serialization");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -147,10 +149,10 @@ SdfUnregisteredValue Reader::read(SdfUnregisteredValue*)
         return SdfUnregisteredValue(val.UncheckedGet<VtDictionary>());
     if (val.IsHolding<SdfUnregisteredValueListOp>())
         return SdfUnregisteredValue(val.UncheckedGet<SdfUnregisteredValueListOp>());
-    TF_CODING_ERROR("SdfUnregisteredValue contains invalid "
-                    "type '%s' = '%s'; expected string, VtDictionary or "
-                    "SdfUnregisteredValueListOp; returning empty",
-                    val.GetTypeName().c_str(), TfStringify(val).c_str());
+    OPENDCC_ERROR("SdfUnregisteredValue contains invalid "
+                  "type '{}' = '{}'; expected string, VtDictionary or "
+                  "SdfUnregisteredValueListOp; returning empty",
+                  val.GetTypeName().c_str(), TfStringify(val).c_str());
     return SdfUnregisteredValue();
 }
 

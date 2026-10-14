@@ -18,6 +18,7 @@
 
 PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.render");
 
 static size_t get_data_size_of_format(HgiFormat format)
 {
@@ -36,7 +37,7 @@ void ViewportRenderAOVs::post_frame(const ViewportHydraEngineParams& params, std
         auto texture_buffer = engine->get_aov_texture(aov_name);
         if (!texture_buffer)
         {
-            TF_CODING_ERROR("Failed to get texture handle of '%s' aov.", aov_name.GetText());
+            OPENDCC_ERROR("Failed to get texture handle of '{}' aov.", aov_name.GetText());
             continue;
         }
         AOV aov;

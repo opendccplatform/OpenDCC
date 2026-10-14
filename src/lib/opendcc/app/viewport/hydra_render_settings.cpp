@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/viewport/hydra_render_settings.h"
+#include "opendcc/base/logging/logger.h"
 #include <pxr/usd/usdRender/product.h>
 #include <pxr/usd/usdRender/var.h>
 #include <queue>
 #include <algorithm>
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.render");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -80,7 +82,7 @@ namespace
         }
         else if (!aov_name.Get(&aov_name_val, time))
         {
-            TF_WARN("Failed to get '%s' from render var '%s'.", RenderSettingsTokens->aov_name.GetText(), render_var.GetPath().GetText());
+            OPENDCC_WARN("Failed to get '{}' from render var '{}'.", RenderSettingsTokens->aov_name.GetText(), render_var.GetPath().GetText());
             return {};
         }
 
@@ -91,8 +93,8 @@ namespace
             result.name = TfToken(aov_name_val.UncheckedGet<std::string>());
         else
         {
-            TF_WARN("Failed to extract '%s' from render var '%s'. The attribute has an incorrect type, expected 'string' or 'token'.",
-                    RenderSettingsTokens->aov_name.GetText(), render_var.GetPath().GetText());
+            OPENDCC_WARN("Failed to extract '{}' from render var '{}'. The attribute has an incorrect type, expected 'string' or 'token'.",
+                         RenderSettingsTokens->aov_name.GetText(), render_var.GetPath().GetText());
             return {};
         }
         result.descriptor = HdAovDescriptor(HdFormatFloat32Vec4, true, VtValue(GfVec4f(0.0)));
@@ -147,7 +149,7 @@ namespace
 
         if (!extract_format(get_data_type(), result.descriptor.format, result.descriptor.clearValue))
         {
-            TF_WARN("Unknown data format '%s' in render var '%s'.", get_data_type().GetText(), render_var.GetPrim().GetPath().GetText());
+            OPENDCC_WARN("Unknown data format '{}' in render var '{}'.", get_data_type().GetText(), render_var.GetPrim().GetPath().GetText());
             return {};
         }
 
@@ -183,7 +185,7 @@ namespace
                 }
                 else
                 {
-                    TF_WARN("Failed to find UsdRenderVar at path '%s'", path.GetText());
+                    OPENDCC_WARN("Failed to find UsdRenderVar at path '{}'", path.GetText());
                     return {};
                 }
             }
@@ -305,7 +307,7 @@ bool UsdHydraRenderSettings::build_render_settings(PXR_NS::UsdRenderSettings ren
             }
             else
             {
-                TF_WARN("Failed to find UsdRenderProduct at path '%s'", path.GetText());
+                OPENDCC_WARN("Failed to find UsdRenderProduct at path '{}'", path.GetText());
                 return false;
             }
         }

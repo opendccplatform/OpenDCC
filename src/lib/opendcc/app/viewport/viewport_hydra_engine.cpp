@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <pxr/pxr.h>
+#include "opendcc/base/logging/logger.h"
 #if PXR_VERSION >= 2005
 #include <pxr/imaging/hgiInterop/hgiInterop.h>
 #include <pxr/imaging/hdx/hgiConversions.h>
@@ -72,6 +73,7 @@ namespace std
 }
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.render");
 PXR_NAMESPACE_USING_DIRECTIVE
 
 TF_DEFINE_PRIVATE_TOKENS(DepthStyleTokens, ((OpenGL, "OpenGL"))((linear, "Linear"))((NDC, "NDC")));
@@ -251,8 +253,9 @@ HdRenderSettingsMap ViewportHydraEngine::read_render_settings(const HdRenderDele
         }
         else
         {
-            TF_WARN("The render setting '%s' of the render delegate '%s' has an incorrect type. Expected '%s', got '%s'.", descriptor.key.GetText(),
-                    m_renderer_id.GetText(), descriptor.defaultValue.GetTypeName().c_str(), vt_val.GetTypeName().c_str());
+            OPENDCC_WARN("The render setting '{}' of the render delegate '{}' has an incorrect type. Expected '{}', got '{}'.",
+                         descriptor.key.GetText(), m_renderer_id.GetText(), descriptor.defaultValue.GetTypeName().c_str(),
+                         vt_val.GetTypeName().c_str());
         }
     }
     result[TfToken("stageMetersPerUnit")] = settings->get(settings_key + ".stageMetersPerUnit", 0.01);
@@ -789,7 +792,7 @@ TfToken ViewportHydraEngine::get_default_render_plugin()
         }
     }
 
-    TF_WARN("Failed to find default renderer with display name '%s'.", default_renderer_display_name.c_str());
+    OPENDCC_WARN("Failed to find default renderer with display name '{}'.", default_renderer_display_name.c_str());
 
     return TfToken();
 }
@@ -818,7 +821,7 @@ bool ViewportHydraEngine::set_renderer_plugin(TfToken const& id)
         else
         {
 
-            TF_CODING_ERROR("Invalid plugin id or plugin is unsupported: %s", id.GetText());
+            OPENDCC_ERROR("Invalid plugin id or plugin is unsupported: {}", id.GetText());
             return false;
         }
     }
@@ -1008,7 +1011,7 @@ bool ViewportHydraEngine::update_hydra_collection(HdRprimCollection* collection,
 {
     if (collection == nullptr)
     {
-        TF_CODING_ERROR("Null passed to _UpdateHydraCollection");
+        OPENDCC_ERROR("Null passed to _UpdateHydraCollection");
         return false;
     }
 

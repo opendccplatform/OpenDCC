@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/viewport/usd_viewport_locator_data.h"
+#include "opendcc/base/logging/logger.h"
 #include "opendcc/app/viewport/viewport_locator_delegate.h"
 #include "opendcc/app/viewport/viewport_light_locators.h"
 #include "opendcc/app/viewport/viewport_camera_locator.h"
@@ -19,6 +20,7 @@
 #endif
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.locators");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -80,7 +82,7 @@ bool UsdViewportLocatorData::insert_locator(const SdfPath& path, const UsdTimeCo
         auto locator = ViewportUsdLocatorRegistry::create_locator(m_delegate, m_delegate->m_cur_stage->GetPrimAtPath(path));
         if (!locator)
         {
-            TF_RUNTIME_ERROR("Failed to create locator for prim '%s'.", path.GetText());
+            OPENDCC_ERROR("Failed to create locator for prim '{}'.", path.GetText());
             return false;
         }
         m_delegate->m_tasks.push([this, path]() { insert_locator(path); });

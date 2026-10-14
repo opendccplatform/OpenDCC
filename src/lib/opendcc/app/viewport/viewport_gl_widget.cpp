@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <pxr/pxr.h>
+#include "opendcc/base/logging/logger.h"
 #if PXR_VERSION < 2108
 #include <GL/glew.h>
 #include <pxr/imaging/glf/glew.h>
@@ -53,6 +54,7 @@
 #endif
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -1394,7 +1396,7 @@ bool ViewportGLWidget::is_display_purpose_enabled(ViewportHydraDisplayPurpose di
     case ViewportHydraDisplayPurpose::DISPLAY_PURPOSE_RENDER:
         return m_params.show_render;
     default:
-        TF_RUNTIME_ERROR("Unknown display purpose option.");
+        OPENDCC_ERROR("Unknown display purpose option.");
         return false;
     }
 }

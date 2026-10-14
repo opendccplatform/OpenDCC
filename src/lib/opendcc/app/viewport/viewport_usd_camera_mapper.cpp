@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <pxr/usd/usdGeom/xformCommonAPI.h>
+#include "opendcc/base/logging/logger.h"
 #include "opendcc/app/viewport/viewport_usd_camera_mapper.h"
 #include "opendcc/app/core/session.h"
 #include <pxr/usd/usdGeom/camera.h>
@@ -14,6 +15,7 @@
 #include "viewport_manipulator_utils.h"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.camera");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -205,12 +207,12 @@ void ViewportUsdCameraMapper::set_path(const SdfPath& path)
             }
             else
             {
-                TF_CODING_ERROR("Failed to assign new camera path. The specified path '%s' is not UsdGeomXformable prim.", path.GetText());
+                OPENDCC_ERROR("Failed to assign new camera path. The specified path '{}' is not UsdGeomXformable prim.", path.GetText());
             }
         }
         else
         {
-            TF_CODING_ERROR("Failed to assign new camera path. The prim at path '%s' doesn't exist.", path.GetText());
+            OPENDCC_ERROR("Failed to assign new camera path. The prim at path '{}' doesn't exist.", path.GetText());
         }
     }
 }

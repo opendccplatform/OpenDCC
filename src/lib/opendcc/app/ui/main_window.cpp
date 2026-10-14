@@ -62,6 +62,7 @@
 #include <string>
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.ui");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 namespace
@@ -336,7 +337,7 @@ void MainWindow::arrange_splitters(ads::CDockWidget* dock_widget, const std::vec
 {
     if (!dock_widget)
     {
-        OPENDCC_WARN_CHANNEL("Application", "Cannot arrange splitters: dock widget is null.");
+        OPENDCC_WARN("Cannot arrange splitters: dock widget is null.");
         return;
     }
 
@@ -345,7 +346,7 @@ void MainWindow::arrange_splitters(ads::CDockWidget* dock_widget, const std::vec
     auto dock_area = dock_widget->dockAreaWidget();
     if (!dock_area)
     {
-        OPENDCC_WARN_CHANNEL("Application", "Cannot arrange splitters: dock widget '{}' has no dock area.", dock_widget->objectName().toStdString());
+        OPENDCC_WARN("Cannot arrange splitters: dock widget '{}' has no dock area.", dock_widget->objectName().toStdString());
         return;
     }
     QList<int> sizes = m_main_container_widget->splitterSizes(dock_area);

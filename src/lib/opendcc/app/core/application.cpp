@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/base/pybind_bridge/usd.h"
+#include "opendcc/base/logging/logger.h"
 #include "opendcc/base/pybind_bridge/shiboken.h"
 #include "opendcc/app/core/application.h"
 
@@ -60,7 +61,7 @@
 #include "opendcc/app/core/sentry_logging_delegate.h"
 
 OPENDCC_NAMESPACE_OPEN
-OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("Application");
+OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.app");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -518,7 +519,7 @@ std::string Application::get_settings_path()
             if (m_settings_path.back() != '/')
                 m_settings_path += '/';
             if (!QDir().mkpath(QString::fromStdString(m_settings_path)))
-                TF_RUNTIME_ERROR("Failed to create application settings directory '%s'.", m_settings_path.c_str());
+                OPENDCC_ERROR("Failed to create application settings directory '{}'.", m_settings_path.c_str());
             return m_settings_path;
         }
 
@@ -535,7 +536,7 @@ std::string Application::get_settings_path()
 
         if (home_dir.empty())
         {
-            TF_RUNTIME_ERROR("Failed to find home directory (%s).", env_name.c_str());
+            OPENDCC_ERROR("Failed to find home directory ({}).", env_name.c_str());
             return m_settings_path;
         }
 

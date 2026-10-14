@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/usd/render/ipc_render.h"
+#include "opendcc/base/logging/logger.h"
 
 #include "opendcc/app/viewport/viewport_render_aovs.h"
 #include "opendcc/app/viewport/offscreen_render.h"
@@ -33,6 +34,7 @@
 #include <QOpenGLContext>
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.usd.render");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -280,7 +282,7 @@ render_system::RenderStatus IpcRender::write_aovs()
         const auto file_path = fs::u8path(aov_setting_iter->product_name.GetString());
         if (file_path.empty())
         {
-            TF_RUNTIME_ERROR("Failed to write aov: product name is empty.");
+            OPENDCC_ERROR("Failed to write aov: product name is empty.");
             return render_system::RenderStatus::FAILED;
         }
         const size_t w = aov.desc.dimensions[0];
@@ -307,7 +309,7 @@ render_system::RenderStatus IpcRender::write_aovs()
         const bool result = image && image->Write(storage);
         if (!result)
         {
-            TF_RUNTIME_ERROR("Failed to write aov to %s", file_path.u8string().c_str());
+            OPENDCC_ERROR("Failed to write aov to {}", file_path.u8string().c_str());
             return render_system::RenderStatus::FAILED;
         }
     }

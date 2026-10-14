@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/usd_editor/uv_editor/uv_editor.h"
+#include "opendcc/base/logging/logger.h"
 #include <QActionGroup>
 #include <QRegularExpression>
 
@@ -185,6 +186,7 @@ Q_DECLARE_METATYPE(TextureFileData);
 Q_DECLARE_METATYPE(MaterialOverrideTexture);
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 
 UVEditor::UVEditor(QWidget* parent /*= nullptr*/)
     : QWidget(parent)
@@ -809,9 +811,9 @@ void UVEditor::collect_geometry(const PXR_NS::SdfPathVector& paths)
         const auto uv_interpolation = uv.GetInterpolation();
         if (uv_interpolation == UsdGeomTokens->constant || uv_interpolation == UsdGeomTokens->uniform)
         {
-            TF_WARN("Unsupported interpolation type for primvar '%s' :"
-                    " expected 'vertex', 'varying' or 'faceVarying', got '%s'.",
-                    uv.GetAttr().GetPath().GetText(), uv_interpolation.GetText());
+            OPENDCC_WARN("Unsupported interpolation type for primvar '{}' :"
+                         " expected 'vertex', 'varying' or 'faceVarying', got '{}'.",
+                         uv.GetAttr().GetPath().GetText(), uv_interpolation.GetText());
             continue;
         }
 

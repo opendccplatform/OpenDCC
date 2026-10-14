@@ -28,7 +28,7 @@ static LogEntry get_pretty_string(const PXR_NS::TfDiagnosticBase& diagnostic_bas
     std::string output;
     std::string codeName = PXR_NS::TfDiagnosticMgr::GetCodeName(code);
     MessageContext ctx;
-    ctx.channel = "USD";
+    ctx.channel = "opendcc.usd.diagnostics";
 
     if (context.IsHidden() || !strcmp(context.GetFunction(), "") || !strcmp(context.GetFile(), ""))
     {
@@ -72,6 +72,7 @@ void UsdLoggingDelegate::IssueFatalError(const PXR_NS::TfCallContext& context, c
 {
     std::string output = i18n("logger.usd_logging_delegate", "Fatal error: ").toStdString() + msg + ' ' + PXR_NS::ArchGetProgramNameForErrors();
     MessageContext ctx;
+    ctx.channel = "opendcc.usd.diagnostics";
     ctx.level = LogLevel::Fatal;
     ctx.function = context.GetFunction();
     ctx.file = context.GetFile();

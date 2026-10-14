@@ -7,6 +7,7 @@ else()
 endif()
 
 function(opendcc_add_package PACKAGE_NAME)
+    set(OPENDCC_CURRENT_PACKAGE_NAME "${PACKAGE_NAME}")
     if(WIN32)
         # Keep Windows build paths short without changing source include roots or install destinations.
         add_subdirectory("${PACKAGE_NAME}" "${CMAKE_BINARY_DIR}/p/${PACKAGE_NAME}")
@@ -117,6 +118,9 @@ function(opendcc_make_python_module TARGET_NAME)
     endif()
 
     target_compile_definitions(${_pymodule_target} PRIVATE PYMODULE_NAME=${args_PYMODULE_NAME})
+    if(OPENDCC_CURRENT_PACKAGE_NAME)
+        target_compile_definitions(${_pymodule_target} PRIVATE OPENDCC_PACKAGE_NAME="${OPENDCC_CURRENT_PACKAGE_NAME}")
+    endif()
     target_link_libraries(${_pymodule_target} PUBLIC pybind11::pybind11 ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARY})
     target_link_libraries(${TARGET_NAME} PUBLIC ${args_LIBRARY_DEPENDENCIES})
 
@@ -207,6 +211,10 @@ function(opendcc_make_library TARGET_NAME)
     endif()
 
     add_library(${TARGET_NAME} ${_library_type} ${args_PUBLIC_HEADERS} ${args_PRIVATE_HEADERS} ${args_CPPFILES})
+
+    if(OPENDCC_CURRENT_PACKAGE_NAME)
+        target_compile_definitions(${TARGET_NAME} PRIVATE OPENDCC_PACKAGE_NAME="${OPENDCC_CURRENT_PACKAGE_NAME}")
+    endif()
 
     if(args_PUBLIC_DEFINITIONS)
         target_compile_definitions(${TARGET_NAME} PUBLIC ${args_PUBLIC_DEFINITIONS})

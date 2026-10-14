@@ -32,6 +32,7 @@ opendcc_add_cpp_test(
     UsdClipboard)
 
 opendcc_add_python_test(ApplicationTests SOURCE test_application.py)
+opendcc_add_python_test(LoggingTests SOURCE test_logging.py STANDALONE)
 opendcc_add_python_test(SelectionTests SOURCE test_selection.py)
 
 opendcc_add_python_test(ApplicationCallbackTests SOURCE test_application_callbacks.py)

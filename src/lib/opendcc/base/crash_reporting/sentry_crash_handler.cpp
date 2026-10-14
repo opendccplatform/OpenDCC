@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/base/crash_reporting/sentry_crash_handler.h"
+#include "opendcc/base/logging/logger.h"
 #include <opendcc/base/vendor/tiny_process/process.hpp>
 #include <opendcc/base/utils/process.h>
 #include <filesystem>
@@ -15,6 +16,7 @@
 #endif
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.base.crash_reporting");
 
 namespace
 {

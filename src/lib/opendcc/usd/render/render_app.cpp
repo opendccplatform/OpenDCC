@@ -11,6 +11,7 @@
 #include "opendcc/usd/render/ipc_render.h"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.usd.render");
 PXR_NAMESPACE_USING_DIRECTIVE
 
 namespace
@@ -36,8 +37,6 @@ UsdRenderApp::UsdRenderApp(std::unique_ptr<CLI::App> app, const PXR_NS::TfToken&
     : m_app(std::move(app))
     , m_render_type(render_type)
 {
-    OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("USD Render");
-
     m_app->add_option("--type,-t", m_common_options.type, "Render type: preview/ipr/disk");
     m_app->add_option("--transferred_layers", m_common_options.transferred_layers, "JSON description of transferred layers");
     m_app->add_option("--frame,-f", m_common_options.frame, "Frame to render");

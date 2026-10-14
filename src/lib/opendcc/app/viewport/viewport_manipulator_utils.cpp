@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/viewport/viewport_manipulator_utils.h"
+#include "opendcc/base/logging/logger.h"
 #include <pxr/base/gf/frustum.h>
 #include <pxr/imaging/cameraUtil/conformWindow.h>
 #include <pxr/base/gf/camera.h>
@@ -16,6 +17,7 @@
 #include "opendcc/app/core/undo/router.h"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.tools");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 namespace manipulator_utils
@@ -37,7 +39,7 @@ namespace manipulator_utils
         case UsdGeomXformCommonAPI::RotationOrderZYX:
             return { 2, 1, 0 };
         default:
-            TF_CODING_ERROR("Failed to get basis vector indices. Rotate manipulation might be incorrect.");
+            OPENDCC_ERROR("Failed to get basis vector indices. Rotate manipulation might be incorrect.");
             return { 0, 1, 2 };
         }
     }

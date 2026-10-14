@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/core/command_utils.h"
+#include "opendcc/base/logging/logger.h"
+#include <stdexcept>
 #include <pxr/usd/sdf/attributeSpec.h>
 #include <pxr/usd/sdf/primSpec.h>
 #include <regex>
@@ -24,6 +26,7 @@
 #include <pxr/usd/sdf/copyUtils.h>
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.commands");
 
 PXR_NAMESPACE_USING_DIRECTIVE;
 
@@ -282,22 +285,22 @@ void commands::utils::apply_schema_to_spec(const std::string& schema_name, const
 
     if (!schema_type)
     {
-        TF_WARN("Failed to apply schema '%s': schema doesn't exist.", schema_name.c_str());
-        return;
+        OPENDCC_ERROR("Failed to apply schema '{}': schema doesn't exist.", schema_name.c_str());
+        throw std::runtime_error("Failed to apply schema: schema doesn't exist.");
     }
 #if PXR_VERSION >= 2005
     auto schema_type_name = UsdSchemaRegistry::GetInstance().GetSchemaTypeName(schema_type);
     if (schema_type_name.IsEmpty())
     {
-        TF_WARN("Failed to apply schema '%s': prim definition doesn't exist.", schema_name.c_str());
-        return;
+        OPENDCC_ERROR("Failed to apply schema '{}': prim definition doesn't exist.", schema_name.c_str());
+        throw std::runtime_error("Failed to apply schema: prim definition doesn't exist.");
     }
 #else
     auto schema_spec = UsdSchemaRegistry::GetPrimDefinition(TfToken(schema_name));
     if (!schema_spec)
     {
-        TF_WARN("Failed to apply schema '%s': prim definition doesn't exist.", schema_name.c_str());
-        return;
+        OPENDCC_ERROR("Failed to apply schema '{}': prim definition doesn't exist.", schema_name.c_str());
+        throw std::runtime_error("Failed to apply schema: prim definition doesn't exist.");
     }
 #endif
     for (auto& prim_spec : prim_specs)

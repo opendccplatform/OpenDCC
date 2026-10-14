@@ -8,7 +8,8 @@ import opendcc.core as dcc_core
 from opendcc import cmds
 from functools import partial
 import os
-from pxr import Sdf, UsdUtils, Tf
+import logging
+from pxr import Sdf, UsdUtils
 
 from .i18n import i18n
 
@@ -83,7 +84,9 @@ def get_extensions():
             file_extensions = file_format.GetFileExtensions()
             all_file_extensions = all_file_extensions + file_extensions
         except:
-            Tf.Warn('Failed to get file extensions for "{}" file format.'.format(extension))
+            logging.getLogger(__name__).warning(
+                'Failed to get file extensions for "%s" file format.', extension
+            )
     all_file_extensions = ["*." + x for x in all_file_extensions]
     result = "*.usd *.usda *.usdc *.usdz;;" + ";;".join(all_file_extensions)
     return result

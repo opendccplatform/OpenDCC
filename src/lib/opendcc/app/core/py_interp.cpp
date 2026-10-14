@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/core/py_interp.h"
+#include "opendcc/base/logging/logger.h"
 #include <filesystem>
 #include <pxr/pxr.h>
 #include <pxr/base/tf/pyInterpreter.h>
@@ -20,6 +21,7 @@
 #endif
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.python");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -183,6 +185,7 @@ void py_interp::init_py_interp(std::vector<std::string>& args)
 #endif
 
     TfPyRunSimpleString("import sys;import opendcc.core as dcc_core;sys.modules['dcc_core'] = dcc_core");
+    TfPyRunSimpleString("import opendcc.logging;opendcc.logging.install()");
     // we override excepthook because exceptions in PyQt5 QActions could close the app
     TfPyRunSimpleString("import sys;sys.excepthook = lambda type, value,tback:sys.__excepthook__(type,value,tback)");
     // Add executable path to PATH env in order to resolove all dll dependencies if current working directory is not "bin"
@@ -260,7 +263,7 @@ int py_interp::run_script(const std::string& filepath)
 {
     if (!std::filesystem::exists(std::filesystem::u8path(filepath)))
     {
-        TF_CODING_ERROR("Could not open file '%s'!", filepath.c_str());
+        OPENDCC_ERROR("Could not open file '{}'!", filepath.c_str());
         return -1;
     }
     return run_python([&filepath](const pybind11::object& globals) { pybind11::eval_file(pybind11::str(filepath), globals, globals); });

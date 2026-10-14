@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/viewport/visibility_mask.h"
+#include "opendcc/base/logging/logger.h"
 #include "opendcc/app/ui/application_ui.h"
 #include <pxr/base/tf/stl.h>
 
@@ -11,6 +12,7 @@ PXR_NAMESPACE_CLOSE_SCOPE
 
 PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.visibility");
 
 bool VisibilityMask::is_visible(const TfToken& type, const PXR_NS::TfToken& group /*= PXR_NS::TfToken()*/) const
 {
@@ -62,7 +64,7 @@ bool OPENDCC_NAMESPACE::PrimVisibilityRegistry::register_prim_type(const PXR_NS:
     {
         if (new_type == entry)
         {
-            TF_RUNTIME_ERROR("Failed to add new prim visibility type: type '%s' with group '%s' already exists.", type.GetText(), group.GetText());
+            OPENDCC_ERROR("Failed to add new prim visibility type: type '{}' with group '{}' already exists.", type.GetText(), group.GetText());
             return false;
         }
     }

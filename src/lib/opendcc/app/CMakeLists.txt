@@ -120,6 +120,7 @@ set(python_headers
     viewport/wrap_prim_refine_manager.h
     viewport/wrap_def_cam_settings.h
     core/wrap_settings.h
+    core/wrap_logging.h
     core/wrap_undo.h
     core/wrap_selection_list.h
     viewport/wrap_tool_context.h
@@ -139,6 +140,7 @@ set(python_src
     viewport/wrap_prim_refine_manager.cpp
     viewport/wrap_def_cam_settings.cpp
     core/wrap_settings.cpp
+    core/wrap_logging.cpp
     core/wrap_undo.cpp
     core/wrap_selection_list.cpp
     viewport/wrap_tool_context.cpp

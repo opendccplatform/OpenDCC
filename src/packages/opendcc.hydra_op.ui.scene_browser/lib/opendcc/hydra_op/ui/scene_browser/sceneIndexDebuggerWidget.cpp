@@ -8,6 +8,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "sceneIndexDebuggerWidget.h"
+#include "opendcc/base/logging/logger.h"
 #include "dataSourceTreeWidget.h"
 #include "dataSourceValueTreeView.h"
 #include "sceneIndexTreeWidget.h"
@@ -30,6 +31,10 @@
 #include <iostream>
 #include <sstream>
 #include <typeinfo>
+
+OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
+OPENDCC_NAMESPACE_CLOSE
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -128,7 +133,7 @@ HduiSceneIndexDebuggerWidget::HduiSceneIndexDebuggerWidget(QWidget *parent, cons
             std::string filePath;
             if (ArchMakeTmpFile(fileNamePrefix, &filePath) == -1)
             {
-                TF_RUNTIME_ERROR("Could not create file to write out scene index.");
+                OPENDCC_ERROR("Could not create file to write out scene index.");
                 return;
             }
 

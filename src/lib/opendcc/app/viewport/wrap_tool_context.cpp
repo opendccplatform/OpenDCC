@@ -85,7 +85,7 @@ void py_interp::bind::wrap_tool_context(pybind11::module& m)
     class_<ViewportToolContextRegistry, std::unique_ptr<ViewportToolContextRegistry, nodelete>>(m, "ViewportToolContextRegistry")
         .def_static("register_tool_context",
                     [](const TfToken& context, const TfToken& name, ViewportToolContextRegistry::ViewportToolContextRegistryCallback callback) {
-                        ViewportToolContextRegistry::register_tool_context(context, name, pybind_safe_callback(callback));
+                        return ViewportToolContextRegistry::register_tool_context(context, name, pybind_safe_callback(callback));
                     })
         .def_static("unregister_tool_context", &ViewportToolContextRegistry::unregister_tool_context)
         .def_static("create_tool_context", &ViewportToolContextRegistry::create_tool_context, return_value_policy::reference);

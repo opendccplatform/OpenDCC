@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/core/undo/state_delegate.h"
+#include "opendcc/base/logging/logger.h"
 #include <pxr/base/tf/refPtr.h>
 #include "opendcc/app/core/undo/router.h"
 #include "opendcc/app/core/undo/inverse.h"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.undo");
 PXR_NAMESPACE_USING_DIRECTIVE
 using namespace commands;
 
@@ -199,7 +201,7 @@ namespace
         }
         else
         {
-            TF_WARN("Performance Warning. Inverse should be muted earlier in stack.");
+            OPENDCC_DEBUG("Performance Warning. Inverse should be muted earlier in stack.");
         }
     }
 
@@ -342,7 +344,7 @@ bool UndoStateDelegate::invert_set_field(LayerStateDelegateProxyPtr proxy, const
 
     if (!proxy->get_layer())
     {
-        TF_CODING_ERROR("Cannot invert field for expired layer.");
+        OPENDCC_ERROR("Cannot invert field for expired layer.");
         return false;
     }
     proxy->SetField(path, field_name, inverse);
@@ -357,7 +359,7 @@ bool UndoStateDelegate::invert_set_field_dict_value_by_key(LayerStateDelegatePro
 
     if (!proxy->get_layer())
     {
-        TF_CODING_ERROR("Cannot invert field dictionary value for expired layer.");
+        OPENDCC_ERROR("Cannot invert field dictionary value for expired layer.");
         return false;
     }
     proxy->SetFieldDictValueByKey(path, field_name, key_path, inverse);
@@ -371,7 +373,7 @@ bool UndoStateDelegate::invert_set_time_sample(LayerStateDelegateProxyPtr proxy,
 
     if (!proxy->get_layer())
     {
-        TF_CODING_ERROR("Cannot invert time sample for expired layer.");
+        OPENDCC_ERROR("Cannot invert time sample for expired layer.");
         return false;
     }
     proxy->SetTimeSample(path, time, value);
@@ -385,7 +387,7 @@ bool UndoStateDelegate::invert_create_spec(LayerStateDelegateProxyPtr proxy, con
 
     if (!proxy->get_layer())
     {
-        TF_CODING_ERROR("Cannot invert spec creation for expired layer.");
+        OPENDCC_ERROR("Cannot invert spec creation for expired layer.");
         return false;
     }
     proxy->DeleteSpec(path, inert);
@@ -400,7 +402,7 @@ bool UndoStateDelegate::invert_delete_spec(LayerStateDelegateProxyPtr proxy, con
 
     if (!proxy->get_layer())
     {
-        TF_CODING_ERROR("Cannot invert spec deletion for expired layer.");
+        OPENDCC_ERROR("Cannot invert spec deletion for expired layer.");
         return false;
     }
 
@@ -440,7 +442,7 @@ bool UndoStateDelegate::invert_move_spec(LayerStateDelegateProxyPtr proxy, const
 
     if (!proxy->get_layer())
     {
-        TF_CODING_ERROR("Cannot invert spec move for expired layer.");
+        OPENDCC_ERROR("Cannot invert spec move for expired layer.");
         return false;
     }
     proxy->MoveSpec(newPath, oldPath);
@@ -455,7 +457,7 @@ bool UndoStateDelegate::invert_push_token_child(LayerStateDelegateProxyPtr proxy
 
     if (!proxy->get_layer())
     {
-        TF_CODING_ERROR("Cannot invert push child for expired layer.");
+        OPENDCC_ERROR("Cannot invert push child for expired layer.");
         return false;
     }
     proxy->PopChild(parentPath, fieldName, value);
@@ -470,7 +472,7 @@ bool UndoStateDelegate::invert_pop_token_child(LayerStateDelegateProxyPtr proxy,
 
     if (!proxy->get_layer())
     {
-        TF_CODING_ERROR("Cannot invert pop child for expired layer.");
+        OPENDCC_ERROR("Cannot invert pop child for expired layer.");
         return false;
     }
     proxy->PushChild(parentPath, fieldName, oldValue);
@@ -485,7 +487,7 @@ bool UndoStateDelegate::invert_push_path_child(LayerStateDelegateProxyPtr proxy,
 
     if (!proxy->get_layer())
     {
-        TF_CODING_ERROR("Cannot invert push child for expired layer.");
+        OPENDCC_ERROR("Cannot invert push child for expired layer.");
         return false;
     }
     proxy->PopChild(parentPath, fieldName, value);
@@ -500,7 +502,7 @@ bool UndoStateDelegate::invert_pop_path_child(LayerStateDelegateProxyPtr proxy, 
 
     if (!proxy->get_layer())
     {
-        TF_CODING_ERROR("Cannot invert pop child for expired layer.");
+        OPENDCC_ERROR("Cannot invert pop child for expired layer.");
         return false;
     }
     proxy->PushChild(parentPath, fieldName, oldValue);

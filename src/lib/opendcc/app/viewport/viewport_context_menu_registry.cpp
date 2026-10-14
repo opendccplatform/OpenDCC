@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/viewport/viewport_context_menu_registry.h"
+#include "opendcc/base/logging/logger.h"
 #include "opendcc/app/viewport/iviewport_tool_context.h"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.ui");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -16,10 +18,15 @@ ViewportContextMenuRegistry& ViewportContextMenuRegistry::instance()
 
 bool ViewportContextMenuRegistry::register_menu(const TfToken& context_type, CreateContextMenuFn creator)
 {
+    if (!creator)
+    {
+        OPENDCC_ERROR("Failed to register viewport context menu '{}': factory is empty.", context_type.GetText());
+        return false;
+    }
     auto emplace_result = m_registry.emplace(context_type, creator);
     if (!emplace_result.second)
     {
-        TF_WARN("Failed to register viewport context menu for context '%s': context menu is already registered.", context_type.GetText());
+        OPENDCC_ERROR("Failed to register viewport context menu for context '{}': context menu is already registered.", context_type.GetText());
         return false;
     }
 
@@ -31,7 +38,7 @@ bool ViewportContextMenuRegistry::unregister_menu(const TfToken& context_type)
     auto erase_result = m_registry.erase(context_type);
     if (erase_result == 0)
     {
-        TF_WARN("Failed to unregister viewport context menu for context '%s': context menu is not found.", context_type.GetText());
+        OPENDCC_WARN("Failed to unregister viewport context menu for context '{}': context menu is not found.", context_type.GetText());
         return false;
     }
 
@@ -46,7 +53,7 @@ QMenu* ViewportContextMenuRegistry::create_menu(const TfToken& context_type, QCo
     {
         return default_iter->second(context_menu_event, viewport_view, parent);
     }
-    TF_WARN("Failed to create viewport context menu for context '%s': context menu is not registered.", context_type.GetText());
+    OPENDCC_DEBUG("Failed to create viewport context menu for context '{}': context menu is not registered.", context_type.GetText());
     return nullptr;
 }
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/usd/layer_tree_watcher/layer_tree_watcher.h"
+#include "opendcc/base/logging/logger.h"
 #include <pxr/usd/pcp/node.h>
 #include <pxr/usd/pcp/layerStack.h>
 #include "pxr/usd/sdf/notice.h"
@@ -9,6 +10,7 @@
 #include <pxr/usd/usd/prim.h>
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.usd.layer_tree_watcher");
 PXR_NAMESPACE_USING_DIRECTIVE
 
 namespace
@@ -46,8 +48,8 @@ void LayerTreeWatcher::SublayersChangedWatcher::on_layers_changed(const PXR_NS::
                 auto changed_sublayer = m_layer_tree->get_layer(sublayer_change.first, changed_layer_id);
                 if (!changed_sublayer && sublayer_change.second == SdfChangeList::SubLayerChangeType::SubLayerAdded)
                 {
-                    TF_CODING_ERROR("Failed to find layer with identifier '%s' and anchor '%s'.", sublayer_change.first.c_str(),
-                                    changed_layer_id.c_str());
+                    OPENDCC_ERROR("Failed to find layer with identifier '{}' and anchor '{}'.", sublayer_change.first.c_str(),
+                                  changed_layer_id.c_str());
                     continue;
                 }
                 const auto& changed_sublayer_id = changed_sublayer ? changed_sublayer->GetIdentifier()

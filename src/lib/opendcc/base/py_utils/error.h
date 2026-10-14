@@ -16,7 +16,7 @@ OPENDCC_PY_UTILS_API std::string py_get_error_str();
 
 inline void py_log_error(const std::string& err_str)
 {
-    const auto channel = g_global_log_channel ? g_global_log_channel : "Python";
+    const auto channel = g_global_log_channel ? g_global_log_channel : "opendcc.base.py_utils";
     if (!err_str.empty())
     {
         OPENDCC_ERROR_CHANNEL(channel, "{}", err_str);

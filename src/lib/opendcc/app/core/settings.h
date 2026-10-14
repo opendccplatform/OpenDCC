@@ -5,6 +5,7 @@
 
 #pragma once
 #include "opendcc/opendcc.h"
+#include "opendcc/base/logging/logger.h"
 #include "opendcc/app/core/api.h"
 #include <pxr/base/js/json.h>
 #include <pxr/base/vt/dictionary.h>
@@ -18,6 +19,7 @@
 #include <opendcc/base/vendor/nonstd/any.hpp>
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.settings");
 
 namespace details
 {
@@ -251,7 +253,7 @@ public:
         if (converter == s_type_helpers.end())
         {
             PXR_NAMESPACE_USING_DIRECTIVE
-            TF_RUNTIME_ERROR("Attempt to set unknown type. Try register this type via register_type<T> method.");
+            OPENDCC_ERROR("Attempt to set unknown type. Try register this type via register_type<T> method.");
             return;
         }
         set(path, converter->second.to_json(nonstd::make_any<TDecayed>(value)), typeid(TDecayed));
@@ -282,7 +284,7 @@ public:
         if (converter == s_type_helpers.end())
         {
             PXR_NAMESPACE_USING_DIRECTIVE
-            TF_RUNTIME_ERROR("Attempt to set unknown type. Try register this type via register_type<T> method.");
+            OPENDCC_ERROR("Attempt to set unknown type. Try register this type via register_type<T> method.");
             return;
         }
         set_default(path, converter->second.to_json(nonstd::make_any<TDecayed>((value))), typeid(TDecayed));
@@ -312,7 +314,7 @@ public:
         if (converter == s_type_helpers.end())
         {
             PXR_NAMESPACE_USING_DIRECTIVE
-            TF_RUNTIME_ERROR("Attempt to get unknown type. Try register this type via register_type<T> method.");
+            OPENDCC_ERROR("Attempt to get unknown type. Try register this type via register_type<T> method.");
             return fallback_value;
         }
         const auto result = get_impl(path);
@@ -348,7 +350,7 @@ public:
         if (converter == s_type_helpers.end())
         {
             PXR_NAMESPACE_USING_DIRECTIVE
-            TF_RUNTIME_ERROR("Attempt to set unknown type. Try register this type via register_type<T> method.");
+            OPENDCC_ERROR("Attempt to get unknown type. Try register this type via register_type<T> method.");
             return fallback_value;
         }
         const auto result = get_default_impl(path);

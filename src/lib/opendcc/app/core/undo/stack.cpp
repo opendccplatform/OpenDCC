@@ -115,13 +115,14 @@ void UndoStack::undo()
     if (m_index == 0)
         return;
 
-    const auto& command = m_commands[m_index-- - 1];
+    const auto& command = m_commands[m_index - 1];
     if (command.log_string.empty())
         OPENDCC_INFO("Undo: \"{}\"", command.cmd->get_command_name());
     else
         OPENDCC_INFO("Undo: \"{}\"", command.log_string);
 
     command.cmd->undo();
+    --m_index;
 }
 
 void UndoStack::redo()
@@ -130,13 +131,14 @@ void UndoStack::redo()
     if (m_index == m_commands.size())
         return;
 
-    const auto& command = m_commands[m_index++];
+    const auto& command = m_commands[m_index];
     if (command.log_string.empty())
         OPENDCC_INFO("Redo: \"{}\"", command.cmd->get_command_name());
     else
         OPENDCC_INFO("Redo: \"{}\"", command.log_string);
 
     command.cmd->redo();
+    ++m_index;
 }
 
 void UndoStack::clear()

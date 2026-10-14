@@ -7,7 +7,7 @@
 #include <opendcc/base/logging/logger.h>
 
 OPENDCC_NAMESPACE_OPEN
-OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("Commands");
+OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.base.commands");
 
 namespace
 {

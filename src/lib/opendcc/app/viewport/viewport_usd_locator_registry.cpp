@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/viewport/viewport_usd_locator_registry.h"
+#include "opendcc/base/logging/logger.h"
 #include "pxr/usd/usdLux/domeLight.h"
 #include "opendcc/app/viewport/viewport_light_locators.h"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.locators");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -26,7 +28,7 @@ bool ViewportUsdLocatorRegistry::register_locator_factory(const TfToken& type, L
 {
     if (!fn)
     {
-        TF_WARN("Failed to register locator factory for type '%s': factory is null.", type.GetText());
+        OPENDCC_ERROR("Failed to register locator factory for type '{}': factory is null.", type.GetText());
         return false;
     }
 
@@ -34,7 +36,7 @@ bool ViewportUsdLocatorRegistry::register_locator_factory(const TfToken& type, L
     auto iter = self.m_registry.find(type);
     if (iter != self.m_registry.end())
     {
-        TF_WARN("Failed to register locator factory for type '%s': factory is already registered.", type.GetText());
+        OPENDCC_ERROR("Failed to register locator factory for type '{}': factory is already registered.", type.GetText());
         return false;
     }
 
@@ -48,7 +50,7 @@ bool ViewportUsdLocatorRegistry::unregister_locator_factory(const TfToken& type)
     auto iter = self.m_registry.find(type);
     if (iter == self.m_registry.end())
     {
-        TF_WARN("Failed to unregister locator factory for type '%s': factory not found.", type.GetText());
+        OPENDCC_WARN("Failed to unregister locator factory for type '{}': factory not found.", type.GetText());
         return false;
     }
     self.m_registry.erase(iter);

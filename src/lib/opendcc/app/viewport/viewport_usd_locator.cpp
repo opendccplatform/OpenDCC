@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <pxr/base/gf/camera.h>
+#include "opendcc/base/logging/logger.h"
 #include <pxr/base/gf/frustum.h>
 #if PXR_VERSION < 2108
 #include <pxr/imaging/glf/textureRegistry.h>
@@ -27,6 +28,7 @@
 #endif
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.locators");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -86,7 +88,7 @@ namespace
             }
             else
             {
-                TF_RUNTIME_ERROR("USD locator has invalid prim type: expected DomeLight, got '%s'.", m_prim.GetTypeName().GetText());
+                OPENDCC_ERROR("USD locator has invalid prim type: expected DomeLight, got '{}'.", m_prim.GetTypeName().GetText());
             }
         }
 
@@ -106,8 +108,7 @@ namespace
             if (m_texture_path.empty())
                 return ViewportUsdLightLocator::get_material_resource();
 
-            const auto domelight_node =
-                SdrRegistry::GetInstance().GetShaderNodeFromSourceCode(usd_locator_domelight_source, TfToken("glslfx"), {});
+            const auto domelight_node = SdrRegistry::GetInstance().GetShaderNodeFromSourceCode(usd_locator_domelight_source, TfToken("glslfx"), {});
             const auto& domelight_source_id = domelight_node->GetIdentifier();
 
             const auto prim_path = get_index_prim_path();

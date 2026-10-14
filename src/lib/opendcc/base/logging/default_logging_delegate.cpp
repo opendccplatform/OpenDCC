@@ -11,6 +11,7 @@ OPENDCC_NAMESPACE_OPEN
 DefaultLoggingDelegate::DefaultLoggingDelegate()
 {
     spdlog::set_pattern("[%H:%M:%S.%e] [%^%l%$]%v (%@)");
+    spdlog::default_logger()->set_level(spdlog::level::trace);
 }
 
 void DefaultLoggingDelegate::log(const MessageContext& context, const std::string& message)

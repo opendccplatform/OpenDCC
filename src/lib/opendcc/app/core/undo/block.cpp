@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/core/undo/block.h"
+#include "opendcc/base/logging/logger.h"
+#include <stdexcept>
 
 #include "opendcc/app/core/undo/router.h"
 #include "opendcc/app/core/undo/stack.h"
@@ -9,6 +11,7 @@
 #include "opendcc/app/core/application.h"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.undo");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -22,8 +25,9 @@ UsdEditsUndoBlock::UsdEditsUndoBlock()
     {
         if (router.m_inversion.size() != 0)
         {
-            TF_CODING_ERROR("Opening fragmented undo block. This may be because of an undo "
-                            "command running inside of an edit block.");
+            OPENDCC_ERROR("Opening fragmented undo block. This may be because of an undo "
+                          "command running inside of an edit block.");
+            throw std::logic_error("Cannot open a fragmented undo block.");
         }
     }
     router.m_depth++;
@@ -51,8 +55,9 @@ UsdEditsBlock::UsdEditsBlock()
     {
         if (router.m_inversion.size() != 0)
         {
-            TF_CODING_ERROR("Opening fragmented undo block. This may be because of an undo "
-                            "command running inside of an edit block.");
+            OPENDCC_ERROR("Opening fragmented undo block. This may be because of an undo "
+                          "command running inside of an edit block.");
+            throw std::logic_error("Cannot open a fragmented undo block.");
         }
     }
     router.m_depth++;

@@ -8,6 +8,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "dataSourceTreeWidget.h"
+#include "opendcc/base/logging/logger.h"
 
 #include "pxr/base/tf/denseHashSet.h"
 
@@ -20,6 +21,10 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_set>
+
+OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
+OPENDCC_NAMESPACE_CLOSE
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -385,11 +390,11 @@ void HduiDataSourceTreeWidget::contextMenuEvent(QContextMenuEvent *event)
         if (outfile)
         {
             _DumpDataSource(this, outfile);
-            TF_STATUS("Wrote to %s\n", outfilePath.c_str());
+            OPENDCC_INFO("Wrote to {}\n", outfilePath.c_str());
         }
         else
         {
-            TF_WARN("Could not open %s to write.", outfilePath.c_str());
+            OPENDCC_ERROR("Could not open {} to write.", outfilePath.c_str());
         }
     });
     dumpToFile->setEnabled(enable);

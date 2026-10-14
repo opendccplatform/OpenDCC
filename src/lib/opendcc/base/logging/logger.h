@@ -11,6 +11,7 @@
 
 #include <mutex>
 #include <vector>
+#include <unordered_map>
 
 OPENDCC_NAMESPACE_OPEN
 
@@ -212,6 +213,17 @@ public:
      */
     OPENDCC_LOGGING_API static void set_log_level(LogLevel level);
 
+    /** @brief Sets a channel's minimum severity. Descendants inherit it unless they have an override. */
+    OPENDCC_LOGGING_API static void set_channel_log_level(const std::string& channel, LogLevel level);
+    /** @brief Removes a channel override, restoring its inherited minimum severity. */
+    OPENDCC_LOGGING_API static void clear_channel_log_level(const std::string& channel);
+    /** @brief Returns the nearest ancestor's level, or the global level if no override exists. */
+    OPENDCC_LOGGING_API static LogLevel get_channel_log_level(const std::string& channel);
+    /** @brief Registers the default channel for messages emitted by a source file. */
+    OPENDCC_LOGGING_API static bool register_source_channel(const char* file, const char* channel);
+    /** @brief Resolves a file's channel, falling back to its library default. */
+    OPENDCC_LOGGING_API static const char* get_source_channel(const char* file, const char* fallback);
+
     /**
      * @brief Adds a logging delegate.
      *
@@ -254,11 +266,14 @@ private:
     Logger& operator=(Logger&&) = delete;
     static Logger& instance();
     OPENDCC_LOGGING_API static void log_impl(const MessageContext& context, const std::string& message);
+    LogLevel get_channel_log_level_impl(std::string channel) const;
 
     std::recursive_mutex m_mutex;
     std::vector<LoggingDelegate*> m_delegates;
     DefaultLoggingDelegate* m_default_delegate = nullptr;
     LogLevel m_log_level = LogLevel::Info;
+    std::unordered_map<std::string, LogLevel> m_channel_log_levels;
+    std::unordered_map<std::string, std::string> m_source_channels;
 };
 
 /**
@@ -289,7 +304,7 @@ static inline bool initialize_library_log_channel(const char* name, const char* 
     using namespace OPENDCC_NAMESPACE;
     if (g_global_log_channel)
     {
-        MessageContext ctx { "Logger", filename, nullptr, line, LogLevel::Warning };
+        MessageContext ctx { "opendcc.base.logging", filename, nullptr, line, LogLevel::Warning };
         Logger::log(ctx, "Library log channel was already initialized. There can be only one library log channel.");
         return false;
     }
@@ -310,6 +325,13 @@ static inline bool initialize_library_log_channel(const char* name, const char* 
 #define OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL(channel_name) \
     OPENDCC_API_HIDDEN auto library_log_channel_already_initialized = initialize_library_log_channel(channel_name, __FILE__, __LINE__);
 
+#define OPENDCC_LOG_CHANNEL_JOIN_IMPL(a, b) a##b
+#define OPENDCC_LOG_CHANNEL_JOIN(a, b) OPENDCC_LOG_CHANNEL_JOIN_IMPL(a, b)
+/** @brief Declares a file-scoped default channel without changing its library default. */
+#define OPENDCC_INITIALIZE_LOG_CHANNEL(channel_name)                                   \
+    static const bool OPENDCC_LOG_CHANNEL_JOIN(opendcc_source_channel_, __COUNTER__) = \
+        OPENDCC_NAMESPACE::Logger::register_source_channel(__FILE__, channel_name);
+
 /**
  * @def OPENDCC_MSG(channel, level, message, ...)
  * @ingroup LoggingMacros
@@ -324,27 +346,30 @@ static inline bool initialize_library_log_channel(const char* name, const char* 
  * @param message The format string of the message to log.
  * @param ... Additional arguments for the message format.
  */
-#define OPENDCC_MSG(channel, level, message, ...)                                                       \
-    do                                                                                                  \
-    {                                                                                                   \
-        if ((channel))                                                                                  \
-        {                                                                                               \
-            OPENDCC_NAMESPACE::MessageContext ctx { (channel), __FILE__, __func__, __LINE__, (level) }; \
-            OPENDCC_NAMESPACE::Logger::log(ctx, message, ##__VA_ARGS__);                                \
-        }                                                                                               \
+#define OPENDCC_MSG(channel, level, message, ...)                                                                 \
+    do                                                                                                            \
+    {                                                                                                             \
+        const auto opendcc_log_channel = (channel);                                                               \
+        if (opendcc_log_channel)                                                                                  \
+        {                                                                                                         \
+            OPENDCC_NAMESPACE::MessageContext ctx { opendcc_log_channel, __FILE__, __func__, __LINE__, (level) }; \
+            OPENDCC_NAMESPACE::Logger::log(ctx, message, ##__VA_ARGS__);                                          \
+        }                                                                                                         \
     } while (false)
 
 /**
  * @def OPENDCC_INFO(message, ...)
  * @ingroup LoggingMacros
- * @brief Logs an informational message to a channel specified in `g_global_log_channel`.
+ * @brief Logs an informational message to the local channel, falling back to the library default.
  *
  * This macro is a convenience wrapper around OPENDCC_MSG for logging informational messages.
  *
  * @param message The format string of the message to log.
  * @param ... Additional arguments for the message format.
  */
-#define OPENDCC_INFO(message, ...) OPENDCC_MSG(OPENDCC_NAMESPACE::g_global_log_channel, OPENDCC_NAMESPACE::LogLevel::Info, message, ##__VA_ARGS__)
+#define OPENDCC_INFO(message, ...)                                                                                                                   \
+    OPENDCC_MSG(OPENDCC_NAMESPACE::Logger::get_source_channel(__FILE__, OPENDCC_NAMESPACE::g_global_log_channel), OPENDCC_NAMESPACE::LogLevel::Info, \
+                message, ##__VA_ARGS__)
 
 /**
  * @def OPENDCC_INFO_CHANNEL(channel, message, ...)
@@ -361,14 +386,16 @@ static inline bool initialize_library_log_channel(const char* name, const char* 
 /**
  * @def OPENDCC_DEBUG(message, ...)
  * @ingroup LoggingMacros
- * @brief Logs a debug message to a channel specified in `g_global_log_channel`.
+ * @brief Logs a debug message to the local channel, falling back to the library default.
  *
  * This macro is a convenience wrapper around OPENDCC_MSG for logging debug messages.
  *
  * @param message The format string of the message to log.
  * @param ... Additional arguments for the message format.
  */
-#define OPENDCC_DEBUG(message, ...) OPENDCC_MSG(OPENDCC_NAMESPACE::g_global_log_channel, OPENDCC_NAMESPACE::LogLevel::Debug, message, ##__VA_ARGS__)
+#define OPENDCC_DEBUG(message, ...)                                                                               \
+    OPENDCC_MSG(OPENDCC_NAMESPACE::Logger::get_source_channel(__FILE__, OPENDCC_NAMESPACE::g_global_log_channel), \
+                OPENDCC_NAMESPACE::LogLevel::Debug, message, ##__VA_ARGS__)
 
 /**
  * @def OPENDCC_DEBUG_CHANNEL(channel, message, ...)
@@ -385,14 +412,16 @@ static inline bool initialize_library_log_channel(const char* name, const char* 
 /**
  * @def OPENDCC_WARN(message, ...)
  * @ingroup LoggingMacros
- * @brief Logs a warning message to a channel specified in `g_global_log_channel`.
+ * @brief Logs a warning message to the local channel, falling back to the library default.
  *
  * This macro is a convenience wrapper around OPENDCC_MSG for logging warning messages.
  *
  * @param message The format string of the message to log.
  * @param ... Additional arguments for the message format.
  */
-#define OPENDCC_WARN(message, ...) OPENDCC_MSG(OPENDCC_NAMESPACE::g_global_log_channel, OPENDCC_NAMESPACE::LogLevel::Warning, message, ##__VA_ARGS__)
+#define OPENDCC_WARN(message, ...)                                                                                \
+    OPENDCC_MSG(OPENDCC_NAMESPACE::Logger::get_source_channel(__FILE__, OPENDCC_NAMESPACE::g_global_log_channel), \
+                OPENDCC_NAMESPACE::LogLevel::Warning, message, ##__VA_ARGS__)
 
 /**
  * @def OPENDCC_WARN_CHANNEL(message, ...)
@@ -409,14 +438,16 @@ static inline bool initialize_library_log_channel(const char* name, const char* 
 /**
  * @def OPENDCC_ERROR(message, ...)
  * @ingroup LoggingMacros
- * @brief Logs an error message to a channel specified in `g_global_log_channel`.
+ * @brief Logs an error message to the local channel, falling back to the library default.
  *
  * This macro is a convenience wrapper around OPENDCC_MSG for logging error messages.
  *
  * @param message The format string of the message to log.
  * @param ... Additional arguments for the message format.
  */
-#define OPENDCC_ERROR(message, ...) OPENDCC_MSG(OPENDCC_NAMESPACE::g_global_log_channel, OPENDCC_NAMESPACE::LogLevel::Error, message, ##__VA_ARGS__)
+#define OPENDCC_ERROR(message, ...)                                                                               \
+    OPENDCC_MSG(OPENDCC_NAMESPACE::Logger::get_source_channel(__FILE__, OPENDCC_NAMESPACE::g_global_log_channel), \
+                OPENDCC_NAMESPACE::LogLevel::Error, message, ##__VA_ARGS__)
 
 /**
  * @def OPENDCC_ERROR_CHANNEL(channel, message, ...)
@@ -433,14 +464,16 @@ static inline bool initialize_library_log_channel(const char* name, const char* 
 /**
  * @def OPENDCC_FATAL(message, ...)
  * @ingroup LoggingMacros
- * @brief Logs a fatal error message to a channel specified in `g_global_log_channel`.
+ * @brief Logs a fatal error message to the local channel, falling back to the library default.
  *
  * This macro is a convenience wrapper around OPENDCC_MSG for logging fatal error messages.
  *
  * @param message The format string of the message to log.
  * @param ... Additional arguments for the message format.
  */
-#define OPENDCC_FATAL(message, ...) OPENDCC_MSG(OPENDCC_NAMESPACE::g_global_log_channel, OPENDCC_NAMESPACE::LogLevel::Fatal, message, ##__VA_ARGS__)
+#define OPENDCC_FATAL(message, ...)                                                                               \
+    OPENDCC_MSG(OPENDCC_NAMESPACE::Logger::get_source_channel(__FILE__, OPENDCC_NAMESPACE::g_global_log_channel), \
+                OPENDCC_NAMESPACE::LogLevel::Fatal, message, ##__VA_ARGS__)
 
 /**
  * @def LOG_FATAL_CHANNEL(channel, message, ...)
@@ -466,17 +499,19 @@ static inline bool initialize_library_log_channel(const char* name, const char* 
 /**
  * @def OPENDCC_ASSERT(condition)
  * @ingroup LoggingMacros
- * @brief Logs a fatal error message to a channel specified in `g_global_log_channel`.
+ * @brief Logs a fatal error message to the local channel, falling back to the library default.
  *
  * This macro checks condition and calls fail_assert function to abort the program, if condition is false.
  *
  * @param condition The condition expression to check.
  */
-#define OPENDCC_ASSERT(condition)                                                                                                                  \
-    ((condition) ||                                                                                                                                \
-     OPENDCC_NAMESPACE::fail_assert(MessageContext { OPENDCC_NAMESPACE::g_global_log_channel ? OPENDCC_NAMESPACE::g_global_log_channel : "Logger", \
-                                                     __FILE__, __FUNCTION__, __LINE__, OPENDCC_NAMESPACE::LogLevel::Fatal },                       \
-                                    #condition))
+#define OPENDCC_ASSERT(condition)                                                                                                                    \
+    ((condition) ||                                                                                                                                  \
+     OPENDCC_NAMESPACE::fail_assert(                                                                                                                 \
+         MessageContext { OPENDCC_NAMESPACE::Logger::get_source_channel(                                                                             \
+                              __FILE__, OPENDCC_NAMESPACE::g_global_log_channel ? OPENDCC_NAMESPACE::g_global_log_channel : "opendcc.base.logging"), \
+                          __FILE__, __FUNCTION__, __LINE__, OPENDCC_NAMESPACE::LogLevel::Fatal },                                                    \
+         #condition))
 
 /**
  * @def OPENDCC_DEBUG_ASSERT(condition)

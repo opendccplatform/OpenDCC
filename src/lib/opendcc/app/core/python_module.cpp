@@ -14,6 +14,7 @@
 #include "opendcc/app/viewport/wrap_prim_refine_manager.h"
 #include "opendcc/app/viewport/wrap_def_cam_settings.h"
 #include "opendcc/app/core/wrap_settings.h"
+#include "opendcc/app/core/wrap_logging.h"
 #include "opendcc/app/core/wrap_undo.h"
 #include "opendcc/app/core/wrap_selection_list.h"
 #include "opendcc/app/viewport/wrap_tool_settings_registry.h"
@@ -27,7 +28,7 @@
 #include "opendcc/base/logging/logger.h"
 
 OPENDCC_NAMESPACE_OPEN
-OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("Application");
+OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.app");
 
 PYBIND11_MODULE(_core, m)
 {
@@ -38,6 +39,7 @@ PYBIND11_MODULE(_core, m)
     py_interp::bind::wrap_prim_refine_manager(m);
     py_interp::bind::wrap_def_cam_settings(m);
     py_interp::bind::wrap_settings(m);
+    py_interp::bind::wrap_logging(m);
     py_interp::bind::wrap_undo(m);
     py_interp::bind::wrap_selection_list(m);
     py_interp::bind::wrap_tool_settings_registry(m);

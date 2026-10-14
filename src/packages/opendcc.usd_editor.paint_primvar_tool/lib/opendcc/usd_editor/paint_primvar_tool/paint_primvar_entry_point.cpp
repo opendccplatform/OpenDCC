@@ -7,7 +7,7 @@
 #include "opendcc/usd_editor/paint_primvar_tool/paint_primvar_tool_settings.h"
 
 OPENDCC_NAMESPACE_OPEN
-OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("PaintPrimvar Tool");
+OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 
 OPENDCC_DEFINE_PACKAGE_ENTRY_POINT(PaintPrimvarToolEntryPoint);
 

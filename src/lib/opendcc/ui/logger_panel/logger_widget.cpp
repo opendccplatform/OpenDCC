@@ -7,7 +7,7 @@
 #include <opendcc/base/logging/logging_utils.h>
 
 OPENDCC_NAMESPACE_OPEN
-OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("Application");
+OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.ui.logger_panel");
 
 LoggerWidget::LoggerWidget(MessageModel* model, QWidget* parent /* = nullptr */)
     : QWidget(parent)

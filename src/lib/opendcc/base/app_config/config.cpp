@@ -5,7 +5,7 @@
 #include "opendcc/base/logging/logger.h"
 
 OPENDCC_NAMESPACE_OPEN
-OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("Application");
+OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.base.app_config");
 
 ApplicationConfig::ApplicationConfig(const std::string& filename)
 {

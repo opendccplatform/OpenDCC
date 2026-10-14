@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/viewport/tool_settings_view.h"
+#include "opendcc/base/logging/logger.h"
 #include "opendcc/app/core/application.h"
 #include "opendcc/app/ui/application_ui.h"
 #include "opendcc/app/viewport/iviewport_tool_context.h"
@@ -12,6 +13,7 @@
 #include "viewport_view.h"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.tools");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -68,7 +70,7 @@ void ToolSettingsView::on_viewport_tool_changed()
     if (auto tool_name = qobject_cast<QLabel*>(layout->itemAt(0)->widget()))
         tool_name->setText(tool_name_str);
     else
-        TF_CODING_ERROR("Tool name widget is not initialized.");
+        OPENDCC_ERROR("Tool name widget is not initialized.");
 }
 
 ToolSettingsViewRegistry& ToolSettingsViewRegistry::instance()
@@ -79,12 +81,20 @@ ToolSettingsViewRegistry& ToolSettingsViewRegistry::instance()
 
 bool ToolSettingsViewRegistry::register_tool_settings_view(const TfToken& name, const TfToken& context, std::function<QWidget*()> factory_fn)
 {
+    if (!factory_fn)
+    {
+        OPENDCC_ERROR("Failed to register tool settings widget '{}': factory is empty.", name.GetText());
+        return false;
+    }
     auto& self = instance();
 
     auto& registry = self.m_registry[context];
     auto iter = registry.find(name);
     if (iter != registry.end())
-        TF_WARN("Tool settings widget with name '%s' was already registered for context '%s'.", name.GetText(), context.GetText());
+    {
+        OPENDCC_ERROR("Tool settings widget with name '{}' was already registered for context '{}'.", name.GetText(), context.GetText());
+        return false;
+    }
     else
         registry[name] = factory_fn;
     return true;
@@ -108,14 +118,14 @@ QWidget* ToolSettingsViewRegistry::create_tool_settings_widget(const TfToken& na
     auto context_iter = registry.find(context);
     if (context_iter == registry.end())
     {
-        TF_WARN("Failed to create tool settings widget with name '%s' for context '%s'.", name.GetText(), context.GetText());
+        OPENDCC_DEBUG("Failed to create tool settings widget with name '{}' for context '{}'.", name.GetText(), context.GetText());
         return nullptr;
     }
 
     auto fn_iter = context_iter->second.find(name);
     if (fn_iter == context_iter->second.end())
     {
-        TF_WARN("Failed to create tool settings widget with name '%s' for context '%s'.", name.GetText(), context.GetText());
+        OPENDCC_DEBUG("Failed to create tool settings widget with name '{}' for context '{}'.", name.GetText(), context.GetText());
         return nullptr;
     }
     return fn_iter->second();

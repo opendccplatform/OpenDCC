@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/ui/node_icon_registry.h"
+#include "opendcc/base/logging/logger.h"
 #include "QPainter"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.ui.icons");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -24,7 +26,7 @@ void NodeIconRegistry::register_icon(const TfToken& context_type, const std::str
 {
     if (pixmap.isNull())
     {
-        TF_WARN("Failed to register icon for node type '%s' in '%s' context: pixmap is null.", node_type.c_str(), context_type.GetText());
+        OPENDCC_WARN("Failed to register icon for node type '{}' in '{}' context: pixmap is null.", node_type.c_str(), context_type.GetText());
         return;
     }
 
@@ -32,8 +34,8 @@ void NodeIconRegistry::register_icon(const TfToken& context_type, const std::str
     auto node_iter = node_icons.find(node_type);
     if (node_iter != node_icons.end())
     {
-        TF_WARN("Unable to register icon for node type '%s' in '%s' context: icon with the same node type already registered.", node_type.c_str(),
-                context_type.GetText());
+        OPENDCC_WARN("Unable to register icon for node type '{}' in '{}' context: icon with the same node type already registered.",
+                     node_type.c_str(), context_type.GetText());
         return;
     }
     auto& per_flags = node_icons[node_type];
@@ -64,8 +66,8 @@ void NodeIconRegistry::unregister_icon(const TfToken& context_type, const std::s
     auto iter = node_icons.find(node_type);
     if (iter == node_icons.end())
     {
-        TF_WARN("Unable to unregister icon path for node type '%s' in '%s' context: icon with specified node type is not registered.",
-                node_type.c_str(), context_type.GetText());
+        OPENDCC_WARN("Unable to unregister icon path for node type '{}' in '{}' context: icon with specified node type is not registered.",
+                     node_type.c_str(), context_type.GetText());
         return;
     }
     node_icons.erase(iter);
@@ -78,16 +80,16 @@ const QPixmap& NodeIconRegistry::get_icon(const TfToken& context_type, const std
     auto node_iter = node_icons.find(node_type);
     if (node_iter == node_icons.end())
     {
-        TF_WARN("Unable to get icon for node type '%s' in '%s' context: icon with specified node type is not registered.", node_type.c_str(),
-                context_type.GetText());
+        OPENDCC_DEBUG("Unable to get icon for node type '{}' in '{}' context: icon with specified node type is not registered.", node_type.c_str(),
+                      context_type.GetText());
         return empty_pixmap;
     }
 
     auto pixmap_iter = node_iter->second.find(flags);
     if (pixmap_iter == node_iter->second.end())
     {
-        TF_WARN("Unable to get icon for node type '%s' in '%s' context: icon with specified flags doesn't exist.", node_type.c_str(),
-                context_type.GetText());
+        OPENDCC_DEBUG("Unable to get icon for node type '{}' in '{}' context: icon with specified flags doesn't exist.", node_type.c_str(),
+                      context_type.GetText());
         return empty_pixmap;
     }
     return pixmap_iter->second.get_icon();
@@ -100,16 +102,16 @@ const std::string& NodeIconRegistry::get_svg(const TfToken& context_type, const 
     auto node_iter = node_icons.find(node_type);
     if (node_iter == node_icons.end())
     {
-        TF_WARN("Unable to get icon for node type '%s' in '%s' context: icon with specified node type is not registered.", node_type.c_str(),
-                context_type.GetText());
+        OPENDCC_DEBUG("Unable to get icon for node type '{}' in '{}' context: icon with specified node type is not registered.", node_type.c_str(),
+                      context_type.GetText());
         return empty_svg;
     }
 
     auto pixmap_iter = node_iter->second.find(flags);
     if (pixmap_iter == node_iter->second.end())
     {
-        TF_WARN("Unable to get icon for node type '%s' in '%s' context: icon with specified flags doesn't exist.", node_type.c_str(),
-                context_type.GetText());
+        OPENDCC_DEBUG("Unable to get icon for node type '{}' in '{}' context: icon with specified flags doesn't exist.", node_type.c_str(),
+                      context_type.GetText());
         return empty_svg;
     }
     return pixmap_iter->second.get_svg();

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/usd_editor/uv_editor/uv_scene_delegate.h"
+#include "opendcc/base/logging/logger.h"
 
 #include "opendcc/app/core/application.h"
 #include "opendcc/app/viewport/viewport_hydra_engine.h"
@@ -21,6 +22,7 @@
 #include <pxr/imaging/hio/glslfx.h>
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 PXR_NAMESPACE_USING_DIRECTIVE
 
 TF_DEFINE_PRIVATE_TOKENS(UVSceneDelegateTokens,
@@ -268,9 +270,9 @@ void UVSceneDelegate::repopulate_geometry(const SdfPathVector& highlighted_paths
                 const auto st_interpolation = st.GetInterpolation();
                 if (st_interpolation == UsdGeomTokens->constant || st_interpolation == UsdGeomTokens->uniform)
                 {
-                    TF_WARN("Unsupported interpolation type for primvar '%s' :"
-                            " expected 'vertex', 'varying' or 'faceVarying', got '%s'.",
-                            st.GetAttr().GetPath().GetText(), st_interpolation.GetText());
+                    OPENDCC_WARN("Unsupported interpolation type for primvar '{}' :"
+                                 " expected 'vertex', 'varying' or 'faceVarying', got '{}'.",
+                                 st.GetAttr().GetPath().GetText(), st_interpolation.GetText());
                     continue;
                 }
 

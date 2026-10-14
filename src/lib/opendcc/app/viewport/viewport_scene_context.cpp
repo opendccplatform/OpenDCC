@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/viewport/viewport_scene_context.h"
+#include "opendcc/base/logging/logger.h"
 #include <array>
 #include "viewport_scene_delegate.h"
 #include "opendcc/app/core/application.h"
 #include "opendcc/app/viewport/hydra_render_settings.h"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.scene");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -48,7 +50,7 @@ bool ViewportSceneContextRegistry::register_scene_context(const TfToken& context
 {
     const auto insert_result = m_registry.insert({ context_name, fn }).second;
     if (!insert_result)
-        TF_RUNTIME_ERROR("Failed to register scene context '%s': another context with the same name was already registered.", context_name.GetText());
+        OPENDCC_ERROR("Failed to register scene context '{}': another context with the same name was already registered.", context_name.GetText());
     return insert_result;
 }
 
@@ -56,7 +58,7 @@ bool ViewportSceneContextRegistry::unregister_scene_context(const TfToken& conte
 {
     const auto erase_result = m_registry.erase(context_name);
     if (erase_result == 0)
-        TF_RUNTIME_ERROR("Failed to unregister scene context '%s': the context with specified name was not found.", context_name.GetText());
+        OPENDCC_WARN("Failed to unregister scene context '{}': the context with specified name was not found.", context_name.GetText());
     return static_cast<bool>(erase_result);
 }
 
@@ -65,7 +67,7 @@ ViewportSceneContextPtr ViewportSceneContextRegistry::create_scene_context(const
     auto iter = m_registry.find(context_name);
     if (iter == m_registry.end())
     {
-        TF_RUNTIME_ERROR("Failed to create scene context '%s': factory function is not registered.", context_name.GetText());
+        OPENDCC_ERROR("Failed to create scene context '{}': factory function is not registered.", context_name.GetText());
         return nullptr;
     }
     return iter->second();

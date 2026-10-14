@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/usd_editor/material_editor/model.h"
+#include "opendcc/base/logging/logger.h"
 #include "opendcc/app/viewport/viewport_widget.h"
 #include "opendcc/app/viewport/prim_material_override.h"
 #include "opendcc/app/viewport/persistent_material_override.h"
@@ -28,6 +29,7 @@
 
 PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 class MaterialNodeMoveAction : public MoveAction
 {
 public:
@@ -188,9 +190,9 @@ namespace
         // Sanity check that the part after <UDIM> did not change.
         if (!TfStringEndsWith(first_tile_path, suffix))
         {
-            TF_WARN("Resolution of first udim tile gave ambiguous result. "
-                    "First tile for '%s' is '%s'.",
-                    path.GetAssetPath().c_str(), first_tile_path.c_str());
+            OPENDCC_WARN("Resolution of first udim tile gave ambiguous result. "
+                         "First tile for '{}' is '{}'.",
+                         path.GetAssetPath().c_str(), first_tile_path.c_str());
             return path;
         }
 

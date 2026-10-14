@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/viewport/viewport_usd_delegate.h"
+#include "opendcc/base/logging/logger.h"
 
 #include "opendcc/app/ui/application_ui.h"
 
@@ -35,6 +36,7 @@
 #include "viewport_locator_delegate.h"
 
 OPENDCC_NAMESPACE_OPEN
+OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.usd");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
@@ -530,7 +532,7 @@ HdPrimvarDescriptorVector ViewportUsdDelegate::GetPrimvarDescriptors(SdfPath con
             mat_iter = override.material_resource_overrides.find(ass_iter->second);
             if (mat_iter == override.material_resource_overrides.end())
             {
-                TF_RUNTIME_ERROR("Inconsistent material override");
+                OPENDCC_ERROR("Inconsistent material override");
                 return base_primvars;
             }
         }
@@ -887,7 +889,7 @@ void ViewportUsdDelegate::on_material_changed(const size_t material_id, const Pr
         }
         else
         {
-            TF_RUNTIME_ERROR("Inconsistent prim material override.");
+            OPENDCC_ERROR("Inconsistent prim material override.");
         }
     }
     else if (status == PrimMaterialOverride::Status::NEW)
@@ -963,7 +965,7 @@ void OPENDCC_NAMESPACE::ViewportUsdDelegate::on_material_resource_changed(const 
     }
     else
     {
-        TF_RUNTIME_ERROR("Inconsistent prim material override.");
+        OPENDCC_ERROR("Inconsistent prim material override.");
     }
 }
 
