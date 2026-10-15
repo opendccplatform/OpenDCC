@@ -4,7 +4,7 @@
 #include "opendcc/base/app_version.h"
 
 OPENDCC_NAMESPACE_OPEN
-namespace platform
+namespace base::app_version
 {
     const char* get_build_date_str()
     {

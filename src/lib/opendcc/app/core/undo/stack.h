@@ -38,7 +38,7 @@ namespace commands
         bool can_redo() const;
         void set_undo_limit(size_t limit);
 
-        void push(std::shared_ptr<UndoCommand> command, bool execute = false);
+        void push(std::shared_ptr<base::commands::UndoCommand> command, bool execute = false);
         void undo();
         void redo();
         void clear();
@@ -46,7 +46,7 @@ namespace commands
     private:
         struct CommandEntry
         {
-            std::shared_ptr<UndoCommand> cmd;
+            std::shared_ptr<base::commands::UndoCommand> cmd;
             std::string log_string;
         };
 
@@ -58,7 +58,7 @@ namespace commands
         size_t m_index = 0;
         mutable std::recursive_mutex m_mutex;
         std::deque<CommandEntry> m_commands;
-        PythonCommandInterface::EventDispatcherHandle m_callback_handle;
+        base::commands::python::PythonCommandInterface::EventDispatcherHandle m_callback_handle;
         bool m_enabled = true;
     };
 }

@@ -16,13 +16,13 @@ OPENDCC_NAMESPACE_OPEN
 
 class ViewportGLWidget;
 
-class OPENDCC_API ViewportIsolateSelectionCommand : public UndoCommand
+class OPENDCC_API ViewportIsolateSelectionCommand : public base::commands::UndoCommand
 {
 public:
     void set_ui_state(ViewportGLWidget* gl_widget, const std::function<void(bool)>& ui_callback = std::function<void(bool)>());
     virtual void undo() override;
     virtual void redo() override;
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
 private:
     ViewportGLWidget* m_gl_widget = nullptr;

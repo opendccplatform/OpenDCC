@@ -16,13 +16,14 @@
 #include "opendcc/base/utils/process.h"
 
 OPENDCC_NAMESPACE_OPEN
+
 namespace
 {
     uint64_t make_context_id()
     {
         // first 32 bits is pid, second 32 bits unique identifier in process.
         static uint64_t per_process_context_counter = std::numeric_limits<uint32_t>::max();
-        return per_process_context_counter++ | static_cast<uint64_t>(get_pid());
+        return per_process_context_counter++ | static_cast<uint64_t>(base::utils::get_pid());
     }
 };
 

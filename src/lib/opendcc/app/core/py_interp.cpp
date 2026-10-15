@@ -25,6 +25,8 @@ OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.python");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+namespace py_utils = base::py_utils;
+
 namespace
 {
     // This function is taken from Pixar's pyInterpreter.cpp with slightly changes
@@ -241,17 +243,17 @@ namespace
                         const auto code = code_attr.cast<int>();
                         if (code != 0)
                         {
-                            py_log_error(exc.what());
+                            py_utils::py_log_error(exc.what());
                         }
                         return code;
                     }
                 }
-                py_log_error(exc.what());
+                py_utils::py_log_error(exc.what());
                 return 1;
             }
             else
             {
-                py_log_error(exc.what());
+                py_utils::py_log_error(exc.what());
                 return -1;
             }
         }

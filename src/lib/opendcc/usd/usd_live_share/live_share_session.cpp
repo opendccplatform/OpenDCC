@@ -14,7 +14,7 @@ LiveShareSession::LiveShareSession(PXR_NS::UsdStageRefPtr stage, const ShareEdit
     : m_stage(stage)
     , m_connection_settings(connection_settings)
 {
-    auto tmp_folder_path = std::filesystem::temp_directory_path() / ("opendcc_live_share_" + get_pid_string());
+    auto tmp_folder_path = std::filesystem::temp_directory_path() / ("opendcc_live_share_" + base::utils::get_pid_string());
     std::filesystem::create_directories(tmp_folder_path);
     auto usd_tmp_folder = tmp_folder_path / "usd";
     std::filesystem::create_directories(usd_tmp_folder);

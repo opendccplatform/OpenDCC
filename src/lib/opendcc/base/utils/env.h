@@ -11,7 +11,12 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-UTILS_API std::string get_env(const std::string_view& name);
-UTILS_API bool set_env(const std::string_view& name, const std::string_view& value);
+namespace base::utils
+{
+
+    OPENDCC_BASE_UTILS_API std::string get_env(const std::string_view& name);
+    OPENDCC_BASE_UTILS_API bool set_env(const std::string_view& name, const std::string_view& value);
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

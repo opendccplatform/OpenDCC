@@ -10,10 +10,15 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-// Keep backend selection project-wide; changing it requires rebuilding native consumers.
-template <class T, class E>
-using Expected = tl::expected<T, E>;
-template <class E>
-using Unexpected = tl::unexpected<E>;
+namespace base::utils
+{
+
+    // Keep backend selection project-wide; changing it requires rebuilding native consumers.
+    template <class T, class E>
+    using Expected = tl::expected<T, E>;
+    template <class E>
+    using Unexpected = tl::unexpected<E>;
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

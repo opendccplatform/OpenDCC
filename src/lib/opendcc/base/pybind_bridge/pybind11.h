@@ -19,35 +19,38 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-template <class Return, class... Args>
-struct pybind_safe_callback
+namespace base::pybind_bridge
 {
-    pybind_safe_callback(const std::function<Return(Args...)>& func)
-        : function(func)
-    {
-    }
 
-    Return operator()(Args... args) const
+    template <class Return, class... Args>
+    struct pybind_safe_callback
     {
-        try
+        pybind_safe_callback(const std::function<Return(Args...)>& func)
+            : function(func)
         {
-            return function(std::forward<Args>(args)...);
         }
-        catch (const pybind11::error_already_set& exc)
+
+        Return operator()(Args... args) const
         {
-            py_log_error(exc.what());
-            if constexpr (!std::is_void_v<Return>)
+            try
             {
-                return Return();
+                return function(std::forward<Args>(args)...);
+            }
+            catch (const pybind11::error_already_set& exc)
+            {
+                base::py_utils::py_log_error(exc.what());
+                if constexpr (!std::is_void_v<Return>)
+                {
+                    return Return();
+                }
             }
         }
-    }
 
-    std::function<Return(Args...)> function;
-};
+        std::function<Return(Args...)> function;
+    };
 
-template <typename Return, typename... Args>
-pybind_safe_callback(std::function<Return(Args...)>) -> pybind_safe_callback<Return, Args...>;
+    template <typename Return, typename... Args>
+    pybind_safe_callback(std::function<Return(Args...)>) -> pybind_safe_callback<Return, Args...>;
 
 #define OPENDCC_PYBIND11_OVERRIDE_EXCEPTION_SAFE(ret_type, cname, fn, ...) \
     do                                                                     \
@@ -59,7 +62,7 @@ pybind_safe_callback(std::function<Return(Args...)>) -> pybind_safe_callback<Ret
         }                                                                  \
         catch (const pybind11::error_already_set& exc)                     \
         {                                                                  \
-            OPENDCC_NAMESPACE::py_log_error(exc.what());                   \
+            OPENDCC_NAMESPACE::base::py_utils::py_log_error(exc.what());   \
         }                                                                  \
         return cname::fn(__VA_ARGS__);                                     \
     } while (false)
@@ -74,9 +77,11 @@ pybind_safe_callback(std::function<Return(Args...)>) -> pybind_safe_callback<Ret
         }                                                                                                          \
         catch (const pybind11::error_already_set& exc)                                                             \
         {                                                                                                          \
-            OPENDCC_NAMESPACE::py_log_error(exc.what());                                                           \
+            OPENDCC_NAMESPACE::base::py_utils::py_log_error(exc.what());                                           \
         }                                                                                                          \
         pybind11::pybind11_fail("Tried to call pure virtual function \"" PYBIND11_STRINGIFY(cname) "::" #fn "\""); \
     } while (false)
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

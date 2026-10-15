@@ -17,7 +17,7 @@ OPENDCC_NAMESPACE_OPEN
 
 class NodeEditorScene;
 
-class OPENDCC_USD_NODE_EDITOR_API NodeEditorLayoutCommand : public UndoCommand
+class OPENDCC_USD_NODE_EDITOR_API NodeEditorLayoutCommand : public base::commands::UndoCommand
 {
 public:
     NodeEditorLayoutCommand() = default;
@@ -26,7 +26,7 @@ public:
     virtual void undo() override;
     virtual void redo() override;
 
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
 private:
     NodeEditorScene* m_scene = nullptr;

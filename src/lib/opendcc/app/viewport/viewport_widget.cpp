@@ -50,6 +50,8 @@
 OPENDCC_NAMESPACE_OPEN
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::CommandInterface;
+using base::commands::CommandArgs;
 std::unordered_set<ViewportWidget*> ViewportWidget::m_live_widgets;
 
 void ViewportWidget::setup_toolbar_action(QAction* action)
@@ -261,7 +263,7 @@ ViewportWidget::ViewportWidget(std::shared_ptr<ViewportSceneContext> scene_conte
             selection = Application::instance().get_prim_selection();
         }
 
-        auto isolate_cmd = CommandRegistry::create_command<ViewportIsolateSelectionCommand>("isolate");
+        auto isolate_cmd = base::commands::CommandRegistry::create_command<ViewportIsolateSelectionCommand>("isolate");
         isolate_cmd->set_ui_state(m_glwidget, [this, checked](bool undo) {
             if (!m_glwidget || !m_isolate_selection)
                 return;

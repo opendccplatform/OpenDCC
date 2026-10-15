@@ -33,6 +33,9 @@ namespace PXR_NS
 OPENDCC_NAMESPACE_OPEN
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::CommandInterface;
+using base::commands::CommandRegistry;
+
 ViewportRotateToolContext::ViewportRotateToolContext()
     : ViewportSelectToolContext()
 {

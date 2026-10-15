@@ -13,6 +13,9 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::logging::LogLevel;
+namespace logging = base::logging;
+
 LoggerOutputWidget::LoggerOutputWidget(MessageModel* model, QWidget* parent)
     : LoggerWidget(model, parent)
 {
@@ -118,11 +121,11 @@ void LoggerOutputWidget::append_html_messages(const QVector<Message>& messages)
 QString LoggerOutputWidget::to_formatted_log_level(LogLevel log_level) const
 {
     static std::unordered_map<LogLevel, QString> upper_log_level_strings = {
-        { LogLevel::Info, QString(log_level_to_str(LogLevel::Info).c_str()).toUpper() },
-        { LogLevel::Debug, QString(log_level_to_str(LogLevel::Debug).c_str()).toUpper() },
-        { LogLevel::Warning, QString(log_level_to_str(LogLevel::Warning).c_str()).toUpper() },
-        { LogLevel::Error, QString(log_level_to_str(LogLevel::Error).c_str()).toUpper() },
-        { LogLevel::Fatal, QString(log_level_to_str(LogLevel::Fatal).c_str()).toUpper() }
+        { LogLevel::Info, QString(logging::log_level_to_str(LogLevel::Info).c_str()).toUpper() },
+        { LogLevel::Debug, QString(logging::log_level_to_str(LogLevel::Debug).c_str()).toUpper() },
+        { LogLevel::Warning, QString(logging::log_level_to_str(LogLevel::Warning).c_str()).toUpper() },
+        { LogLevel::Error, QString(logging::log_level_to_str(LogLevel::Error).c_str()).toUpper() },
+        { LogLevel::Fatal, QString(logging::log_level_to_str(LogLevel::Fatal).c_str()).toUpper() }
     };
 
     QString result(7, ' ');

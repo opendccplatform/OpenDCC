@@ -36,7 +36,7 @@ class PixelInfoColorRect;
 class RenderViewGLWidgetTool;
 class RenderViewInternalImageCache;
 
-namespace ipc
+namespace base::ipc
 {
     class CommandServer;
 }
@@ -86,7 +86,8 @@ public:
         std::map<std::string, std::string> extra_attributes;
     };
 
-    RenderViewMainWindow(RenderViewPreferences&& preferences, const ApplicationConfig& config = ApplicationConfig());
+    RenderViewMainWindow(RenderViewPreferences&& preferences,
+                         const base::app_config::ApplicationConfig& config = base::app_config::ApplicationConfig());
     ~RenderViewMainWindow();
 
     static void set_instance(RenderViewMainWindow* instance) { m_global_instance = instance; }
@@ -266,11 +267,11 @@ private:
     RenderViewPreferences m_prefs;
     std::map<QAction*, QKeySequence> m_defaults_map;
     QTimer* m_timesago_timer;
-    ApplicationConfig m_app_config;
+    base::app_config::ApplicationConfig m_app_config;
 
-    std::unique_ptr<ipc::CommandServer> m_server;
+    std::unique_ptr<base::ipc::CommandServer> m_server;
 
-    ipc::ServerInfo m_main_server_info;
+    base::ipc::ServerInfo m_main_server_info;
 
     static RenderViewMainWindow* m_global_instance;
 

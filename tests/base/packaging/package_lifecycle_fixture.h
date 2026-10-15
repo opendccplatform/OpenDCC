@@ -19,11 +19,11 @@ namespace packaging_tests
 {
     inline bool is_library_loaded(const std::string& path)
     {
-        auto handle = get_dl_handle(path);
+        auto handle = base::utils::get_dl_handle(path);
 #ifndef OPENDCC_OS_WINDOWS
         // RTLD_NOLOAD acquires a reference; release the probe's reference.
         if (handle)
-            dl_close(handle);
+            base::utils::dl_close(handle);
 #endif
         return handle != nullptr;
     }
@@ -38,9 +38,9 @@ namespace packaging_tests
         pybind11::dict modules = sys.attr("modules");
         pybind11::object saved_module =
             modules.contains("lifecycle_entry_point") ? modules["lifecycle_entry_point"].cast<pybind11::object>() : pybind11::none();
-        std::string saved_environment_path = get_env("PATH");
-        PackageRegistry registry;
-        std::shared_ptr<FileSystemPackageProvider> provider = std::make_shared<FileSystemPackageProvider>();
+        std::string saved_environment_path = base::utils::get_env("PATH");
+        base::packaging::PackageRegistry registry;
+        std::shared_ptr<base::packaging::FileSystemPackageProvider> provider = std::make_shared<base::packaging::FileSystemPackageProvider>();
 
         LifecycleFixture()
         {
@@ -60,7 +60,7 @@ namespace packaging_tests
                 modules.attr("pop")("lifecycle_entry_point");
             if (!saved_module.is_none())
                 modules["lifecycle_entry_point"] = saved_module;
-            set_env("PATH", saved_environment_path);
+            base::utils::set_env("PATH", saved_environment_path);
         }
         void write_manifest(const std::string& name, const std::string& entry_points, const std::string& first_entry_point = "cpp",
                             const std::string& dependencies = "", bool fail_initialize = false)

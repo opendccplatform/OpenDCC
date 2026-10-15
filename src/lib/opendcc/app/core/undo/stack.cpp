@@ -13,6 +13,12 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::python::PythonCommandInterface;
+using base::commands::Command;
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+using base::commands::UndoCommand;
+
 using namespace commands;
 
 UndoStack::UndoStack(size_t undo_limit /*= 100*/)

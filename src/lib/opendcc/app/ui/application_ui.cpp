@@ -146,7 +146,7 @@ void ApplicationUI::init_ui()
     m_main_window = new MainWindow;
     m_main_window->show();
     Application::instance().m_ui_available = true;
-    CrashHandler::set_tag("ui_available", "yes");
+    base::crash_reporting::CrashHandler::set_tag("ui_available", "yes");
     py_interp::run_init_ui();
     Application::instance().m_event_dispatcher.dispatch(Application::EventType::AFTER_UI_LOAD);
     get_main_window()->load_panel_layout();

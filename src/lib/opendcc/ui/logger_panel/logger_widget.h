@@ -36,16 +36,16 @@ public:
     struct Message
     {
         QString channel;
-        LogLevel log_level;
+        base::logging::LogLevel log_level;
         QString message;
     };
 
     LoggerWidget(MessageModel* model, QWidget* parent = nullptr);
     virtual ~LoggerWidget();
 
-    static LogLevelFlags log_level_to_flag(LogLevel log_level);
+    static LogLevelFlags log_level_to_flag(base::logging::LogLevel log_level);
     static QString log_level_to_qstring(LogLevelFlags log_level);
-    static QColor log_level_to_color(LogLevel log_level);
+    static QColor log_level_to_color(base::logging::LogLevel log_level);
 
 public Q_SLOTS:
     virtual void on_selected_channels_changed(const QSet<QString>& selected_channels);
@@ -86,4 +86,4 @@ private:
 
 OPENDCC_NAMESPACE_CLOSE
 
-Q_DECLARE_METATYPE(OPENDCC_NAMESPACE::LogLevel);
+Q_DECLARE_METATYPE(OPENDCC_NAMESPACE::base::logging::LogLevel);

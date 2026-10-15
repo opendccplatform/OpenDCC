@@ -14,6 +14,13 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::UndoCommand;
+using base::commands::CommandResult;
+using base::commands::CommandArgs;
+using base::commands::CommandRegistry;
+using base::commands::CommandSyntax;
+using base::commands::CommandInterface;
+
 namespace
 {
     class SetValueCommand : public UndoCommand

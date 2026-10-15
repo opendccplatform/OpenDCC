@@ -12,20 +12,25 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-class OPENDCC_PACKAGING_API PackageEntryPoint
+namespace base::packaging
 {
-public:
-    PackageEntryPoint();
-    virtual ~PackageEntryPoint() = default;
 
-    virtual void initialize(const Package& package) {};
-    virtual void uninitialize(const Package& package) {};
-};
+    class OPENDCC_BASE_PACKAGING_API PackageEntryPoint
+    {
+    public:
+        PackageEntryPoint();
+        virtual ~PackageEntryPoint() = default;
 
-#define OPENDCC_DEFINE_PACKAGE_ENTRY_POINT(class_name)                             \
-    extern "C" OPENDCC_API_EXPORT PackageEntryPoint* opendcc_package_entry_point() \
-    {                                                                              \
-        return new class_name;                                                     \
+        virtual void initialize(const Package& package) {};
+        virtual void uninitialize(const Package& package) {};
+    };
+
+#define OPENDCC_DEFINE_PACKAGE_ENTRY_POINT(class_name)                                                                 \
+    extern "C" OPENDCC_API_EXPORT OPENDCC_NAMESPACE::base::packaging::PackageEntryPoint* opendcc_package_entry_point() \
+    {                                                                                                                  \
+        return new class_name;                                                                                         \
     }
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

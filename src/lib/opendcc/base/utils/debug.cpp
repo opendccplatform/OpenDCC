@@ -12,23 +12,28 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-bool is_debugged()
+namespace base::utils
 {
-#ifdef OPENDCC_OS_WINDOWS
-    return IsDebuggerPresent();
-#else
-    // Not implemented
-    return false;
-#endif
-}
 
-void trap_debugger()
-{
+    bool is_debugged()
+    {
 #ifdef OPENDCC_OS_WINDOWS
-    DebugBreak();
+        return IsDebuggerPresent();
 #else
-    // Not implemented
+        // Not implemented
+        return false;
 #endif
+    }
+
+    void trap_debugger()
+    {
+#ifdef OPENDCC_OS_WINDOWS
+        DebugBreak();
+#else
+        // Not implemented
+#endif
+    }
+
 }
 
 OPENDCC_NAMESPACE_CLOSE

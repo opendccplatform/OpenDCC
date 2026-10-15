@@ -14,6 +14,12 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::Command;
+using base::commands::CommandSyntax;
+using base::commands::UndoCommand;
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 std::string SelectPrimCommand::cmd_name("select");
 
 std::shared_ptr<Command> SelectPrimCommand::create_cmd()

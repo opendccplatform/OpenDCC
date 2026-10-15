@@ -26,7 +26,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 
-void HydraOpTranslatorEntryPoint::initialize(const Package& package)
+void HydraOpTranslatorEntryPoint::initialize(const base::packaging::Package& package)
 {
     auto& registry = HydraOpTranslatorRegistry::instance();
     registry.register_node(UsdHydraOpTokens->HydraOpUsdIn, [](const UsdPrim& prim) -> std::unique_ptr<HydraOpNodeTranslator> {

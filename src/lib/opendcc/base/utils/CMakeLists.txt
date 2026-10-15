@@ -25,7 +25,7 @@ add_library(
 
 make_folder("base" ${TARGET_NAME})
 
-target_compile_definitions(${TARGET_NAME} PRIVATE -DUTILS_API_EXPORT)
+target_compile_definitions(${TARGET_NAME} PRIVATE -DOPENDCC_BASE_UTILS_EXPORT)
 target_link_libraries(${TARGET_NAME} PUBLIC ${CMAKE_DL_LIBS})
 
 install(

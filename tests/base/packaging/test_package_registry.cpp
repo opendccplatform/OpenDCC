@@ -19,6 +19,15 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::packaging::PackageRegistry;
+using base::packaging::FileSystemPackageProvider;
+using base::packaging::PackageSharedData;
+using base::packaging::PackageAnyDictionary;
+using base::packaging::PackageAnyArray;
+using base::packaging::PackageResolver;
+using base::packaging::PackageProvider;
+using base::packaging::PackageData;
+
 namespace
 {
     struct RegistryFixture
@@ -102,7 +111,7 @@ DOCTEST_TEST_SUITE("PackagingRegistry")
         DOCTEST_CHECK(package.get_root_dir() == (directory.path() / "tokens" / "resolved").generic_u8string());
         const auto entries = std::any_cast<PackageAnyArray>(package.get_attribute("native.entry_point"));
         DOCTEST_REQUIRE(entries.size() == 1);
-        const auto library_path = find_package_attribute(std::any_cast<const PackageAnyDictionary&>(entries[0]), "path");
+        const auto library_path = base::packaging::find_package_attribute(std::any_cast<const PackageAnyDictionary&>(entries[0]), "path");
         DOCTEST_REQUIRE(library_path);
 #ifdef OPENDCC_OS_WINDOWS
         DOCTEST_CHECK(packaging_tests::values_equal(library_path->get(), std::any(std::string("plugin.dll"))));

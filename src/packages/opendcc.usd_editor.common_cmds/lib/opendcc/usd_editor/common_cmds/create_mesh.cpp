@@ -18,6 +18,11 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE;
 
+using base::commands::CommandSyntax;
+using base::commands::Command;
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 std::string commands::CreateMeshCommand::cmd_name = "create_mesh";
 
 CommandSyntax commands::CreateMeshCommand::cmd_syntax()
@@ -47,7 +52,7 @@ enum MeshShape
     Sphere
 };
 
-OPENDCC_NAMESPACE::CommandResult commands::CreateMeshCommand::execute(const CommandArgs& args)
+CommandResult commands::CreateMeshCommand::execute(const CommandArgs& args)
 {
     TfToken name = *args.get_arg<TfToken>(0);
     TfToken shape = *args.get_arg<TfToken>(1);

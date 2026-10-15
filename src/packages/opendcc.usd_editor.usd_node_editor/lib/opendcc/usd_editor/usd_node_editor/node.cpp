@@ -35,6 +35,11 @@
 
 PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
+using base::commands::UndoCommandBlock;
+using base::commands::CommandInterface;
+using base::commands::CommandArgs;
+using base::commands::CommandRegistry;
+
 const int s_time_delay = 500; // msec = 0.5 sec
 const qreal s_port_spacing = 5.0;
 const qreal s_port_radius = 5.0;

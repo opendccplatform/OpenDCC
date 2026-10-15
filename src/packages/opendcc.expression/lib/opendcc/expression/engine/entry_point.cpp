@@ -19,6 +19,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
 OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 
+using base::packaging::Package;
+
 static bool is_f_variable_old_mode()
 {
     if (auto env_value = getenv("OPENDCC_EXPRESSION_F_VARIABLE_OLD_MODE"))

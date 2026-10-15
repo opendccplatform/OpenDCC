@@ -11,16 +11,21 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-UTILS_API void* dl_open(const std::string& filename, int flags);
+namespace base::utils
+{
 
-UTILS_API int dl_close(void* handle);
+    OPENDCC_BASE_UTILS_API void* dl_open(const std::string& filename, int flags);
 
-UTILS_API void* dl_sym(void* handle, const char* name);
+    OPENDCC_BASE_UTILS_API int dl_close(void* handle);
 
-UTILS_API std::string dl_error_str();
+    OPENDCC_BASE_UTILS_API void* dl_sym(void* handle, const char* name);
 
-UTILS_API int dl_error();
+    OPENDCC_BASE_UTILS_API std::string dl_error_str();
 
-UTILS_API void* get_dl_handle(const std::string& library_name);
+    OPENDCC_BASE_UTILS_API int dl_error();
+
+    OPENDCC_BASE_UTILS_API void* get_dl_handle(const std::string& library_name);
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

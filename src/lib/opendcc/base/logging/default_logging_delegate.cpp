@@ -8,27 +8,32 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-DefaultLoggingDelegate::DefaultLoggingDelegate()
+namespace base::logging
 {
-    spdlog::set_pattern("[%H:%M:%S.%e] [%^%l%$]%v (%@)");
-    spdlog::default_logger()->set_level(spdlog::level::trace);
-}
 
-void DefaultLoggingDelegate::log(const MessageContext& context, const std::string& message)
-{
-    const auto format = "[{}]: {}";
-    spdlog::source_loc loc;
-    loc.filename = context.file;
-    loc.funcname = context.function;
-    loc.line = context.line;
+    DefaultLoggingDelegate::DefaultLoggingDelegate()
+    {
+        spdlog::set_pattern("[%H:%M:%S.%e] [%^%l%$]%v (%@)");
+        spdlog::default_logger()->set_level(spdlog::level::trace);
+    }
 
-    using level_enum = spdlog::level::level_enum;
-    static const std::unordered_map<LogLevel, level_enum> to_spd_level = {
-        { LogLevel::Unknown, level_enum::err },  { LogLevel::Info, level_enum::info }, { LogLevel::Debug, level_enum::debug },
-        { LogLevel::Warning, level_enum::warn }, { LogLevel::Error, level_enum::err }, { LogLevel::Fatal, level_enum::critical }
-    };
+    void DefaultLoggingDelegate::log(const MessageContext& context, const std::string& message)
+    {
+        const auto format = "[{}]: {}";
+        spdlog::source_loc loc;
+        loc.filename = context.file;
+        loc.funcname = context.function;
+        loc.line = context.line;
 
-    spdlog::log(loc, to_spd_level.at(context.level), format, context.channel, message);
+        using level_enum = spdlog::level::level_enum;
+        static const std::unordered_map<LogLevel, level_enum> to_spd_level = {
+            { LogLevel::Unknown, level_enum::err },  { LogLevel::Info, level_enum::info }, { LogLevel::Debug, level_enum::debug },
+            { LogLevel::Warning, level_enum::warn }, { LogLevel::Error, level_enum::err }, { LogLevel::Fatal, level_enum::critical }
+        };
+
+        spdlog::log(loc, to_spd_level.at(context.level), format, context.channel, message);
+    }
+
 }
 
 OPENDCC_NAMESPACE_CLOSE

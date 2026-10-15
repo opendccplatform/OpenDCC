@@ -35,11 +35,11 @@ DOCTEST_TEST_SUITE("StringUtils")
         for (const auto& test : cases)
         {
             DOCTEST_INFO("Input: " << test.input);
-            DOCTEST_CHECK(split(test.input, '.') == test.keep_empty);
-            DOCTEST_CHECK(split(test.input, '.', false) == test.keep_empty);
-            DOCTEST_CHECK(split(test.input, '.', true) == test.skip_empty);
+            DOCTEST_CHECK(base::utils::split(test.input, '.') == test.keep_empty);
+            DOCTEST_CHECK(base::utils::split(test.input, '.', false) == test.keep_empty);
+            DOCTEST_CHECK(base::utils::split(test.input, '.', true) == test.skip_empty);
         }
-        DOCTEST_CHECK(split("/a//b/", '/', true) == std::vector<std::string> { "a", "b" });
+        DOCTEST_CHECK(base::utils::split("/a//b/", '/', true) == std::vector<std::string> { "a", "b" });
     }
 }
 

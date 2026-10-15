@@ -137,7 +137,7 @@ void setup_qt_ui()
 
 QString get_config_path()
 {
-    QDir config_path(get_executable_path().c_str());
+    QDir config_path(OPENDCC_NAMESPACE::base::utils::get_executable_path().c_str());
     config_path.cdUp();
     config_path.cdUp();
 #ifdef OPENDCC_OS_MAC
@@ -150,7 +150,7 @@ QString get_config_path()
 int main(int argc, char** argv)
 {
     const auto config_path = get_config_path();
-    const auto app_config = ApplicationConfig(config_path.toLocal8Bit().toStdString());
+    const auto app_config = OPENDCC_NAMESPACE::base::app_config::ApplicationConfig(config_path.toLocal8Bit().toStdString());
     const auto dsn = app_config.get("sentry.dsn", std::string());
 
     if (dsn.empty())

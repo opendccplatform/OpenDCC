@@ -14,7 +14,7 @@ OPENDCC_NAMESPACE_OPEN
 
 void update_timebar();
 
-class ANIM_ENGINE_API AddCurvesAndKeysCommand : public UndoCommand
+class ANIM_ENGINE_API AddCurvesAndKeysCommand : public base::commands::UndoCommand
 {
 public:
     virtual ~AddCurvesAndKeysCommand() {}
@@ -22,7 +22,7 @@ public:
                            const AnimEngine::CurveIdToKeyframesMap& keyframes);
     virtual void undo() override;
     virtual void redo() override;
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
 private:
     PXR_NS::UsdStageCache::Id m_stage_id;
@@ -31,13 +31,13 @@ private:
     AnimEngine::CurveIdToKeyframesMap m_keyframes_to_add;
 };
 
-class ANIM_ENGINE_API RemoveCurvesAndKeysCommand : public UndoCommand
+class ANIM_ENGINE_API RemoveCurvesAndKeysCommand : public base::commands::UndoCommand
 {
 public:
     virtual ~RemoveCurvesAndKeysCommand() {}
     virtual void undo() override;
     virtual void redo() override;
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
 private:
     PXR_NS::UsdStageCache::Id m_stage_id;
@@ -47,7 +47,7 @@ private:
     AnimEngine::CurveIdToKeyframesMap m_keyframes;
 };
 
-class ANIM_ENGINE_API ChangeKeyframesCommand : public UndoCommand
+class ANIM_ENGINE_API ChangeKeyframesCommand : public base::commands::UndoCommand
 {
 public:
     void set_start_keyframes(const AnimEngine::CurveIdToKeyframesMap& start_key_frames);
@@ -57,7 +57,7 @@ public:
     virtual void undo() override;
     virtual void redo() override;
 
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
 private:
     PXR_NS::UsdStageCache::Id m_stage_id;
@@ -65,14 +65,14 @@ private:
     AnimEngine::CurveIdToKeyframesMap m_end_keyframes_list;
 };
 
-class ANIM_ENGINE_API ChangeInfinityTypeCommand : public UndoCommand
+class ANIM_ENGINE_API ChangeInfinityTypeCommand : public base::commands::UndoCommand
 {
 public:
     virtual ~ChangeInfinityTypeCommand() {}
     virtual void undo() override;
     virtual void redo() override;
 
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
 private:
     PXR_NS::UsdStageCache::Id m_stage_id;

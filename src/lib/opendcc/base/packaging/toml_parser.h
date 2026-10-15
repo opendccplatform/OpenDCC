@@ -11,10 +11,15 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-class OPENDCC_PACKAGING_API TOMLParser final : public PackageParser
+namespace base::packaging
 {
-public:
-    PackageData parse(const std::string& path) override;
-};
+
+    class OPENDCC_BASE_PACKAGING_API TOMLParser final : public PackageParser
+    {
+    public:
+        PackageData parse(const std::string& path) override;
+    };
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

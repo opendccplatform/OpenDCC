@@ -60,7 +60,7 @@ HydraOpViewportUIExtension::HydraOpViewportUIExtension(ViewportWidget* viewport_
         }
         auto gl_widget = get_viewport_widget()->get_gl_widget();
 
-        auto isolate_cmd = CommandRegistry::create_command<ViewportIsolateSelectionCommand>("isolate");
+        auto isolate_cmd = base::commands::CommandRegistry::create_command<ViewportIsolateSelectionCommand>("isolate");
         isolate_cmd->set_ui_state(gl_widget, [this, checked, gl_widget, isolate_selection](bool undo) {
             if (!gl_widget || !isolate_selection)
                 return;
@@ -68,7 +68,7 @@ HydraOpViewportUIExtension::HydraOpViewportUIExtension(ViewportWidget* viewport_
             isolate_selection->setChecked(undo ? !checked : checked);
             gl_widget->update();
         });
-        CommandInterface::execute(isolate_cmd, CommandArgs().kwarg("paths", selection));
+        base::commands::CommandInterface::execute(isolate_cmd, base::commands::CommandArgs().kwarg("paths", selection));
     });
 
     viewport_widget->toolbar_add_action(isolate_selection);

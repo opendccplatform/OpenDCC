@@ -9,6 +9,8 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::packaging::Package;
+
 OPENDCC_DEFINE_PACKAGE_ENTRY_POINT(HydraOpAttributeViewEntryPoint);
 
 PXR_NAMESPACE_USING_DIRECTIVE

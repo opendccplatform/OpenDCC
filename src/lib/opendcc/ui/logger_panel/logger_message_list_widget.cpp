@@ -15,6 +15,8 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::logging::LogLevel;
+
 LoggerMessageListWidget::LoggerMessageListWidget(MessageModel* model, QWidget* parent)
     : LoggerWidget(model, parent)
 {
@@ -59,7 +61,7 @@ LoggerMessageListWidget::LoggerMessageListWidget(MessageModel* model, QWidget* p
     };
     for (const auto& entry : log_level_defaults)
     {
-        auto action = new QAction(log_level_to_str(entry.level).c_str());
+        auto action = new QAction(base::logging::log_level_to_str(entry.level).c_str());
         action->setCheckable(true);
         action->setChecked(entry.enable);
         const auto log_level_flag = log_level_to_flag(entry.level);

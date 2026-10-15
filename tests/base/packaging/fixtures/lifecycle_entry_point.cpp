@@ -11,6 +11,9 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::packaging::PackageEntryPoint;
+using base::packaging::Package;
+
 class LifecycleEntryPoint : public PackageEntryPoint
 {
 public:
@@ -26,7 +29,8 @@ public:
         record("native:init", package);
         const auto environment_variable = package.get_attribute("test.environment_variable");
         if ((std::any_cast<std::string>(&environment_variable) != nullptr))
-            std::ofstream(m_filename, std::ios::app) << "native:environment:" << get_env(std::any_cast<std::string>(environment_variable)) << '\n';
+            std::ofstream(m_filename, std::ios::app)
+                << "native:environment:" << base::utils::get_env(std::any_cast<std::string>(environment_variable)) << '\n';
         const auto fail = package.get_attribute("test.fail_initialize");
         if ((std::any_cast<bool>(&fail) != nullptr) && std::any_cast<bool>(fail))
             throw std::runtime_error("Native test initialization failed");

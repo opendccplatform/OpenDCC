@@ -13,6 +13,9 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::CommandInterface;
+using base::commands::CommandArgs;
+
 static const float s_point_rect_size = 0.01f;
 static int s_bezier_curve_refine_level = 2;
 

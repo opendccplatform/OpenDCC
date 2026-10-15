@@ -13,6 +13,10 @@
 OPENDCC_NAMESPACE_OPEN
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::logging::MessageContext;
+using base::logging::LogLevel;
+using base::logging::Logger;
+
 struct LogEntry
 {
     MessageContext ctx;

@@ -7,83 +7,84 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-IPC_NAMESPACE_OPEN
-
-static std::string make_tcp_address(const std::string& hostname, const uint32_t port)
+namespace base::ipc
 {
-    const auto port_str = port == ServerInfo::s_invalid_port ? "*" : std::to_string(port);
-    return "tcp://" + hostname + ":" + port_str;
-}
 
-static const auto tcp_port_max = 65'535;
-
-/* static */
-ServerInfo ServerInfo::from_string(const std::string& tcp_address)
-{
-    ServerInfo result;
-
-    // tcp_address must be:
-    // tcp://[0-255].[0-255].[0-255].[0-255]:[0-65'535]
-    // or
-    // tcp://url:[0-65'535]
-    const auto split = OPENDCC_NAMESPACE::split(tcp_address, ':');
-
-    if (split.size() != 3)
+    static std::string make_tcp_address(const std::string& hostname, const uint32_t port)
     {
+        const auto port_str = port == ServerInfo::s_invalid_port ? "*" : std::to_string(port);
+        return "tcp://" + hostname + ":" + port_str;
+    }
+
+    static const auto tcp_port_max = 65'535;
+
+    /* static */
+    ServerInfo ServerInfo::from_string(const std::string& tcp_address)
+    {
+        ServerInfo result;
+
+        // tcp_address must be:
+        // tcp://[0-255].[0-255].[0-255].[0-255]:[0-65'535]
+        // or
+        // tcp://url:[0-65'535]
+        const auto split = utils::split(tcp_address, ':');
+
+        if (split.size() != 3)
+        {
+            return result;
+        }
+
+        if (split[0] != "tcp")
+        {
+            return result;
+        }
+
+        uint32_t port;
+        try
+        {
+            port = std::stoi(split[2]);
+        }
+        catch (...)
+        {
+            return result;
+        }
+
+        auto hostname = split[1];
+        if (hostname.size() <= 2 || hostname[0] != '/' || hostname[1] != '/')
+        {
+            return result;
+        }
+
+        hostname = std::string(hostname.begin() + 2, hostname.end());
+
+        result.input_port = port;
+        result.hostname = hostname;
+
         return result;
     }
 
-    if (split[0] != "tcp")
+    bool ServerInfo::valid() const
     {
-        return result;
-    }
+        const auto empty = hostname.empty();
 
-    uint32_t port;
-    try
-    {
-        port = std::stoi(split[2]);
-    }
-    catch (...)
-    {
-        return result;
-    }
+        if (input_port == s_invalid_port)
+        {
+            return !empty;
+        }
 
-    auto hostname = split[1];
-    if (hostname.size() <= 2 || hostname[0] != '/' || hostname[1] != '/')
-    {
-        return result;
-    }
+        if (input_port < 0 || input_port > tcp_port_max)
+        {
+            return false;
+        }
 
-    hostname = std::string(hostname.begin() + 2, hostname.end());
-
-    result.input_port = port;
-    result.hostname = hostname;
-
-    return result;
-}
-
-bool ServerInfo::valid() const
-{
-    const auto empty = hostname.empty();
-
-    if (input_port == s_invalid_port)
-    {
         return !empty;
     }
 
-    if (input_port < 0 || input_port > tcp_port_max)
+    std::string ServerInfo::get_tcp_address() const
     {
-        return false;
+        return make_tcp_address(hostname, input_port);
     }
 
-    return !empty;
 }
-
-std::string ServerInfo::get_tcp_address() const
-{
-    return make_tcp_address(hostname, input_port);
-}
-
-IPC_NAMESPACE_CLOSE
 
 OPENDCC_NAMESPACE_CLOSE

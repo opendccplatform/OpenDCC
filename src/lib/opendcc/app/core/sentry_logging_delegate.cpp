@@ -7,6 +7,10 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::logging::Logger;
+using base::logging::MessageContext;
+using base::logging::LogLevel;
+
 SentryLoggingDelegate::SentryLoggingDelegate()
 {
     Logger::add_logging_delegate(this);
@@ -27,7 +31,7 @@ void SentryLoggingDelegate::log(const MessageContext& context, const std::string
         sentry_value_set_by_key(msg_crumb, "category", sentry_value_new_string(context.channel.c_str()));
     }
 
-    auto log_level_str = log_level_to_str(context.level);
+    auto log_level_str = base::logging::log_level_to_str(context.level);
     if (context.level == LogLevel::Unknown)
     {
         log_level_str = "error";

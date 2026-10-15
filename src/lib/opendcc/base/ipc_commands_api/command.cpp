@@ -7,57 +7,58 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-IPC_NAMESPACE_OPEN
-
-static const auto arg_splitter = ' ';
-static const auto key_value_splitter = '=';
-
-std::string Command::to_string() const
+namespace base::ipc
 {
-    std::string result;
 
-    result += "name=" + name;
+    static const auto arg_splitter = ' ';
+    static const auto key_value_splitter = '=';
 
-    for (const auto& arg : args)
+    std::string Command::to_string() const
     {
-        result += arg_splitter + arg.first + key_value_splitter + arg.second;
+        std::string result;
+
+        result += "name=" + name;
+
+        for (const auto& arg : args)
+        {
+            result += arg_splitter + arg.first + key_value_splitter + arg.second;
+        }
+
+        return result;
     }
 
-    return result;
-}
-
-/* static */
-Command Command::from_string(const std::string& string)
-{
-    Command result;
-
-    const auto splits = OPENDCC_NAMESPACE::split(string, arg_splitter);
-
-    for (const auto& split : splits)
+    /* static */
+    Command Command::from_string(const std::string& string)
     {
-        const auto args_split = OPENDCC_NAMESPACE::split(split, key_value_splitter);
+        Command result;
 
-        if (args_split.size() != 2)
+        const auto splits = utils::split(string, arg_splitter);
+
+        for (const auto& split : splits)
         {
-            continue;
+            const auto args_split = utils::split(split, key_value_splitter);
+
+            if (args_split.size() != 2)
+            {
+                continue;
+            }
+
+            const auto& key = args_split[0];
+            const auto& value = args_split[1];
+
+            if (key == "name")
+            {
+                result.name = value;
+            }
+            else
+            {
+                result.args[key] = value;
+            }
         }
 
-        const auto& key = args_split[0];
-        const auto& value = args_split[1];
-
-        if (key == "name")
-        {
-            result.name = value;
-        }
-        else
-        {
-            result.args[key] = value;
-        }
+        return result;
     }
 
-    return result;
 }
-
-IPC_NAMESPACE_CLOSE
 
 OPENDCC_NAMESPACE_CLOSE

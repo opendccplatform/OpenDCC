@@ -12,6 +12,11 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-OPENDCC_PACKAGING_API extern std::unordered_map<std::string, std::any> s_core_property_defaults;
+namespace base::packaging
+{
+
+    OPENDCC_BASE_PACKAGING_API extern std::unordered_map<std::string, std::any> s_core_property_defaults;
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

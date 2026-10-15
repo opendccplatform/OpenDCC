@@ -126,7 +126,7 @@ private:
     BezierCurvePtr m_curve;
     BezierToolStrategyPtr m_strategy;
 
-    std::shared_ptr<UndoCommandBlock> m_command_block;
+    std::shared_ptr<base::commands::UndoCommandBlock> m_command_block;
     std::unique_ptr<StageObjectChangedWatcher> m_stage_watcher;
     Application::CallbackHandle m_stage_changed_callback;
     BezierCurve::TangentMode m_tangent_mode = BezierCurve::TangentMode::Normal;

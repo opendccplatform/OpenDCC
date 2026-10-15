@@ -18,42 +18,53 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::packaging::PackageSharedData;
+namespace packaging = base::packaging;
+using base::packaging::PackageValueError;
+using base::packaging::PackageAnyArray;
+using base::packaging::PackageRegistry;
+using base::packaging::FileSystemPackageProvider;
+using base::utils::ScopeGuard;
+using base::packaging::PackageResolver;
+using base::packaging::PackageLoader;
+using base::packaging::PackageAttribute;
+
 DOCTEST_TEST_SUITE("PackagingValues")
 {
     DOCTEST_TEST_CASE("dotted_lookup_and_owned_defaults")
     {
         PackageSharedData data;
         data.name = "values";
-        DOCTEST_REQUIRE(set_package_attribute(data.resolved_attributes, "nested.name", std::string("value")));
-        DOCTEST_REQUIRE(set_package_attribute(data.resolved_attributes, "nested.count", int64_t { 42 }));
+        DOCTEST_REQUIRE(packaging::set_package_attribute(data.resolved_attributes, "nested.name", std::string("value")));
+        DOCTEST_REQUIRE(packaging::set_package_attribute(data.resolved_attributes, "nested.count", int64_t { 42 }));
         data.resolved_attributes["literal.key"] = std::string("literal");
         data.resolved_attributes["empty"] = std::any();
-        const auto empty = find_package_attribute(data.resolved_attributes, "empty");
+        const auto empty = packaging::find_package_attribute(data.resolved_attributes, "empty");
         DOCTEST_REQUIRE(empty);
         DOCTEST_CHECK_FALSE(empty->get().has_value());
         DOCTEST_CHECK(&empty->get() == &data.resolved_attributes.at("empty"));
         DOCTEST_CHECK(data.get_resolved("nested.name", "fallback") == "value");
         DOCTEST_CHECK(data.get_resolved(".nested..name.", "fallback") == "value");
-        DOCTEST_CHECK_FALSE(find_package_attribute(data.resolved_attributes, ""));
-        const auto missing = find_package_attribute(data.resolved_attributes, "...");
+        DOCTEST_CHECK_FALSE(packaging::find_package_attribute(data.resolved_attributes, ""));
+        const auto missing = packaging::find_package_attribute(data.resolved_attributes, "...");
         DOCTEST_REQUIRE_FALSE(missing);
         DOCTEST_CHECK(missing.error() == PackageValueError::NOT_FOUND);
-        DOCTEST_REQUIRE(set_package_attribute(data.resolved_attributes, ".nested..enabled.", true));
+        DOCTEST_REQUIRE(packaging::set_package_attribute(data.resolved_attributes, ".nested..enabled.", true));
         DOCTEST_CHECK(data.get_resolved("nested.enabled", false));
         const auto attribute_count = data.resolved_attributes.size();
-        DOCTEST_REQUIRE(set_package_attribute(data.resolved_attributes, "...", true));
+        DOCTEST_REQUIRE(packaging::set_package_attribute(data.resolved_attributes, "...", true));
         DOCTEST_CHECK(data.resolved_attributes.size() == attribute_count);
         DOCTEST_CHECK(data.get_resolved("missing", "fallback") == "fallback");
         DOCTEST_CHECK(data.get_resolved("nested.count", "fallback") == "fallback");
-        DOCTEST_CHECK_FALSE(find_package_attribute(data.resolved_attributes, "nested.name.child"));
-        DOCTEST_CHECK_FALSE(find_package_attribute(data.resolved_attributes, "literal.key"));
+        DOCTEST_CHECK_FALSE(packaging::find_package_attribute(data.resolved_attributes, "nested.name.child"));
+        DOCTEST_CHECK_FALSE(packaging::find_package_attribute(data.resolved_attributes, "literal.key"));
         DOCTEST_CHECK(std::any_cast<std::string>(data.resolved_attributes.at("literal.key")) == "literal");
         DOCTEST_CHECK(data.get_resolved<PackageAnyArray>("missing").empty());
         const auto copied_default = data.get_resolved<PackageAnyArray>("missing", PackageAnyArray { std::string("owned") });
         DOCTEST_CHECK(std::any_cast<std::string>(copied_default.front()) == "owned");
-        DOCTEST_REQUIRE(set_package_attribute(data.resolved_attributes, "nested.count.child", false));
+        DOCTEST_REQUIRE(packaging::set_package_attribute(data.resolved_attributes, "nested.count.child", false));
         DOCTEST_CHECK_FALSE(data.get_resolved("nested.count.child", true));
-        const auto rejected = set_package_attribute(data.resolved_attributes, "nested.count", std::vector<int> { 1 });
+        const auto rejected = packaging::set_package_attribute(data.resolved_attributes, "nested.count", std::vector<int> { 1 });
         DOCTEST_REQUIRE_FALSE(rejected);
         DOCTEST_CHECK(rejected.error() == PackageValueError::UNSUPPORTED_TYPE);
         DOCTEST_CHECK_FALSE(data.get_resolved("nested.count.child", true));
@@ -84,10 +95,10 @@ DOCTEST_TEST_SUITE("PackagingValues")
         data->name = "invalid_entries";
         data->root_dir = directory.path().generic_u8string();
         const PackageAnyArray invalid_entries { false, std::string("invalid"), int64_t { 42 } };
-        DOCTEST_REQUIRE(set_package_attribute(data->resolved_attributes, "native.load", invalid_entries));
-        DOCTEST_REQUIRE(set_package_attribute(data->resolved_attributes, "python.import", invalid_entries));
-        DOCTEST_REQUIRE(set_package_attribute(data->resolved_attributes, "python.path", invalid_entries));
-        DOCTEST_REQUIRE(set_package_attribute(data->resolved_attributes, "environment.OPENDCC_INVALID_ENTRIES", invalid_entries));
+        DOCTEST_REQUIRE(packaging::set_package_attribute(data->resolved_attributes, "native.load", invalid_entries));
+        DOCTEST_REQUIRE(packaging::set_package_attribute(data->resolved_attributes, "python.import", invalid_entries));
+        DOCTEST_REQUIRE(packaging::set_package_attribute(data->resolved_attributes, "python.path", invalid_entries));
+        DOCTEST_REQUIRE(packaging::set_package_attribute(data->resolved_attributes, "environment.OPENDCC_INVALID_ENTRIES", invalid_entries));
         std::unordered_map<std::string, std::shared_ptr<PackageSharedData>> packages { { data->name, data } };
         auto resolver = std::make_shared<PackageResolver>();
         resolver->set_packages(packages);

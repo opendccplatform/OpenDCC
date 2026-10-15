@@ -12,6 +12,12 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE;
 
+using base::commands::CommandSyntax;
+using base::commands::Command;
+using base::commands::CommandArgs;
+using base::commands::CommandInterface;
+using base::commands::CommandResult;
+
 std::string commands::CreateMaterialCommand::cmd_name = "create_material";
 
 CommandSyntax commands::CreateMaterialCommand::cmd_syntax()
@@ -28,7 +34,7 @@ std::shared_ptr<Command> commands::CreateMaterialCommand::create_cmd()
     return std::make_shared<commands::CreateMaterialCommand>();
 }
 
-OPENDCC_NAMESPACE::CommandResult commands::CreateMaterialCommand::execute(const CommandArgs& args)
+CommandResult commands::CreateMaterialCommand::execute(const CommandArgs& args)
 {
     TfToken scope_name = UsdUtilsGetMaterialsScopeName();
     TfToken name = *args.get_arg<TfToken>(0);

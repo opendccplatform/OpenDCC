@@ -10,11 +10,11 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-class BezierToolEntryPoint final : public PackageEntryPoint
+class BezierToolEntryPoint final : public base::packaging::PackageEntryPoint
 {
 public:
-    void initialize(const Package& package) override;
-    void uninitialize(const Package& package) override;
+    void initialize(const base::packaging::Package& package) override;
+    void uninitialize(const base::packaging::Package& package) override;
 };
 
 OPENDCC_NAMESPACE_CLOSE

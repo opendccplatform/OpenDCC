@@ -34,7 +34,7 @@ opendcc_make_library(
     utils
     pybind11::pybind11
     PRIVATE_DEFINITIONS
-    OPENDCC_PACKAGING_EXPORT
+    OPENDCC_BASE_PACKAGING_EXPORT
     PYMODULE_NO_BOOST_PYTHON
     PYMODULE_NAME
     packaging

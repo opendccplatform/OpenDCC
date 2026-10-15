@@ -22,7 +22,7 @@ make_folder("base/commands_api" ${TARGET_NAME})
 
 target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src/lib ${Boost_INCLUDE_DIR})
 target_precompile_headers(${TARGET_NAME} PRIVATE ${PRECOMPILED_INCLUDES})
-target_compile_definitions(${TARGET_NAME} PRIVATE -DCOMMANDS_API_EXPORT)
+target_compile_definitions(${TARGET_NAME} PRIVATE -DOPENDCC_BASE_COMMANDS_EXPORT)
 target_link_libraries(${TARGET_NAME} test_runner logging)
 install(TARGETS ${TARGET_NAME})
 if(MSVC)

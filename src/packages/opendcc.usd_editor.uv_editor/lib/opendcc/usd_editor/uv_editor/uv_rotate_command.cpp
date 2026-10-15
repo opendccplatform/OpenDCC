@@ -22,6 +22,12 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::UndoCommand;
+using base::commands::CommandRegistry;
+using base::commands::CommandSyntax;
+using base::commands::CommandResult;
+using base::commands::CommandArgs;
+
 //////////////////////////////////////////////////////////////////////////
 // UvRotateCommand
 //////////////////////////////////////////////////////////////////////////

@@ -206,7 +206,7 @@ VtTokenArray UsdPropertyProxy::get_options() const
     VtValue options = sdr_metadata["options"];
     if (options.IsHolding<std::string>())
     {
-        for (auto option : split(options.UncheckedGet<std::string>(), '|'))
+        for (auto option : base::utils::split(options.UncheckedGet<std::string>(), '|'))
             options_array.push_back(TfToken(option));
     }
 

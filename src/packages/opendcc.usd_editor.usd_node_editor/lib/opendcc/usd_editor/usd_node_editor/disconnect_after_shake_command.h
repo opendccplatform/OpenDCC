@@ -18,8 +18,8 @@ namespace commands
 }
 
 class DisconnectAfterShakeCommand
-    : public UndoCommand
-    , public ToolCommand
+    : public base::commands::UndoCommand
+    , public base::commands::ToolCommand
 {
 public:
     DisconnectAfterShakeCommand() = default;
@@ -31,8 +31,8 @@ public:
     void start_block();
     void end_block();
 
-    CommandArgs make_args() const override;
-    CommandResult execute(const CommandArgs& args) override;
+    base::commands::CommandArgs make_args() const override;
+    base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
 private:
     std::unique_ptr<commands::UndoInverse> m_inverse;

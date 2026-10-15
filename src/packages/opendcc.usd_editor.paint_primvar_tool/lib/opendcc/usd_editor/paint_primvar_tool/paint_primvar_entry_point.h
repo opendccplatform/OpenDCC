@@ -11,12 +11,12 @@
 #include "opendcc/base/packaging/package_entry_point.h"
 
 OPENDCC_NAMESPACE_OPEN
-class PaintPrimvarToolEntryPoint : public PackageEntryPoint
+class PaintPrimvarToolEntryPoint : public base::packaging::PackageEntryPoint
 {
 public:
     PaintPrimvarToolEntryPoint();
     virtual ~PaintPrimvarToolEntryPoint();
-    void initialize(const Package& package) override;
-    void uninitialize(const Package& package) override;
+    void initialize(const base::packaging::Package& package) override;
+    void uninitialize(const base::packaging::Package& package) override;
 };
 OPENDCC_NAMESPACE_CLOSE

@@ -13,26 +13,31 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-class OPENDCC_PACKAGING_API FileSystemPackageProvider final : public PackageProvider
+namespace base::packaging
 {
-public:
-    FileSystemPackageProvider();
-    FileSystemPackageProvider(const FileSystemPackageProvider&) = delete;
-    FileSystemPackageProvider(FileSystemPackageProvider&&) = delete;
-    FileSystemPackageProvider& operator=(const FileSystemPackageProvider&) = delete;
-    FileSystemPackageProvider& operator=(FileSystemPackageProvider&&) = delete;
 
-    void fetch() override;
-    const PackageDataList& get_cached_packages() const override;
+    class OPENDCC_BASE_PACKAGING_API FileSystemPackageProvider final : public PackageProvider
+    {
+    public:
+        FileSystemPackageProvider();
+        FileSystemPackageProvider(const FileSystemPackageProvider&) = delete;
+        FileSystemPackageProvider(FileSystemPackageProvider&&) = delete;
+        FileSystemPackageProvider& operator=(const FileSystemPackageProvider&) = delete;
+        FileSystemPackageProvider& operator=(FileSystemPackageProvider&&) = delete;
 
-    void register_package_parser(const std::string& extension, const std::shared_ptr<PackageParser>& parser);
-    void add_path(const char* package_directory);
-    void remove_path(const char* package_directory);
+        void fetch() override;
+        const PackageDataList& get_cached_packages() const override;
 
-private:
-    std::unordered_map<std::string, std::shared_ptr<PackageParser>> m_package_parsers;
-    std::vector<std::string> m_package_directories;
-    PackageDataList m_cached_packages;
-};
+        void register_package_parser(const std::string& extension, const std::shared_ptr<PackageParser>& parser);
+        void add_path(const char* package_directory);
+        void remove_path(const char* package_directory);
+
+    private:
+        std::unordered_map<std::string, std::shared_ptr<PackageParser>> m_package_parsers;
+        std::vector<std::string> m_package_directories;
+        PackageDataList m_cached_packages;
+    };
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

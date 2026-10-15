@@ -18,6 +18,17 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::packaging::PackageProvider;
+using base::packaging::PackageData;
+using base::packaging::PackageParser;
+namespace packaging = base::packaging;
+using base::packaging::PackageAnyArray;
+using base::packaging::PackageAnyDictionary;
+using base::packaging::PackageValueError;
+using base::packaging::PackageRegistry;
+using base::utils::ScopeGuard;
+using base::packaging::PackageAttribute;
+
 namespace
 {
     struct ValueProvider : PackageProvider
@@ -38,18 +49,18 @@ DOCTEST_TEST_SUITE("PackagingValueLibrary")
 {
     DOCTEST_TEST_CASE("typed_access_and_unsupported_provider_values")
     {
-        const auto text = copy_package_value(std::string("text"));
+        const auto text = packaging::copy_package_value(std::string("text"));
         DOCTEST_REQUIRE(text);
         DOCTEST_CHECK(std::any_cast<std::string>(*text) == "text");
         DOCTEST_CHECK(std::any_cast<bool>(&*text) == nullptr);
         DOCTEST_CHECK_THROWS_AS(static_cast<void>(std::any_cast<bool>(*text)), std::bad_any_cast);
-        const auto empty = copy_package_value(std::any());
+        const auto empty = packaging::copy_package_value(std::any());
         DOCTEST_REQUIRE(empty);
         DOCTEST_CHECK_FALSE(empty->has_value());
         for (const auto& value : { std::any(std::vector<int> { 1 }), std::any(PackageAnyArray { std::vector<int> { 1 } }),
                                    std::any(PackageAnyDictionary { { "nested", std::vector<int> { 1 } } }) })
         {
-            const auto copied = copy_package_value(value);
+            const auto copied = packaging::copy_package_value(value);
             DOCTEST_REQUIRE_FALSE(copied);
             DOCTEST_CHECK(copied.error() == PackageValueError::UNSUPPORTED_TYPE);
         }
@@ -68,17 +79,17 @@ DOCTEST_TEST_SUITE("PackagingValueLibrary")
     DOCTEST_TEST_CASE("native_and_python_values_survive_producer_unload")
     {
 #ifdef OPENDCC_OS_WINDOWS
-        auto library = dl_open(OPENDCC_PACKAGING_VALUE_LIBRARY, 0);
+        auto library = base::utils::dl_open(OPENDCC_PACKAGING_VALUE_LIBRARY, 0);
 #else
-        auto library = dl_open(OPENDCC_PACKAGING_VALUE_LIBRARY, RTLD_NOW | RTLD_LOCAL);
+        auto library = base::utils::dl_open(OPENDCC_PACKAGING_VALUE_LIBRARY, RTLD_NOW | RTLD_LOCAL);
 #endif
         DOCTEST_REQUIRE(library);
         const ScopeGuard close([&] {
             if (library)
-                dl_close(library);
+                base::utils::dl_close(library);
         });
-        const auto produce = reinterpret_cast<void (*)(std::any*, bool)>(dl_sym(library, "produce_package_value"));
-        const auto check = reinterpret_cast<bool (*)(const std::any*)>(dl_sym(library, "check_package_value"));
+        const auto produce = reinterpret_cast<void (*)(std::any*, bool)>(base::utils::dl_sym(library, "produce_package_value"));
+        const auto check = reinterpret_cast<bool (*)(const std::any*)>(base::utils::dl_sym(library, "check_package_value"));
         DOCTEST_REQUIRE(produce);
         DOCTEST_REQUIRE(check);
 
@@ -123,16 +134,16 @@ DOCTEST_TEST_SUITE("PackagingValueLibrary")
         provider->packages.clear();
         registry.remove_package_provider(provider);
         provider.reset();
-        DOCTEST_CHECK(dl_close(library) == 0);
+        DOCTEST_CHECK(base::utils::dl_close(library) == 0);
         library = nullptr;
-        const auto remaining_handle = get_dl_handle(OPENDCC_PACKAGING_VALUE_LIBRARY);
+        const auto remaining_handle = base::utils::get_dl_handle(OPENDCC_PACKAGING_VALUE_LIBRARY);
 #ifndef OPENDCC_OS_WINDOWS
         if (remaining_handle)
-            dl_close(remaining_handle);
+            base::utils::dl_close(remaining_handle);
 #endif
         DOCTEST_CHECK(remaining_handle == nullptr);
 
-        const auto retained = copy_package_value(package.get_attribute("test"));
+        const auto retained = packaging::copy_package_value(package.get_attribute("test"));
         DOCTEST_REQUIRE(retained);
         const auto dictionary = std::any_cast<PackageAnyDictionary>(&*retained);
         DOCTEST_REQUIRE(dictionary);
@@ -147,7 +158,7 @@ DOCTEST_TEST_SUITE("PackagingValueLibrary")
         DOCTEST_CHECK(py::object(cached_attributes[py::int_(0)].attr("value")).equal(python_value));
         DOCTEST_CHECK(py::object(parsed.attr("raw_attributes")[py::int_(0)].attr("value")).equal(python_value));
         DOCTEST_CHECK(py::object(copied_attributes[py::int_(0)].attr("value")).equal(python_value));
-        DOCTEST_CHECK(copy_package_value(owned).has_value());
+        DOCTEST_CHECK(packaging::copy_package_value(owned).has_value());
         owned.reset();
         attribute.value.reset();
     }

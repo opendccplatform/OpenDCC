@@ -8,7 +8,7 @@ opendcc_make_library(
     CPPFILES
     sentry_crash_handler.cpp
     PRIVATE_DEFINITIONS
-    OPENDCC_CRASH_REPORTING_EXPORT
+    OPENDCC_BASE_CRASH_REPORTING_EXPORT
     LIBRARY_DEPENDENCIES
     sentry::sentry
     logging

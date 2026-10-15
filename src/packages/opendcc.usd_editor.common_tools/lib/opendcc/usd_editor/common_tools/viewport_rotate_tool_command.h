@@ -21,8 +21,8 @@ OPENDCC_NAMESPACE_OPEN
 class SelectionList;
 
 class ViewportRotateToolCommand
-    : public UndoCommand
-    , public ToolCommand
+    : public base::commands::UndoCommand
+    , public base::commands::ToolCommand
 {
 public:
     virtual ~ViewportRotateToolCommand() = default;
@@ -39,12 +39,12 @@ public:
     bool get_start_gizmo_data(ViewportRotateManipulator::GizmoData& gizmo_data) const;
     bool affects_components() const;
 
-    virtual CommandArgs make_args() const override;
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandArgs make_args() const override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
     static std::string cmd_name;
-    static CommandSyntax cmd_syntax();
-    static std::shared_ptr<Command> create_cmd();
+    static base::commands::CommandSyntax cmd_syntax();
+    static std::shared_ptr<base::commands::Command> create_cmd();
 
 private:
     struct InstancerData

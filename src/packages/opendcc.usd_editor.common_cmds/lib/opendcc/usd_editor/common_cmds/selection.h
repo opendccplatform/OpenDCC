@@ -35,7 +35,7 @@ OPENDCC_NAMESPACE_OPEN
  *    @note By default, this command uses ``replace`` flag.
  *
  */
-class OPENDCC_USD_EDITOR_COMMON_CMDS_API SelectPrimCommand : public UndoCommand
+class OPENDCC_USD_EDITOR_COMMON_CMDS_API SelectPrimCommand : public base::commands::UndoCommand
 {
 public:
     SelectPrimCommand() = default;
@@ -44,17 +44,17 @@ public:
 
     virtual void undo() override;
 
-    virtual bool merge_with(UndoCommand* command) override;
+    virtual bool merge_with(base::commands::UndoCommand* command) override;
 
     bool operator==(const SelectPrimCommand& other) const;
 
     bool operator!=(const SelectPrimCommand& other) const { return !(*this == other); }
 
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
     static std::string cmd_name;
-    static CommandSyntax cmd_syntax();
-    static std::shared_ptr<Command> create_cmd();
+    static base::commands::CommandSyntax cmd_syntax();
+    static std::shared_ptr<base::commands::Command> create_cmd();
 
 private:
     SelectionList m_new_selection;

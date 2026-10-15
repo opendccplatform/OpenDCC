@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 #endif
     configs_dir.cd("configs");
 
-    const auto app_config = ApplicationConfig(configs_dir.filePath("default.toml").toLocal8Bit().toStdString());
+    const auto app_config = OPENDCC_NAMESPACE::base::app_config::ApplicationConfig(configs_dir.filePath("default.toml").toLocal8Bit().toStdString());
     // Disable it for now until we will be ready to use multiple databases
 #if 0
     sentry_options_t *options = sentry_options_new();

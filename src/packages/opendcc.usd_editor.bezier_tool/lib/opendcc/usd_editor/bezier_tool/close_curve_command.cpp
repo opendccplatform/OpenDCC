@@ -7,6 +7,10 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::CommandArgs;
+using base::commands::UndoCommand;
+using base::commands::CommandResult;
+
 CloseCurveCommand::CloseCurveCommand(BezierCurvePtr curve, BezierToolContext* context, const BezierCurve::Point& point)
     : m_curve(curve)
     , m_context(context)

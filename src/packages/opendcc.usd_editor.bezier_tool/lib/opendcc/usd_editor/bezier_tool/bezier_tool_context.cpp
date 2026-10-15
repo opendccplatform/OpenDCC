@@ -28,6 +28,9 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::UndoCommandBlock;
+using base::commands::CommandInterface;
+
 GfPlane s_curve_plane = GfPlane(GfVec3d(0.0f, 1.0f, 0.0f), GfVec3d(0.0f, 0.0f, 0.0f));
 
 BezierToolContext::BezierToolContext()

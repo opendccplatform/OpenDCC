@@ -320,10 +320,11 @@ void ArnoldUsdPropertyFactory::get_property(const UsdPrim& prim, const TfToken& 
                     UsdMetadataValueMap meta;
                     meta[SdfFieldKeys->DisplayGroup] = VtValue(TfToken("filter"));
 
-                    property_gatherer.try_insert_property(
-                        SdfSpecType::SdfSpecTypeAttribute,
-                        starts_with(property_name.GetString(), "arnold:") ? property_name : TfToken("arnold:" + property_name.GetString()), prim,
-                        meta, source);
+                    property_gatherer.try_insert_property(SdfSpecType::SdfSpecTypeAttribute,
+                                                          base::utils::starts_with(property_name.GetString(), "arnold:")
+                                                              ? property_name
+                                                              : TfToken("arnold:" + property_name.GetString()),
+                                                          prim, meta, source);
 
                     return;
                 }
@@ -352,10 +353,10 @@ void ArnoldUsdPropertyFactory::get_property(const UsdPrim& prim, const TfToken& 
         auto attribute_spec = node_entry_layer->GetAttributeAtPath(SdfPath("/temp_prim").AppendProperty(property_name));
         if (attribute_spec)
         {
-            property_gatherer.try_insert_property(SdfSpecType::SdfSpecTypeAttribute,
-                                                  starts_with(property_name.GetString(), "arnold:") ? property_name
-                                                                                                    : TfToken("arnold:" + property_name.GetString()),
-                                                  prim, UsdMetadataValueMap(), source);
+            property_gatherer.try_insert_property(
+                SdfSpecType::SdfSpecTypeAttribute,
+                base::utils::starts_with(property_name.GetString(), "arnold:") ? property_name : TfToken("arnold:" + property_name.GetString()), prim,
+                UsdMetadataValueMap(), source);
         }
 
         return;
@@ -407,14 +408,14 @@ void ArnoldUsdPropertyFactory::get_property(const UsdPrim& prim, const TfToken& 
 
     auto stage_def = get_arnold_metadata();
     auto metadata_src = stage_def->GetPrimAtPath(SdfPath(TfStringPrintf("/%s", sdr_node->GetName().c_str())));
-    if (starts_with(property_name.GetString(), s_input_prefix))
+    if (base::utils::starts_with(property_name.GetString(), s_input_prefix))
     {
         auto input_name = TfToken(property_name.GetText() + s_input_prefix.size());
         auto usd_metadata = metadata_src.GetAttribute(input_name);
         if (auto prop = sdr_node->GetShaderInput(input_name))
             create_property_proxy(prim, property_name, prop, usd_metadata, property_gatherer);
     }
-    else if (starts_with(property_name.GetString(), s_output_prefix))
+    else if (base::utils::starts_with(property_name.GetString(), s_output_prefix))
     {
         auto output_name = TfToken(property_name.GetText() + s_output_prefix.size());
         auto usd_metadata = metadata_src.GetAttribute(output_name);
@@ -433,7 +434,7 @@ void ArnoldUsdPropertyFactory::get_property(const UsdPrim& prim, const TfToken& 
     }
 
     auto shader = UsdShadeShader(metadata_src);
-    if (starts_with(property_name.GetString(), s_output_prefix))
+    if (base::utils::starts_with(property_name.GetString(), s_output_prefix))
     {
         auto output_name = TfToken(property_name.GetText() + s_output_prefix.size());
         auto output_attr = metadata_src.GetAttribute(property_name);

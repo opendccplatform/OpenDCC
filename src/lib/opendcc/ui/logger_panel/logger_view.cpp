@@ -20,6 +20,7 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::logging::LogLevel;
 LoggerView::LoggerView(LoggerManager* manager, QWidget* parent)
     : QWidget(parent)
     , m_logger_manager(manager)
@@ -251,10 +252,10 @@ LoggerManager::LoggerManager(QObject* parent /*= nullptr*/)
     connect(m_messages_flush_timer, &QTimer::timeout, this, &LoggerManager::flush_messages_to_model);
     connect(this, &LoggerManager::send_message, this, &LoggerManager::on_add_message);
 
-    Logger::add_logging_delegate(this);
+    base::logging::Logger::add_logging_delegate(this);
 }
 
-void LoggerManager::log(const MessageContext& context, const std::string& message)
+void LoggerManager::log(const base::logging::MessageContext& context, const std::string& message)
 {
     Q_EMIT send_message(QString::fromStdString(context.channel), context.level, QString::fromStdString(message));
 }

@@ -38,6 +38,9 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::CommandInterface;
+using base::commands::CommandArgs;
+
 static SdfPath get_enclosing_model_path(const SdfPath& current, const TfToken& base_kind)
 {
     auto cur_prim = Application::instance().get_session()->get_current_stage()->GetPrimAtPath(current);

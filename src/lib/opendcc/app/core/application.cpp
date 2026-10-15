@@ -65,6 +65,11 @@ OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.app");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::app_config::ApplicationConfig;
+using base::packaging::PackageRegistry;
+using base::commands::python::PythonCommandInterface;
+namespace ipc = base::ipc;
+
 namespace
 {
     template <class T>
@@ -321,9 +326,9 @@ Application::Application()
     mtlx_stdlib_search.append(ARCH_PATH_LIST_SEP + mtlx_path.path());
     qputenv("PXR_MTLX_STDLIB_SEARCH_PATHS", mtlx_stdlib_search.toStdString().c_str());
     m_package_registry = std::make_shared<PackageRegistry>();
-    auto package_provider = std::make_shared<FileSystemPackageProvider>();
+    auto package_provider = std::make_shared<base::packaging::FileSystemPackageProvider>();
     package_provider->add_path((m_application_root_path + "/packages/*").c_str());
-    package_provider->register_package_parser("toml", std::make_shared<TOMLParser>());
+    package_provider->register_package_parser("toml", std::make_shared<base::packaging::TOMLParser>());
     m_package_registry->add_package_provider(package_provider);
 #if defined(OPENDCC_OS_WINDOWS)
     m_package_registry->define_token("APP_LIB_DIR", m_application_root_path + "/bin");
@@ -353,7 +358,7 @@ Application::Application()
 
     m_usd_logging_delegate = std::make_unique<UsdLoggingDelegate>();
     PXR_NS::TfDiagnosticMgr::GetInstance().AddDelegate(m_usd_logging_delegate.get());
-    if (CrashHandler::is_enabled())
+    if (base::crash_reporting::CrashHandler::is_enabled())
     {
         m_sentry_logging_delegate = std::make_unique<SentryLoggingDelegate>();
     }
@@ -429,7 +434,7 @@ void Application::init_python(std::vector<std::string>& args)
     PythonCommandInterface::instance().register_conversion<GfMatrix4f>("Gf.Matrix4f");
     PythonCommandInterface::instance().register_conversion<GfMatrix3d>("Gf.Matrix3d");
     PythonCommandInterface::instance().register_conversion<GfMatrix4d>("Gf.Matrix4d");
-    CommandRegistry::register_command_interface(PythonCommandInterface::instance());
+    base::commands::CommandRegistry::register_command_interface(PythonCommandInterface::instance());
 }
 
 void Application::run_startup_init()
@@ -767,7 +772,7 @@ void Application::create_command_server()
         {
             auto scene_lib_crop = crop;
             scene_lib_crop.name = "CropSceneLibRender";
-            s_server->send_command(get_pid_string(), scene_lib_crop);
+            s_server->send_command(base::utils::get_pid_string(), scene_lib_crop);
         }
     });
 
@@ -865,12 +870,12 @@ OPENDCC_API std::tuple<int, int, int, int> Application::get_opendcc_version()
 
 OPENDCC_API const std::string Application::get_build_date()
 {
-    return std::string(platform::get_build_date_str());
+    return std::string(base::app_version::get_build_date_str());
 }
 
 OPENDCC_API const std::string Application::get_commit_hash()
 {
-    return std::string(platform::get_git_commit_hash_str());
+    return std::string(base::app_version::get_git_commit_hash_str());
 }
 
 int Application::run_python_script(const std::string& filepath)

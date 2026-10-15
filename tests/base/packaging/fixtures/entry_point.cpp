@@ -6,6 +6,9 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::packaging::PackageEntryPoint;
+using base::packaging::Package;
+
 enum EntryPointChecker
 {
     kInitial = 0,

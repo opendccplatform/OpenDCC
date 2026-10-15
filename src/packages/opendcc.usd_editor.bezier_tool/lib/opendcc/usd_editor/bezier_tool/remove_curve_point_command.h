@@ -17,20 +17,20 @@
 OPENDCC_NAMESPACE_OPEN
 
 class RemoveCurvePointCommand
-    : public UndoCommand
-    , public ToolCommand
+    : public base::commands::UndoCommand
+    , public base::commands::ToolCommand
 {
 public:
     RemoveCurvePointCommand(BezierCurvePtr curve, BezierToolContext* context, size_t point_index, const BezierCurve::Point& point, bool change_close);
 
-    CommandResult execute(const CommandArgs& args) override;
+    base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
     void undo() override;
     void redo() override;
 
-    bool merge_with(UndoCommand* command) override;
+    bool merge_with(base::commands::UndoCommand* command) override;
 
-    CommandArgs make_args() const override;
+    base::commands::CommandArgs make_args() const override;
 
 private:
     BezierCurvePtr m_curve;

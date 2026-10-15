@@ -14,11 +14,11 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-class AnimEngineEntryPoint : public PackageEntryPoint
+class AnimEngineEntryPoint : public base::packaging::PackageEntryPoint
 {
 public:
-    void initialize(const Package& package) override;
-    void uninitialize(const Package& package) override;
+    void initialize(const base::packaging::Package& package) override;
+    void uninitialize(const base::packaging::Package& package) override;
 
 private:
     void timeline_widget_update();

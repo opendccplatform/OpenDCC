@@ -9,12 +9,17 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-struct Noncopyable
+namespace base::utils
 {
-    constexpr Noncopyable() = default;
-    ~Noncopyable() = default;
-    Noncopyable(const Noncopyable&) = delete;
-    Noncopyable& operator=(const Noncopyable&) = delete;
-};
+
+    struct Noncopyable
+    {
+        constexpr Noncopyable() = default;
+        ~Noncopyable() = default;
+        Noncopyable(const Noncopyable&) = delete;
+        Noncopyable& operator=(const Noncopyable&) = delete;
+    };
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

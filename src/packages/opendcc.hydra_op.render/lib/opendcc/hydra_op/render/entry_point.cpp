@@ -13,7 +13,7 @@ OPENDCC_NAMESPACE_OPEN
 PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 
-void HydraOpRenderEntryPoint::initialize(const Package& package)
+void HydraOpRenderEntryPoint::initialize(const base::packaging::Package& package)
 {
     auto hydra_render_control = std::make_shared<UsdRenderControl>("HydraOp", std::make_shared<UsdRender>([] {
                                                                        return "\"" + Application::instance().get_application_root_path() +

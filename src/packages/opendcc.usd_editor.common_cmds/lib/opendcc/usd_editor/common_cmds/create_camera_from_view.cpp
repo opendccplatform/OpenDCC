@@ -19,6 +19,12 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE;
 
+using base::commands::CommandSyntax;
+using base::commands::Command;
+using base::commands::CommandArgs;
+using base::commands::CommandArg;
+using base::commands::CommandResult;
+
 CommandSyntax commands::CreateCameraFromViewCommand::cmd_syntax()
 {
     return CommandSyntax()

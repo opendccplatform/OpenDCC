@@ -10,6 +10,9 @@
 PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 MoveItemsCommand::MoveItemsCommand(UsdGraphModel& model, std::vector<std::shared_ptr<MoveAction>>&& move_actions)
     : m_move_actions(std::move(move_actions))
 {

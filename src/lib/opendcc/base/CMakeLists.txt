@@ -12,7 +12,7 @@ add_subdirectory(crash_reporting)
 install(FILES export.h defines.h DESTINATION "include/opendcc/base")
 
 add_library(app_version SHARED app_version.h app_version.cpp)
-target_compile_definitions(app_version PRIVATE -DOPENDCC_APP_VERSION_EXPORT)
+target_compile_definitions(app_version PRIVATE -DOPENDCC_BASE_APP_VERSION_EXPORT)
 target_compile_definitions(app_version PRIVATE -DGIT_COMMIT="${OPENDCC_GIT_COMMIT}")
 
 install(

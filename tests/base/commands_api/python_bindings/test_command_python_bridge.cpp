@@ -14,6 +14,13 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::Command;
+using base::commands::CommandResult;
+using base::commands::CommandArgs;
+using base::commands::CommandSyntax;
+using base::commands::CommandRegistry;
+using base::commands::CommandInterface;
+
 namespace
 {
     namespace py = pybind11;

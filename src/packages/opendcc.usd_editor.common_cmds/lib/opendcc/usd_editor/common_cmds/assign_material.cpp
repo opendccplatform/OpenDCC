@@ -21,6 +21,11 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE;
 
+using base::commands::CommandSyntax;
+using base::commands::Command;
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 std::string commands::AssignMaterialCommand::cmd_name = "assign_material";
 
 CommandSyntax commands::AssignMaterialCommand::cmd_syntax()

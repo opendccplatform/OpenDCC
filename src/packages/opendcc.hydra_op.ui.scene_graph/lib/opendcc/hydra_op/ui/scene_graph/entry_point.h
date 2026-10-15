@@ -9,13 +9,13 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-class HydraOpSceneGraphEntryPoint : public PackageEntryPoint
+class HydraOpSceneGraphEntryPoint : public base::packaging::PackageEntryPoint
 {
 public:
     HydraOpSceneGraphEntryPoint();
     virtual ~HydraOpSceneGraphEntryPoint();
-    void initialize(const Package& package) override;
-    void uninitialize(const Package& package) override;
+    void initialize(const base::packaging::Package& package) override;
+    void uninitialize(const base::packaging::Package& package) override;
 };
 
 OPENDCC_NAMESPACE_CLOSE

@@ -18,6 +18,10 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+namespace fs_utils = base::fs_utils;
+using base::utils::ScopeGuard;
+using base::fs_utils::GlobErrorCode;
+
 namespace
 {
     class TemporaryDirectory
@@ -59,10 +63,10 @@ DOCTEST_TEST_SUITE("FileSystemGlob")
 {
     DOCTEST_TEST_CASE("filesystem_glob_forms_and_order")
     {
-        const auto no_patterns = glob_paths({});
+        const auto no_patterns = fs_utils::glob_paths({});
         DOCTEST_REQUIRE(no_patterns);
         DOCTEST_CHECK(no_patterns->empty());
-        const auto empty_pattern = glob_paths({ "" });
+        const auto empty_pattern = fs_utils::glob_paths({ "" });
         DOCTEST_REQUIRE(empty_pattern);
         DOCTEST_CHECK(empty_pattern->empty());
         TemporaryDirectory directory;
@@ -73,7 +77,7 @@ DOCTEST_TEST_SUITE("FileSystemGlob")
         directory.write("name.txt/package.toml", "");
         const auto unicode = directory.write(u8"\u0442\u0435\u0441\u0442/package.toml", "");
         const auto glob = [&directory](const std::string& pattern) {
-            const auto found = glob_paths({ (directory.path() / std::filesystem::u8path(pattern)).generic_u8string() });
+            const auto found = fs_utils::glob_paths({ (directory.path() / std::filesystem::u8path(pattern)).generic_u8string() });
             DOCTEST_REQUIRE(found);
             return *found;
         };
@@ -121,7 +125,7 @@ DOCTEST_TEST_SUITE("FileSystemGlob")
         const auto escaped_path = directory.write("star*/package.toml", "");
         DOCTEST_CHECK(glob("star\\*/package.toml") == std::vector<std::string> { escaped_path });
 #endif
-        const auto ordered_result = glob_paths({ b, a, a });
+        const auto ordered_result = fs_utils::glob_paths({ b, a, a });
         DOCTEST_REQUIRE(ordered_result);
         const auto& ordered = *ordered_result;
 #ifdef OPENDCC_OS_WINDOWS
@@ -144,7 +148,7 @@ DOCTEST_TEST_SUITE("FileSystemGlob")
         std::filesystem::directory_iterator inaccessible(blocked, error);
         if (error)
         {
-            const auto found = glob_paths({ (blocked / "*").generic_u8string(), a, (blocked / "*").generic_u8string() });
+            const auto found = fs_utils::glob_paths({ (blocked / "*").generic_u8string(), a, (blocked / "*").generic_u8string() });
             DOCTEST_REQUIRE_FALSE(found);
             DOCTEST_CHECK(found.error().partial_matches == std::vector<std::string> { a });
             const auto& diagnostics = found.error().diagnostics;
@@ -155,14 +159,14 @@ DOCTEST_TEST_SUITE("FileSystemGlob")
                 DOCTEST_CHECK(diagnostic.system_error == std::errc::permission_denied);
                 DOCTEST_CHECK(diagnostic.code == GlobErrorCode::PERMISSION_DENIED);
             }
-            DOCTEST_REQUIRE(glob_paths({ a }));
+            DOCTEST_REQUIRE(fs_utils::glob_paths({ a }));
         }
 #endif
         const auto original_directory = std::filesystem::current_path();
         const ScopeGuard restore_directory([&] { std::filesystem::current_path(original_directory); });
         std::filesystem::current_path(directory.path());
         const auto relative = std::filesystem::path("a1/package.toml");
-        const auto relative_result = glob_paths({ relative.generic_u8string() });
+        const auto relative_result = fs_utils::glob_paths({ relative.generic_u8string() });
         DOCTEST_REQUIRE(relative_result);
         DOCTEST_CHECK(*relative_result == std::vector<std::string> { relative.generic_u8string() });
     }

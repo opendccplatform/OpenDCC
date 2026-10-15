@@ -11,23 +11,28 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-struct PackageData
+namespace base::packaging
 {
-    std::string name;
-    std::string path;
-    PackageAttributeList raw_attributes;
 
-    bool is_valid() const { return !name.empty(); }
-    operator bool() const { return is_valid(); }
-};
+    struct PackageData
+    {
+        std::string name;
+        std::string path;
+        PackageAttributeList raw_attributes;
 
-using PackageDataList = std::vector<PackageData>;
+        bool is_valid() const { return !name.empty(); }
+        operator bool() const { return is_valid(); }
+    };
 
-class OPENDCC_PACKAGING_API PackageParser
-{
-public:
-    virtual ~PackageParser() = default;
-    virtual PackageData parse(const std::string& path) = 0;
-};
+    using PackageDataList = std::vector<PackageData>;
+
+    class OPENDCC_BASE_PACKAGING_API PackageParser
+    {
+    public:
+        virtual ~PackageParser() = default;
+        virtual PackageData parse(const std::string& path) = 0;
+    };
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

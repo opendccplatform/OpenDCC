@@ -19,8 +19,8 @@
 OPENDCC_NAMESPACE_OPEN
 
 class SplineWidgetCommand
-    : public UndoCommand
-    , public ToolCommand
+    : public base::commands::UndoCommand
+    , public base::commands::ToolCommand
 {
 public:
     virtual void finalize() = 0;
@@ -35,10 +35,10 @@ public:
     virtual void finalize() override;
     virtual void redo() override;
     virtual void undo() override;
-    virtual bool merge_with(UndoCommand* command) override;
+    virtual bool merge_with(base::commands::UndoCommand* command) override;
 
-    virtual CommandResult execute(const CommandArgs& args) override;
-    virtual CommandArgs make_args() const override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
+    virtual base::commands::CommandArgs make_args() const override;
 
 private:
     std::map<OPENDCC_NAMESPACE::AnimEngine::CurveId, SelectionInfo> start_selection_data_map;

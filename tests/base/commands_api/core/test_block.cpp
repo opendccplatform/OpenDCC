@@ -15,6 +15,17 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::UndoCommand;
+using base::commands::CommandResult;
+using base::commands::CommandArgs;
+using base::commands::CommandInterface;
+using base::commands::CommandSyntax;
+using base::commands::Command;
+using base::commands::CommandRegistry;
+using base::commands::CommandRouter;
+using base::commands::CommandBlock;
+using base::commands::UndoCommandBlock;
+
 DOCTEST_TEST_SUITE("CommandBlock/UndoCommandBlock")
 {
     class TestCommand : public UndoCommand

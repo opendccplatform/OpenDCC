@@ -16,6 +16,12 @@ OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.viewport.selection");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::UndoCommand;
+using base::commands::CommandRegistry;
+using base::commands::CommandSyntax;
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 TF_REGISTRY_FUNCTION(TfType)
 {
     TfType::Define<ViewportIsolateSelectionCommand, TfType::Bases<UndoCommand>>();

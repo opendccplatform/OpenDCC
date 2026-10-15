@@ -14,6 +14,12 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-UTILS_API std::tuple<std::string, bool> dynamic_alloc_read(size_t init_size, const std::function<bool(char*, size_t&)>& alloc_callback);
+namespace base::utils
+{
+
+    OPENDCC_BASE_UTILS_API std::tuple<std::string, bool> dynamic_alloc_read(size_t init_size,
+                                                                            const std::function<bool(char*, size_t&)>& alloc_callback);
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

@@ -17,7 +17,7 @@ opendcc_make_library(
     LIBRARY_DEPENDENCIES
     ${_deps_libs}
     PRIVATE_DEFINITIONS
-    OPENDCC_LOGGING_EXPORT
+    OPENDCC_BASE_LOGGING_EXPORT
     VS_FOLDER
     base)
 

@@ -15,6 +15,11 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE;
 
+using base::commands::CommandSyntax;
+using base::commands::Command;
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 std::string commands::AEPasteCommand::cmd_name = "paste_attr";
 
 CommandSyntax commands::AEPasteCommand::cmd_syntax()

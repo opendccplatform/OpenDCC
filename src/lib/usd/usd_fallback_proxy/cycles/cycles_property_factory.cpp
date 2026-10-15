@@ -49,7 +49,7 @@ void CyclesPropertyFactory::get_properties(const UsdPrim& prim, PropertyGatherer
 
     static const std::string cycles_prefix = "cycles:";
     TfToken shader_id;
-    if (!shader.GetShaderId(&shader_id) || !starts_with(shader_id.GetString(), cycles_prefix) ||
+    if (!shader.GetShaderId(&shader_id) || !base::utils::starts_with(shader_id.GetString(), cycles_prefix) ||
         shader.GetImplementationSource() != UsdShadeTokens->id)
         return;
 
@@ -107,7 +107,7 @@ void CyclesPropertyFactory::get_property(const UsdPrim& prim, const TfToken& pro
         return;
     static const std::string cycles_prefix = "cycles:";
     TfToken shader_id;
-    if (!shader.GetShaderId(&shader_id) || !starts_with(shader_id.GetString(), cycles_prefix) ||
+    if (!shader.GetShaderId(&shader_id) || !base::utils::starts_with(shader_id.GetString(), cycles_prefix) ||
         shader.GetImplementationSource() != UsdShadeTokens->id)
         return;
 

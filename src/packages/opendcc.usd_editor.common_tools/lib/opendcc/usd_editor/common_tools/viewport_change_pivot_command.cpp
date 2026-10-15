@@ -16,6 +16,11 @@ OPENDCC_INITIALIZE_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::CommandSyntax;
+using base::commands::Command;
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 std::string ViewportChangePivotCommand::cmd_name = "change_pivot";
 
 CommandSyntax ViewportChangePivotCommand::cmd_syntax()

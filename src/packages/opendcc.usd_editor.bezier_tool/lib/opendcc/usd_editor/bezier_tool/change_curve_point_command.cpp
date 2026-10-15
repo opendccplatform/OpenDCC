@@ -7,6 +7,10 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::CommandArgs;
+using base::commands::UndoCommand;
+using base::commands::CommandResult;
+
 ChangeCurvePointCommand::ChangeCurvePointCommand(const std::string& action_name, BezierCurvePtr curve, BezierToolContext* context, size_t point_index,
                                                  const BezierCurve::Point& point)
     : m_curve(curve)

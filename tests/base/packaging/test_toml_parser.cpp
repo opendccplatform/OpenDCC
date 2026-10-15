@@ -12,6 +12,12 @@
 #include <doctest/doctest.h>
 OPENDCC_NAMESPACE_OPEN
 
+using base::packaging::PackageData;
+using base::packaging::PackageAttribute;
+using base::packaging::TOMLParser;
+using base::packaging::PackageAnyDictionary;
+using base::packaging::PackageAnyArray;
+
 DOCTEST_TEST_SUITE("PackagingTOMLParserTests")
 {
     DOCTEST_TEST_CASE("deserialization")

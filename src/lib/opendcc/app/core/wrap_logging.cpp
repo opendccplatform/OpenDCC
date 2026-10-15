@@ -8,6 +8,10 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::logging::LogLevel;
+using base::logging::MessageContext;
+using base::logging::Logger;
+
 namespace
 {
     LogLevel python_log_level(int level)

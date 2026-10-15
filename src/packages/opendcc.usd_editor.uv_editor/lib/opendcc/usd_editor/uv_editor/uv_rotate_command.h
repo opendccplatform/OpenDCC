@@ -22,22 +22,22 @@ OPENDCC_NAMESPACE_OPEN
 class UVEditorGLWidget;
 
 class UvRotateCommand final
-    : public UndoCommand
-    , public ToolCommand
+    : public base::commands::UndoCommand
+    , public base::commands::ToolCommand
 {
 public:
     UvRotateCommand() = default;
     virtual ~UvRotateCommand() override = default;
 
     // Command
-    CommandResult execute(const CommandArgs& args) override;
+    base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
     // UndoCommand
     void undo() override;
     void redo() override;
 
     // ToolCommand
-    CommandArgs make_args() const override;
+    base::commands::CommandArgs make_args() const override;
 
     //
     void init_from_mesh_selection(UVEditorGLWidget* widget, const SelectionList& mesh_list);

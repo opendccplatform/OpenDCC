@@ -11,42 +11,43 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.base.ipc");
-
-IPC_NAMESPACE_OPEN
-
-//////////////////////////////////////////////////////////////////////////
-// ServerRegistry
-//////////////////////////////////////////////////////////////////////////
-
-/* static */
-ServerRegistry& ServerRegistry::instance()
+namespace base::ipc
 {
-    static ServerRegistry s_instance;
-    return s_instance;
-}
 
-void ServerRegistry::add_server(const std::string& pid, const ServerInfo& info)
-{
-    m_servers[pid] = info;
-}
+    OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL("opendcc.base.ipc");
 
-ServerInfo ServerRegistry::find_server(const std::string& pid)
-{
-    const auto find = m_servers.find(pid);
+    //////////////////////////////////////////////////////////////////////////
+    // ServerRegistry
+    //////////////////////////////////////////////////////////////////////////
 
-    if (find == m_servers.end())
+    /* static */
+    ServerRegistry& ServerRegistry::instance()
     {
-        return {};
+        static ServerRegistry s_instance;
+        return s_instance;
     }
 
-    return find->second;
+    void ServerRegistry::add_server(const std::string& pid, const ServerInfo& info)
+    {
+        m_servers[pid] = info;
+    }
+
+    ServerInfo ServerRegistry::find_server(const std::string& pid)
+    {
+        const auto find = m_servers.find(pid);
+
+        if (find == m_servers.end())
+        {
+            return {};
+        }
+
+        return find->second;
+    }
+
+    ServerRegistry::ServerRegistry() {}
+
+    ServerRegistry::~ServerRegistry() {}
+
 }
-
-ServerRegistry::ServerRegistry() {}
-
-ServerRegistry::~ServerRegistry() {}
-
-IPC_NAMESPACE_CLOSE
 
 OPENDCC_NAMESPACE_CLOSE

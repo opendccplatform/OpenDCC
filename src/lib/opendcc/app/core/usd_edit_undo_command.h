@@ -17,14 +17,14 @@ namespace commands
     class UndoInverse;
 }
 
-class UsdEditUndoCommand : public UndoCommand
+class UsdEditUndoCommand : public base::commands::UndoCommand
 {
 public:
     virtual ~UsdEditUndoCommand() = default;
 
     virtual void redo() override;
     virtual void undo() override;
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
     void set_state(std::shared_ptr<commands::UndoInverse> inverse);
 
 private:

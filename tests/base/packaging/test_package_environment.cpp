@@ -35,13 +35,13 @@ namespace
         if (std::getenv(name.c_str()) == nullptr)
             return std::nullopt;
 #endif
-        return get_env(name);
+        return base::utils::get_env(name);
     }
 
     void restore_environment(const std::string& name, const std::optional<std::string>& value)
     {
         if (value)
-            set_env(name, *value);
+            base::utils::set_env(name, *value);
         else
         {
 #ifdef OPENDCC_OS_WINDOWS
@@ -97,7 +97,7 @@ fail_initialize = false
         }
 
         bool has_python_path(const std::string& path) const { return sys.attr("path").attr("__contains__")(path).cast<bool>(); }
-        std::string setting() const { return get_env(setting_name); }
+        std::string setting() const { return base::utils::get_env(setting_name); }
     };
 }
 
@@ -121,11 +121,11 @@ value = '{}'
         const auto relative_path = (std::filesystem::u8path(package.get_root_dir()) / "bin").lexically_normal().u8string();
         const auto absolute_path = std::filesystem::u8path(external_path).lexically_normal().u8string();
         const auto expected = absolute_path + OPENDCC_PATH_LIST_SEPARATOR + relative_path + OPENDCC_PATH_LIST_SEPARATOR + saved_environment_path;
-        DOCTEST_CHECK(get_env("PATH") == expected);
+        DOCTEST_CHECK(base::utils::get_env("PATH") == expected);
         DOCTEST_REQUIRE(registry.load(package));
-        DOCTEST_CHECK(get_env("PATH") == expected);
+        DOCTEST_CHECK(base::utils::get_env("PATH") == expected);
         DOCTEST_REQUIRE(registry.unload(package));
-        DOCTEST_CHECK(get_env("PATH") == expected);
+        DOCTEST_CHECK(base::utils::get_env("PATH") == expected);
     }
 
     DOCTEST_TEST_CASE_FIXTURE(EnvironmentFixture, "pythonpath_environment_is_inherited_without_changing_runtime_search_paths")
@@ -146,13 +146,13 @@ operation = 'append'
         const auto command = py::make_tuple(OPENDCC_PACKAGING_TEST_PYTHON, "-c", "import packaging_environment_probe as probe; print(probe.marker)");
         const auto output = py::module_::import("subprocess").attr("check_output")(command, py::arg("text") = true).cast<std::string>();
         DOCTEST_CHECK(output == "from-package\n");
-        const auto process_python_path = get_env("PYTHONPATH");
+        const auto process_python_path = base::utils::get_env("PYTHONPATH");
         DOCTEST_CHECK(process_python_path.find((std::filesystem::u8path(package.get_root_dir()) / "python").lexically_normal().u8string()) !=
                       std::string::npos);
         const auto path_after_load = py::list(sys.attr("path"));
         DOCTEST_REQUIRE(registry.load(package));
         DOCTEST_CHECK(sys.attr("path").cast<py::list>().equal(path_after_load));
-        DOCTEST_CHECK(get_env("PYTHONPATH") == process_python_path);
+        DOCTEST_CHECK(base::utils::get_env("PYTHONPATH") == process_python_path);
         DOCTEST_REQUIRE(registry.unload(package));
         DOCTEST_CHECK(sys.attr("path").cast<py::list>().equal(path_after_load));
     }
@@ -166,7 +166,7 @@ value = 'relative-search-path'
         registry.fetch_packages();
         const auto package = registry.get_package("literal_pythonpath");
         DOCTEST_REQUIRE(registry.load(package));
-        DOCTEST_CHECK(get_env("PYTHONPATH") == "relative-search-path");
+        DOCTEST_CHECK(base::utils::get_env("PYTHONPATH") == "relative-search-path");
         DOCTEST_CHECK_FALSE(has_python_path("relative-search-path"));
         DOCTEST_CHECK_FALSE(has_python_path((std::filesystem::u8path(package.get_root_dir()) / "relative-search-path").generic_u8string()));
     }
@@ -207,7 +207,7 @@ module = 'packaging_environment_probe'
         registry.fetch_packages();
         const auto package = registry.get_package("mixed");
         DOCTEST_REQUIRE(registry.load(package));
-        DOCTEST_CHECK(get_env(setting_name) == "enabled");
+        DOCTEST_CHECK(base::utils::get_env(setting_name) == "enabled");
         DOCTEST_CHECK(setting() == "enabled");
         DOCTEST_CHECK(modules[module_name.c_str()].attr("value").cast<std::string>() == "enabled");
         const auto observed = events();
@@ -218,7 +218,7 @@ module = 'packaging_environment_probe'
 
     DOCTEST_TEST_CASE_FIXTURE(EnvironmentFixture, "explicit_operations_apply_in_manifest_order_with_custom_separators")
     {
-        DOCTEST_REQUIRE(set_env(setting_name, "original"));
+        DOCTEST_REQUIRE(base::utils::set_env(setting_name, "original"));
         write_environment_manifest("operations", R"toml(
 [[environment.OPENDCC_TEST_MODE]]
 value = 'middle'
@@ -262,17 +262,17 @@ is_path = true
         const auto package = registry.get_package("roots");
         DOCTEST_REQUIRE(registry.load(package));
         const auto expected = (std::filesystem::u8path(package.get_root_dir()) / "assets").lexically_normal().u8string();
-        DOCTEST_CHECK(get_env(asset_name) == expected);
+        DOCTEST_CHECK(base::utils::get_env(asset_name) == expected);
         DOCTEST_CHECK(setting() == "${TEST_MODE}/${PACKAGE_ROOT}");
         const auto relative_package = registry.get_package("relative_root");
         DOCTEST_REQUIRE(registry.load(relative_package));
         const auto relative_expected = (std::filesystem::u8path(relative_package.get_root_dir()) / "assets").lexically_normal().u8string();
-        DOCTEST_CHECK(get_env(asset_name) == relative_expected);
+        DOCTEST_CHECK(base::utils::get_env(asset_name) == relative_expected);
     }
 
     DOCTEST_TEST_CASE_FIXTURE(EnvironmentFixture, "python_path_set_preserves_initial_paths_and_prepend_controls_search_priority")
     {
-        const auto process_python_path = get_env("PYTHONPATH");
+        const auto process_python_path = base::utils::get_env("PYTHONPATH");
         const auto initial_paths = sys.attr("path").cast<py::list>().cast<std::vector<std::string>>();
         const auto startup_path = std::find_if(initial_paths.begin(), initial_paths.end(), [](const std::string& path) { return !path.empty(); });
         DOCTEST_REQUIRE(startup_path != initial_paths.end());
@@ -310,12 +310,12 @@ operation = 'prepend'
         DOCTEST_CHECK(std::equal(initial_paths.begin(), initial_paths.end(), actual_paths.begin() + 1));
         DOCTEST_CHECK(std::count(actual_paths.begin(), actual_paths.end(), *startup_path) ==
                       std::count(initial_paths.begin(), initial_paths.end(), *startup_path));
-        DOCTEST_CHECK(get_env("PYTHONPATH") == process_python_path);
+        DOCTEST_CHECK(base::utils::get_env("PYTHONPATH") == process_python_path);
     }
 
     DOCTEST_TEST_CASE_FIXTURE(EnvironmentFixture, "empty_values_and_invalid_entries_do_not_apply_unintended_changes")
     {
-        DOCTEST_REQUIRE(set_env(setting_name, "before"));
+        DOCTEST_REQUIRE(base::utils::set_env(setting_name, "before"));
         write_environment_manifest("invalid", R"toml(
 [[environment.OPENDCC_TEST_MODE]]
 operation = 'set'
@@ -338,16 +338,16 @@ value = ''
         registry.fetch_packages();
         DOCTEST_REQUIRE(registry.load("invalid"));
         DOCTEST_CHECK(setting() == "before");
-        DOCTEST_CHECK(get_env(setting_name) == "before");
+        DOCTEST_CHECK(base::utils::get_env(setting_name) == "before");
         DOCTEST_REQUIRE(registry.load("empty"));
         DOCTEST_CHECK(setting().empty());
-        DOCTEST_CHECK(get_env(setting_name).empty());
+        DOCTEST_CHECK(base::utils::get_env(setting_name).empty());
         DOCTEST_CHECK(environment_value(setting_name).has_value());
     }
 
     DOCTEST_TEST_CASE_FIXTURE(EnvironmentFixture, "python_paths_change_runtime_search_without_changing_the_environment")
     {
-        const auto process_python_path = get_env("PYTHONPATH");
+        const auto process_python_path = base::utils::get_env("PYTHONPATH");
         DOCTEST_REQUIRE(registry.define_token("TEST_PY_DIR", "python"));
         directory.write("runtime/python/packaging_environment_probe.py", "marker = 'runtime-only'\n");
         write_environment_manifest("runtime", R"toml(
@@ -373,7 +373,7 @@ module = 'packaging_environment_probe'
         DOCTEST_CHECK(has_python_path((root / "python").lexically_normal().generic_u8string()));
         DOCTEST_CHECK(sys.attr("path").cast<py::list>()[0].cast<std::string>() == (root / "priority").lexically_normal().generic_u8string());
         DOCTEST_CHECK(modules[module_name.c_str()].attr("marker").cast<std::string>() == "runtime-only");
-        DOCTEST_CHECK(get_env("PYTHONPATH") == process_python_path);
+        DOCTEST_CHECK(base::utils::get_env("PYTHONPATH") == process_python_path);
         const auto path_after_load = py::list(sys.attr("path"));
         DOCTEST_REQUIRE(registry.load(package));
         DOCTEST_CHECK(sys.attr("path").cast<py::list>().equal(path_after_load));
@@ -413,7 +413,7 @@ expand_tokens = false
 )toml");
         registry.fetch_packages();
         DOCTEST_REQUIRE(registry.load("literal_path"));
-        DOCTEST_CHECK(get_env("PATH") == "${TEST_BIN}");
+        DOCTEST_CHECK(base::utils::get_env("PATH") == "${TEST_BIN}");
     }
 }
 

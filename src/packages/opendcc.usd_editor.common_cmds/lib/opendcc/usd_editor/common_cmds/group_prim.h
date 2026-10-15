@@ -19,16 +19,16 @@ namespace commands
 {
     class ParentPrimCommand;
 
-    class GroupPrimCommand : public UndoCommand
+    class GroupPrimCommand : public base::commands::UndoCommand
     {
     public:
-        virtual CommandResult execute(const CommandArgs& args) override;
+        virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
         virtual void undo() override;
         virtual void redo() override;
 
         static std::string cmd_name;
-        static CommandSyntax cmd_syntax();
-        static std::shared_ptr<Command> create_cmd();
+        static base::commands::CommandSyntax cmd_syntax();
+        static std::shared_ptr<base::commands::Command> create_cmd();
 
     private:
         PXR_NS::SdfPath define_group_root(PXR_NS::UsdStageWeakPtr stage, const PXR_NS::SdfPathVector& prim_paths) const;

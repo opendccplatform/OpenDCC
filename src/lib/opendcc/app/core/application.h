@@ -48,7 +48,7 @@ namespace commands
     class UndoStack;
 };
 
-namespace ipc
+namespace base::ipc
 {
     class CommandServer;
 };
@@ -484,12 +484,12 @@ public:
      *
      * @param app_config The application configuration path.
      */
-    OPENDCC_API static void set_app_config(const ApplicationConfig& app_config);
+    OPENDCC_API static void set_app_config(const base::app_config::ApplicationConfig& app_config);
     /**
      * @brief Returns the current configuration of the application.
      *
      */
-    OPENDCC_API static const ApplicationConfig& get_app_config();
+    OPENDCC_API static const base::app_config::ApplicationConfig& get_app_config();
 
     /**
      * @brief initialize extensions.
@@ -505,7 +505,7 @@ public:
     OPENDCC_API static void destroy_command_server();
 
     OPENDCC_API void update_render_control();
-    OPENDCC_API std::shared_ptr<PackageRegistry> get_package_registry() const;
+    OPENDCC_API std::shared_ptr<base::packaging::PackageRegistry> get_package_registry() const;
 
 private:
     friend class ApplicationUI;
@@ -519,7 +519,7 @@ private:
     static Application* m_instance;
 
     std::unique_ptr<UsdLoggingDelegate> m_usd_logging_delegate = nullptr;
-    std::unique_ptr<LoggingDelegate> m_sentry_logging_delegate = nullptr;
+    std::unique_ptr<base::logging::LoggingDelegate> m_sentry_logging_delegate = nullptr;
 
     Session* m_session;
     std::string m_application_root_path;
@@ -544,10 +544,10 @@ private:
     PXR_NS::TfToken m_active_view_context_type = PXR_NS::TfToken("USD");
 
     PXR_NS::SdfLayerHandleSet m_layer_selection;
-    static ApplicationConfig m_app_config;
+    static base::app_config::ApplicationConfig m_app_config;
 
-    static std::shared_ptr<ipc::CommandServer> s_server;
-    std::shared_ptr<PackageRegistry> m_package_registry;
+    static std::shared_ptr<base::ipc::CommandServer> s_server;
+    std::shared_ptr<base::packaging::PackageRegistry> m_package_registry;
 };
 
 OPENDCC_NAMESPACE_CLOSE

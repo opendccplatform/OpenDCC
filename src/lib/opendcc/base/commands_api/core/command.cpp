@@ -6,64 +6,69 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-CommandSyntax Command::get_syntax() const
+namespace base::commands
 {
-    CommandSyntax result;
-    CommandRegistry::get_command_syntax(m_command_name, result);
-    return result;
-}
 
-std::string Command::get_command_name() const
-{
-    return m_command_name;
-}
+    CommandSyntax Command::get_syntax() const
+    {
+        CommandSyntax result;
+        CommandRegistry::get_command_syntax(m_command_name, result);
+        return result;
+    }
 
-CommandResult::CommandResult(Status result, std::shared_ptr<CommandArgBase> result_value /*= nullptr*/)
-    : m_result(result)
-    , m_result_value(result_value)
-{
-}
+    std::string Command::get_command_name() const
+    {
+        return m_command_name;
+    }
 
-CommandResult::operator bool() const
-{
-    return is_successful();
-}
+    CommandResult::CommandResult(Status result, std::shared_ptr<CommandArgBase> result_value /*= nullptr*/)
+        : m_result(result)
+        , m_result_value(result_value)
+    {
+    }
 
-bool CommandResult::is_successful() const
-{
-    return m_result == Status::SUCCESS;
-}
+    CommandResult::operator bool() const
+    {
+        return is_successful();
+    }
 
-const std::type_info& CommandResult::get_type_info() const
-{
-    if (!m_result_value)
-        return typeid(nullptr);
+    bool CommandResult::is_successful() const
+    {
+        return m_result == Status::SUCCESS;
+    }
 
-    return m_result_value->get_type_info();
-}
+    const std::type_info& CommandResult::get_type_info() const
+    {
+        if (!m_result_value)
+            return typeid(nullptr);
 
-bool CommandResult::has_result() const
-{
-    return get_type_info() != typeid(nullptr);
-}
+        return m_result_value->get_type_info();
+    }
 
-CommandResult::Status CommandResult::get_status() const
-{
-    return m_result;
-}
+    bool CommandResult::has_result() const
+    {
+        return get_type_info() != typeid(nullptr);
+    }
 
-std::shared_ptr<CommandArgBase> CommandResult::get_result() const
-{
-    return m_result_value;
-}
+    CommandResult::Status CommandResult::get_status() const
+    {
+        return m_result;
+    }
 
-void UndoCommand::undo() {}
+    std::shared_ptr<CommandArgBase> CommandResult::get_result() const
+    {
+        return m_result_value;
+    }
 
-void UndoCommand::redo() {}
+    void UndoCommand::undo() {}
 
-bool UndoCommand::merge_with(UndoCommand* command)
-{
-    return false;
+    void UndoCommand::redo() {}
+
+    bool UndoCommand::merge_with(UndoCommand* command)
+    {
+        return false;
+    }
+
 }
 
 OPENDCC_NAMESPACE_CLOSE

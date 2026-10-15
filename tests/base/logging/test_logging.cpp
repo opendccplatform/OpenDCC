@@ -12,6 +12,11 @@
 #include <doctest/doctest.h>
 OPENDCC_NAMESPACE_OPEN
 OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.logging_test.source");
+using base::logging::LoggingDelegate;
+using base::logging::MessageContext;
+using base::logging::LogLevel;
+using base::logging::Logger;
+
 namespace
 {
     struct Capture : LoggingDelegate

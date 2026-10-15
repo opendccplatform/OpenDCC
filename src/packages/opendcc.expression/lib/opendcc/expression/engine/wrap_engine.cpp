@@ -7,6 +7,8 @@
 #include "session.h"
 
 OPENDCC_NAMESPACE_OPEN
+namespace pybind_bridge = base::pybind_bridge;
+
 using namespace pybind11;
 
 namespace
@@ -34,12 +36,12 @@ PYBIND11_MODULE(expression_engine, m)
         .def_static("invalid_callback_id", &ExpressionEngine::invalid_callback_id)
         .def("register_expression_callback",
              [](ExpressionEngine* self, PXR_NS::SdfPath attr_path, std::function<void(PXR_NS::SdfPath, const PXR_NS::VtValue&)> cb) {
-                 return self->register_expression_callback(attr_path, pybind_safe_callback(cb));
+                 return self->register_expression_callback(attr_path, pybind_bridge::pybind_safe_callback(cb));
              })
         .def("register_variable_changed_callback",
              [](ExpressionEngine* self, std::string variables_name,
                 std::function<void(const std::string& variable_name, const PXR_NS::VtValue& value)> cb) {
-                 return self->register_variable_changed_callback(variables_name, pybind_safe_callback(cb));
+                 return self->register_variable_changed_callback(variables_name, pybind_bridge::pybind_safe_callback(cb));
              })
         .def("evaluate", &ExpressionEngine::evaluate, arg("attr_path"), arg("time") = PXR_NS::UsdTimeCode::Default())
         .def("unregister_callback", &ExpressionEngine::unregister_callback);

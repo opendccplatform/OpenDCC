@@ -33,9 +33,9 @@ namespace packaging_tests
             return *value == std::any_cast<double>(expected);
         if (const auto value = std::any_cast<bool>(&actual))
             return *value == std::any_cast<bool>(expected);
-        if (const auto values = std::any_cast<PackageAnyArray>(&actual))
+        if (const auto values = std::any_cast<base::packaging::PackageAnyArray>(&actual))
         {
-            const auto& other = std::any_cast<const PackageAnyArray&>(expected);
+            const auto& other = std::any_cast<const base::packaging::PackageAnyArray&>(expected);
             if (values->size() != other.size())
                 return false;
             for (size_t index = 0; index < values->size(); ++index)
@@ -43,9 +43,9 @@ namespace packaging_tests
                     return false;
             return true;
         }
-        if (const auto values = std::any_cast<PackageAnyDictionary>(&actual))
+        if (const auto values = std::any_cast<base::packaging::PackageAnyDictionary>(&actual))
         {
-            const auto& other = std::any_cast<const PackageAnyDictionary&>(expected);
+            const auto& other = std::any_cast<const base::packaging::PackageAnyDictionary&>(expected);
             if (values->size() != other.size())
                 return false;
             for (const auto& entry : *values)

@@ -23,18 +23,18 @@ namespace commands
     class ParentPrimCommand;
     using ParentCommandNotifier = utils::CommandExecNotifier<ParentPrimCommand, PXR_NS::SdfPathVector, PXR_NS::SdfPathVector>;
 
-    class OPENDCC_USD_EDITOR_COMMON_CMDS_API ParentPrimCommand : public UndoCommand
+    class OPENDCC_USD_EDITOR_COMMON_CMDS_API ParentPrimCommand : public base::commands::UndoCommand
     {
     public:
-        virtual CommandResult execute(const CommandArgs& args) override;
+        virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
         virtual void undo() override;
         virtual void redo() override;
 
         static ParentCommandNotifier& get_notifier();
 
         static std::string cmd_name;
-        static CommandSyntax cmd_syntax();
-        static std::shared_ptr<Command> create_cmd();
+        static base::commands::CommandSyntax cmd_syntax();
+        static std::shared_ptr<base::commands::Command> create_cmd();
 
     private:
         PXR_NS::UsdPrim get_parent_prim(PXR_NS::UsdStageWeakPtr stage, const PXR_NS::SdfPath& prim_path) const;

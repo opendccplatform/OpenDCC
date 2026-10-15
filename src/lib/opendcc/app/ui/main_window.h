@@ -104,7 +104,7 @@ public:
     void init_timeline_ui();
 
 Q_SIGNALS:
-    void send_message(QString channel, LogLevel log_level, QString msg);
+    void send_message(QString channel, base::logging::LogLevel log_level, QString msg);
 
 private:
     void add_create_panel_btn(ads::CDockAreaWidget* dock_widget);
@@ -114,7 +114,7 @@ private:
     void cleanup_timeline_ui();
 
     LoggerManager* m_logger_panel_manager = nullptr;
-    std::unique_ptr<LoggingDelegate> m_status_bar_logging = nullptr;
+    std::unique_ptr<base::logging::LoggingDelegate> m_status_bar_logging = nullptr;
 
     ads::CDockManager* m_main_container_widget;
     TimelineWidget* m_timeline_widget;

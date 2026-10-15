@@ -7,6 +7,10 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::CommandArgs;
+using base::commands::UndoCommand;
+using base::commands::CommandResult;
+
 RemoveCurvePointCommand::RemoveCurvePointCommand(BezierCurvePtr curve, BezierToolContext* context, size_t point_index,
                                                  const BezierCurve::Point& point, bool change_close)
     : m_curve(curve)

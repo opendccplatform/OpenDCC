@@ -69,8 +69,7 @@ static VtValue get_metadata(UsdPropertyProxy* self, const TfToken& key)
 static bool set_metadata(UsdPropertyProxy* self, const TfToken& key, pybind11::object obj)
 {
     VtValue value;
-    return UsdPythonToMetadataValue(key, TfToken(), bp::object(bp::handle<>(bp::borrowed(obj.ptr()))), &value) &&
-           self->set_metadata(key, value);
+    return UsdPythonToMetadataValue(key, TfToken(), bp::object(bp::handle<>(bp::borrowed(obj.ptr()))), &value) && self->set_metadata(key, value);
 }
 
 static std::string property_proxy_repr(UsdPropertyProxy* self)
@@ -101,7 +100,7 @@ PYBIND11_MODULE(MODULE_NAME, m)
     class_<UsdFallbackProxyWatcher, std::unique_ptr<UsdFallbackProxyWatcher, nodelete>>(m, "UsdFallbackProxyWatcher")
         .def_static("register_invalid_proxy_callback",
                     [](const std::function<void(const std::vector<UsdPrimFallbackProxy>&)>& callback) {
-                        return UsdFallbackProxyWatcher::register_invalid_proxy_callback(pybind_safe_callback(callback));
+                        return UsdFallbackProxyWatcher::register_invalid_proxy_callback(base::pybind_bridge::pybind_safe_callback(callback));
                     })
         .def_static("unregister_invalid_proxy_callback", &UsdFallbackProxyWatcher::unregister_invalid_proxy_callback);
 

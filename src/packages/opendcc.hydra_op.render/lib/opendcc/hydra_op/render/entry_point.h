@@ -10,10 +10,10 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-class HydraOpRenderEntryPoint final : public PackageEntryPoint
+class HydraOpRenderEntryPoint final : public base::packaging::PackageEntryPoint
 {
 public:
-    void initialize(const Package& package) override;
+    void initialize(const base::packaging::Package& package) override;
 };
 
 OPENDCC_NAMESPACE_CLOSE

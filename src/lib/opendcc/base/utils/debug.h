@@ -16,8 +16,13 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-// Implemented only for Windows
-UTILS_API bool is_debugged();
-UTILS_API void trap_debugger();
+namespace base::utils
+{
+
+    // Implemented only for Windows
+    OPENDCC_BASE_UTILS_API bool is_debugged();
+    OPENDCC_BASE_UTILS_API void trap_debugger();
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

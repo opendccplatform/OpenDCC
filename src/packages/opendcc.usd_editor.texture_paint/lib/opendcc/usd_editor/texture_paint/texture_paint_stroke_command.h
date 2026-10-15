@@ -17,16 +17,16 @@ class TextureData;
 class TexturePainter;
 
 class TexturePaintStrokeCommand
-    : public UndoCommand
-    , public ToolCommand
+    : public base::commands::UndoCommand
+    , public base::commands::ToolCommand
 {
 public:
     TexturePaintStrokeCommand(const TextureData& texture_data, const TexturePainter& painter, bool write_to_files);
     void undo() override;
     void redo() override;
 
-    CommandResult execute(const CommandArgs& args) override;
-    CommandArgs make_args() const override;
+    base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
+    base::commands::CommandArgs make_args() const override;
 
 private:
     void exec(bool undo) const;

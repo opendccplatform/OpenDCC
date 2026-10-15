@@ -143,7 +143,7 @@ void UsdRender::init_temp_dir()
         static std::atomic_ullong render_id(0);
         const auto id = render_id++;
 
-        m_tmp_dir = std::filesystem::temp_directory_path() / ("hydra_render_" + get_pid_string() + '_' + std::to_string(id));
+        m_tmp_dir = std::filesystem::temp_directory_path() / ("hydra_render_" + base::utils::get_pid_string() + '_' + std::to_string(id));
         std::filesystem::create_directories(m_tmp_dir);
         auto usd_tmp_folder = m_tmp_dir / "usd";
         std::filesystem::create_directories(usd_tmp_folder);

@@ -29,7 +29,7 @@ public Q_SLOTS:
 private:
     void append_html_messages(const QVector<Message>& messages);
     QString to_formatted_string(const Message& message) const;
-    QString to_formatted_log_level(LogLevel log_level) const;
+    QString to_formatted_log_level(base::logging::LogLevel log_level) const;
     void append_html_message(const QString& message);
 
     QVector<Message> m_cached_messages;

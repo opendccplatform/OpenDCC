@@ -11,14 +11,19 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-inline void hash_combine(size_t& seed) {}
-
-template <class T, class... TOther>
-inline void hash_combine(size_t& seed, const T& value, TOther&&... other)
+namespace base::utils
 {
-    std::hash<T> hasher;
-    seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    hash_combine(seed, other...);
+
+    inline void hash_combine(size_t& seed) {}
+
+    template <class T, class... TOther>
+    inline void hash_combine(size_t& seed, const T& value, TOther&&... other)
+    {
+        std::hash<T> hasher;
+        seed ^= hasher(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        hash_combine(seed, other...);
+    }
+
 }
 
 OPENDCC_NAMESPACE_CLOSE

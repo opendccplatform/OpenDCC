@@ -6,50 +6,55 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-const std::string& Package::get_name() const
+namespace base::packaging
 {
-    return m_data->name;
-}
 
-const PackageAnyDictionary& Package::get_all_attributes() const
-{
-    return m_data->resolved_attributes;
-}
-
-Package::Package(const std::shared_ptr<PackageSharedData>& data)
-    : m_data(data)
-{
-}
-
-const std::any& Package::get_attribute(const std::string& name) const
-{
-    auto it = find_package_attribute(m_data->resolved_attributes, name);
-    if (!it)
+    const std::string& Package::get_name() const
     {
-        static const std::any empty;
-        return empty;
+        return m_data->name;
     }
-    return it->get();
-}
 
-bool Package::is_loaded() const
-{
-    return m_data->loaded;
-}
+    const PackageAnyDictionary& Package::get_all_attributes() const
+    {
+        return m_data->resolved_attributes;
+    }
 
-const PackageAnyDictionary& Package::get_direct_dependencies() const
-{
-    return m_data->direct_dependencies;
-}
+    Package::Package(const std::shared_ptr<PackageSharedData>& data)
+        : m_data(data)
+    {
+    }
 
-const std::string& Package::get_root_dir() const
-{
-    return m_data->root_dir;
-}
+    const std::any& Package::get_attribute(const std::string& name) const
+    {
+        auto it = find_package_attribute(m_data->resolved_attributes, name);
+        if (!it)
+        {
+            static const std::any empty;
+            return empty;
+        }
+        return it->get();
+    }
 
-bool OPENDCC_NAMESPACE::Package::is_valid() const
-{
-    return m_data != nullptr;
+    bool Package::is_loaded() const
+    {
+        return m_data->loaded;
+    }
+
+    const PackageAnyDictionary& Package::get_direct_dependencies() const
+    {
+        return m_data->direct_dependencies;
+    }
+
+    const std::string& Package::get_root_dir() const
+    {
+        return m_data->root_dir;
+    }
+
+    bool Package::is_valid() const
+    {
+        return m_data != nullptr;
+    }
+
 }
 
 OPENDCC_NAMESPACE_CLOSE

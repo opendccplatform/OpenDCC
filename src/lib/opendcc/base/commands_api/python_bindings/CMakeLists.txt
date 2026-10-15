@@ -7,7 +7,7 @@ add_library(${TARGET_NAME} SHARED api.h utils.h python_command_interface.h pytho
 target_include_directories(${TARGET_NAME} PUBLIC $${PYTHON_INCLUDE_DIR})
 target_precompile_headers(${TARGET_NAME} PRIVATE ${PRECOMPILED_INCLUDES})
 target_link_libraries(${TARGET_NAME} PUBLIC commands_api py_utils pybind11::pybind11 ${PYTHON_LIBRARY})
-target_compile_definitions(${TARGET_NAME} PRIVATE -DPY_COMMANDS_API_EXPORT
+target_compile_definitions(${TARGET_NAME} PRIVATE -DOPENDCC_BASE_PY_COMMANDS_EXPORT
                                                   -DPYMODULE_NAME_STR="opendcc.${PYMODULE_NAME}")
 install(TARGETS ${TARGET_NAME})
 if(MSVC)

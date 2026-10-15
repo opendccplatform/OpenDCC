@@ -20,8 +20,15 @@
 OPENDCC_NAMESPACE_OPEN
 PXR_NAMESPACE_USING_DIRECTIVE;
 
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 TF_REGISTRY_FUNCTION(TfType)
 {
+    using base::commands::CommandRegistry;
+    using base::commands::CommandSyntax;
+    using base::commands::UndoCommand;
+
     TfType::Define<AddCurvesAndKeysCommand, TfType::Bases<UndoCommand>>();
     TfType::Define<RemoveCurvesAndKeysCommand, TfType::Bases<UndoCommand>>();
     TfType::Define<ChangeKeyframesCommand, TfType::Bases<UndoCommand>>();

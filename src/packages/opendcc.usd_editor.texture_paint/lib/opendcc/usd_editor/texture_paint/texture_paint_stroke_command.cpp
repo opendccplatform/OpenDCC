@@ -10,6 +10,9 @@
 
 OPENDCC_NAMESPACE_OPEN
 PXR_NAMESPACE_USING_DIRECTIVE
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 using namespace OIIO;
 
 TexturePaintStrokeCommand::TexturePaintStrokeCommand(const TextureData& texture_data, const TexturePainter& painter, bool write_to_files)

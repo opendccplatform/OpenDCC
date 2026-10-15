@@ -11,18 +11,23 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-class PyLock
+namespace base::py_utils
 {
-public:
-    PyLock() { m_state = PyGILState_Ensure(); }
-    PyLock(const PyLock&) = delete;
-    PyLock(PyLock&&) = delete;
-    PyLock& operator=(const PyLock&) = delete;
-    PyLock& operator=(PyLock&&) = delete;
-    ~PyLock() { PyGILState_Release(m_state); }
 
-private:
-    PyGILState_STATE m_state;
-};
+    class PyLock
+    {
+    public:
+        PyLock() { m_state = PyGILState_Ensure(); }
+        PyLock(const PyLock&) = delete;
+        PyLock(PyLock&&) = delete;
+        PyLock& operator=(const PyLock&) = delete;
+        PyLock& operator=(PyLock&&) = delete;
+        ~PyLock() { PyGILState_Release(m_state); }
+
+    private:
+        PyGILState_STATE m_state;
+    };
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

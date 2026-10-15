@@ -15,14 +15,14 @@ OPENDCC_NAMESPACE_OPEN
 class MoveAction;
 class UsdGraphModel;
 
-class MoveItemsCommand : public UndoCommand
+class MoveItemsCommand : public base::commands::UndoCommand
 {
 public:
     MoveItemsCommand(UsdGraphModel& model, std::vector<std::shared_ptr<MoveAction>>&& move_actions);
     ~MoveItemsCommand();
     virtual void undo() override;
     virtual void redo() override;
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
 private:
     std::vector<std::shared_ptr<MoveAction>> m_move_actions;

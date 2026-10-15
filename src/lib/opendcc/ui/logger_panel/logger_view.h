@@ -21,7 +21,7 @@ OPENDCC_NAMESPACE_OPEN
 
 class OPENDCC_LOGGER_PANEL_API LoggerManager
     : public QObject
-    , public LoggingDelegate
+    , public base::logging::LoggingDelegate
 {
     Q_OBJECT;
 
@@ -41,20 +41,20 @@ public:
 
 public Q_SLOTS:
     void on_clear_messages(QSet<QString> channels);
-    void on_add_message(QString channel, LogLevel log_level, QString msg);
+    void on_add_message(QString channel, base::logging::LogLevel log_level, QString msg);
 
 private Q_SLOTS:
     void flush_messages_to_model();
 
 Q_SIGNALS:
-    void send_message(QString channel, LogLevel log_level, QString msg);
+    void send_message(QString channel, base::logging::LogLevel log_level, QString msg);
     void clear_messages(QSet<QString> channels);
     void selected_channels_cleared();
     void message_added(Message message);
     void model_updated(QVector<Message> channels);
 
 private:
-    void log(const MessageContext& context, const std::string& message) override;
+    void log(const base::logging::MessageContext& context, const std::string& message) override;
 
     MessageModel* m_model = nullptr;
     QVector<Message> m_message_buffer;
@@ -72,7 +72,7 @@ public:
     ~LoggerView();
 
 private Q_SLOTS:
-    void on_add_message(QString channel, LogLevel log_level, QString msg);
+    void on_add_message(QString channel, base::logging::LogLevel log_level, QString msg);
 
 Q_SIGNALS:
     void selected_channels_changed(QSet<QString> selected_channels);

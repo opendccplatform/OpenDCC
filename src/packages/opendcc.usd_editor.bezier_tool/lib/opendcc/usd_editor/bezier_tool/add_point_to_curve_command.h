@@ -17,20 +17,20 @@
 OPENDCC_NAMESPACE_OPEN
 
 class AddPointToCurveCommand
-    : public UndoCommand
-    , public ToolCommand
+    : public base::commands::UndoCommand
+    , public base::commands::ToolCommand
 {
 public:
     AddPointToCurveCommand(BezierCurvePtr curve, BezierToolContext* context, const BezierCurve::Point& point);
 
-    CommandResult execute(const CommandArgs& args) override;
+    base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
     void undo() override;
     void redo() override;
 
-    bool merge_with(UndoCommand* command) override;
+    bool merge_with(base::commands::UndoCommand* command) override;
 
-    CommandArgs make_args() const override;
+    base::commands::CommandArgs make_args() const override;
 
 private:
     BezierCurvePtr m_curve;

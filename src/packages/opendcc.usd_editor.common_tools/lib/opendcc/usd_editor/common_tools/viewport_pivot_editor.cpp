@@ -18,6 +18,9 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::CommandRegistry;
+using base::commands::CommandInterface;
+
 ViewportPivotEditor::ViewportPivotEditor(const SelectionList& selection_list, Orientation orientation)
     : m_selection(selection_list)
 {

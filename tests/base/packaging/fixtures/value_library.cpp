@@ -8,6 +8,9 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::packaging::PackageAnyArray;
+using base::packaging::PackageAnyDictionary;
+
 extern "C" OPENDCC_API_EXPORT void produce_package_value(std::any* result, bool use_factory)
 {
     PackageAnyArray values { true,
@@ -18,7 +21,7 @@ extern "C" OPENDCC_API_EXPORT void produce_package_value(std::any* result, bool 
                              PackageAnyDictionary { { "key", int64_t { 7 } } },
                              PackageAnyArray { int64_t { 8 } } };
     PackageAnyDictionary dictionary { { "nested", std::move(values) } };
-    *result = use_factory ? std::move(*copy_package_value(dictionary)) : std::any(std::move(dictionary));
+    *result = use_factory ? std::move(*base::packaging::copy_package_value(dictionary)) : std::any(std::move(dictionary));
 }
 
 extern "C" OPENDCC_API_EXPORT bool check_package_value(const std::any* value)

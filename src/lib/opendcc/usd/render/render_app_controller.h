@@ -32,7 +32,7 @@ public:
     virtual int process_args(const CLI::App& app) = 0;
 };
 
-class OPENDCC_USD_RENDER_API RenderAppControllerFactory : Noncopyable
+class OPENDCC_USD_RENDER_API RenderAppControllerFactory : base::utils::Noncopyable
 {
 public:
     using FactoryFn = std::function<std::unique_ptr<RenderAppController>()>;

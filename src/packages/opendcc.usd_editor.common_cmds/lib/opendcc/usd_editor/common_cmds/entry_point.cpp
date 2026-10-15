@@ -31,11 +31,14 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::packaging::Package;
+
 OPENDCC_DEFINE_PACKAGE_ENTRY_POINT(UsdEditorCommonCmdsEntryPoint);
 OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 
 void UsdEditorCommonCmdsEntryPoint::initialize(const Package& package)
 {
+    using base::commands::CommandRegistry;
 
     CommandRegistry::register_command(SelectPrimCommand::cmd_name, SelectPrimCommand::cmd_syntax(), &SelectPrimCommand::create_cmd);
     CommandRegistry::register_command(commands::AssignMaterialCommand::cmd_name, commands::AssignMaterialCommand::cmd_syntax(),
@@ -84,6 +87,8 @@ void UsdEditorCommonCmdsEntryPoint::initialize(const Package& package)
 
 void UsdEditorCommonCmdsEntryPoint::uninitialize(const Package& package)
 {
+    using base::commands::CommandRegistry;
+
     CommandRegistry::unregister_command(SelectPrimCommand::cmd_name);
     CommandRegistry::unregister_command(commands::RenamePrimCommand::cmd_name);
     CommandRegistry::unregister_command(commands::RemovePrimsCommand::cmd_name);

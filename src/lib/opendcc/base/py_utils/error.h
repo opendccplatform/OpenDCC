@@ -11,17 +11,22 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-inline void py_log_error(const std::string& err_str)
+namespace base::py_utils
 {
-    const auto channel = g_global_log_channel ? g_global_log_channel : "opendcc.base.py_utils";
-    if (!err_str.empty())
+
+    inline void py_log_error(const std::string& err_str)
     {
-        OPENDCC_ERROR_CHANNEL(channel, "{}", err_str);
+        const auto channel = base::logging::g_global_log_channel ? base::logging::g_global_log_channel : "opendcc.base.py_utils";
+        if (!err_str.empty())
+        {
+            OPENDCC_ERROR_CHANNEL(channel, "{}", err_str);
+        }
+        else
+        {
+            OPENDCC_ERROR_CHANNEL(channel, "A Python error happened during handling of another exception, see stderr for more information.");
+        }
     }
-    else
-    {
-        OPENDCC_ERROR_CHANNEL(channel, "A Python error happened during handling of another exception, see stderr for more information.");
-    }
+
 }
 
 OPENDCC_NAMESPACE_CLOSE

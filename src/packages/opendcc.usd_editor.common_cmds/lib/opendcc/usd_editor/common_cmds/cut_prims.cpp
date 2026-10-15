@@ -14,6 +14,11 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE;
 
+using base::commands::CommandSyntax;
+using base::commands::Command;
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 std::string commands::CutPrimsCommand::cmd_name = "cut_prims";
 
 CommandSyntax commands::CutPrimsCommand::cmd_syntax()

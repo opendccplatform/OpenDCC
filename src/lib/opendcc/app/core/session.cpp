@@ -47,7 +47,7 @@ void Session::set_current_stage(const PXR_NS::UsdStageRefPtr &stage)
         };
         std::string result = TfStringPrintf("UsdStage(rootLayer=%s)", sdf_layer_repr(stage->GetRootLayer()).c_str());
 
-        CrashHandler::set_extra("current_stage", result);
+        base::crash_reporting::CrashHandler::set_extra("current_stage", result);
     }
 
     auto find_id = std::find(m_stage_list_ids.begin(), m_stage_list_ids.end(), m_current_stage_id);
@@ -300,9 +300,9 @@ void Session::update_watcher()
         {
             m_undo_stack_watcher = std::make_unique<UsdEditUndoStackChangedWatcher>(
                 m_layer_tree_watcher, m_layer_state_delegates, [this](std::shared_ptr<commands::UndoInverse> inverse) {
-                    auto cmd = CommandRegistry::create_command<UsdEditUndoCommand>("usd_edit_undo");
+                    auto cmd = base::commands::CommandRegistry::create_command<UsdEditUndoCommand>("usd_edit_undo");
                     cmd->set_state(inverse);
-                    CommandInterface::finalize(cmd, CommandArgs().arg(inverse));
+                    base::commands::CommandInterface::finalize(cmd, base::commands::CommandArgs().arg(inverse));
                 });
         }
     }

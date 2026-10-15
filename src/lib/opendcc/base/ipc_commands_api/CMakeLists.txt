@@ -7,7 +7,6 @@ add_library(
     command_registry.cpp
     command.cpp
     command.h
-    ipc.h
     server_info.cpp
     server_info.h
     server_registry.cpp
@@ -21,7 +20,7 @@ target_include_directories(${TARGET_NAME} PRIVATE ${ZMQ_INCLUDE_DIRS} ${PROJECT_
 
 target_link_libraries(${TARGET_NAME} ${CMAKE_THREAD_LIBS_INIT} ${ZMQ_LIBRARIES} utils logging)
 
-target_compile_definitions(${TARGET_NAME} PRIVATE -DIPC_COMMANDS_API_EXPORT)
+target_compile_definitions(${TARGET_NAME} PRIVATE -DOPENDCC_BASE_IPC_COMMANDS_EXPORT)
 install(TARGETS ${TARGET_NAME})
 
 if(MSVC)

@@ -13,6 +13,8 @@
 OPENDCC_NAMESPACE_OPEN
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::packaging::Package;
+
 void HydraOpDCCEntryPoint::initialize(const Package& package)
 {
     ViewportSceneContextRegistry::get_instance().register_scene_context(TfToken("HydraOp"),

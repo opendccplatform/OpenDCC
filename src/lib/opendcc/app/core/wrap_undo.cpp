@@ -21,7 +21,7 @@ void py_interp::bind::wrap_undo(pybind11::module& m)
         .def("can_undo", &UndoStack::can_undo)
         .def("can_redo", &UndoStack::can_redo)
         .def("set_undo_limit", &UndoStack::set_undo_limit)
-        .def("push", overload_cast<std::shared_ptr<UndoCommand>, bool>(&UndoStack::push), arg("command"), arg("execute") = false)
+        .def("push", overload_cast<std::shared_ptr<base::commands::UndoCommand>, bool>(&UndoStack::push), arg("command"), arg("execute") = false)
         .def("undo", &UndoStack::undo)
         .def("redo", &UndoStack::redo)
         .def("clear", &UndoStack::clear);

@@ -6,87 +6,92 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-class GroupCommand : public UndoCommand
+namespace base::commands
 {
-public:
-    friend class CommandRouter;
 
-    GroupCommand(const std::vector<std::shared_ptr<UndoCommand>>& commands)
-        : m_commands(commands)
+    class GroupCommand : public UndoCommand
     {
-    }
-    virtual ~GroupCommand() = default;
+    public:
+        friend class CommandRouter;
 
-    virtual CommandResult execute(const CommandArgs& args) override { return CommandResult(CommandResult::Status::CMD_NOT_REGISTERED); }
-
-    virtual void undo() override
-    {
-        for (auto it = m_commands.rbegin(); it != m_commands.rend(); ++it)
+        GroupCommand(const std::vector<std::shared_ptr<UndoCommand>>& commands)
+            : m_commands(commands)
         {
-            (*it)->undo();
+        }
+        virtual ~GroupCommand() = default;
+
+        virtual CommandResult execute(const CommandArgs& args) override { return CommandResult(CommandResult::Status::CMD_NOT_REGISTERED); }
+
+        virtual void undo() override
+        {
+            for (auto it = m_commands.rbegin(); it != m_commands.rend(); ++it)
+            {
+                (*it)->undo();
+            }
+        }
+
+        virtual void redo() override
+        {
+            for (auto& command : m_commands)
+            {
+                command->redo();
+            }
+        }
+
+    private:
+        std::vector<std::shared_ptr<UndoCommand>> m_commands;
+    };
+
+    //
+
+    CommandRouter& CommandRouter::instance()
+    {
+        static CommandRouter router;
+        return router;
+    }
+
+    void CommandRouter::add_command(const std::shared_ptr<Command>& cmd)
+    {
+        if (auto undo_cmd = std::dynamic_pointer_cast<UndoCommand>(cmd))
+        {
+            instance().m_commands.push_back(undo_cmd);
         }
     }
 
-    virtual void redo() override
+    void CommandRouter::create_group_command()
     {
-        for (auto& command : m_commands)
+        auto& router = instance();
+        const auto command = std::make_shared<GroupCommand>(router.m_commands);
+        command->m_command_name = router.m_block_name;
+        clear();
+        CommandInterface::finalize(command, CommandArgs());
+    }
+
+    void CommandRouter::transfer_commands(std::vector<std::shared_ptr<UndoCommand>>& commands)
+    {
+        auto& router = instance();
+
+        for (auto& command : router.m_commands)
         {
-            command->redo();
+            commands.push_back(command);
         }
+
+        clear();
     }
 
-private:
-    std::vector<std::shared_ptr<UndoCommand>> m_commands;
-};
-
-//
-
-CommandRouter& CommandRouter::instance()
-{
-    static CommandRouter router;
-    return router;
-}
-
-void CommandRouter::add_command(const std::shared_ptr<Command>& cmd)
-{
-    if (auto undo_cmd = std::dynamic_pointer_cast<UndoCommand>(cmd))
+    bool CommandRouter::lock_execute()
     {
-        instance().m_commands.push_back(undo_cmd);
+        return instance().m_depth > 0;
     }
-}
 
-void CommandRouter::create_group_command()
-{
-    auto& router = instance();
-    const auto command = std::make_shared<GroupCommand>(router.m_commands);
-    command->m_command_name = router.m_block_name;
-    clear();
-    CommandInterface::finalize(command, CommandArgs());
-}
-
-void CommandRouter::transfer_commands(std::vector<std::shared_ptr<UndoCommand>>& commands)
-{
-    auto& router = instance();
-
-    for (auto& command : router.m_commands)
+    void CommandRouter::clear()
     {
-        commands.push_back(command);
+        auto& router = instance();
+
+        router.m_block_name.clear();
+        router.m_commands.clear();
     }
 
-    clear();
-}
-
-bool CommandRouter::lock_execute()
-{
-    return instance().m_depth > 0;
-}
-
-void CommandRouter::clear()
-{
-    auto& router = instance();
-
-    router.m_block_name.clear();
-    router.m_commands.clear();
 }
 
 OPENDCC_NAMESPACE_CLOSE

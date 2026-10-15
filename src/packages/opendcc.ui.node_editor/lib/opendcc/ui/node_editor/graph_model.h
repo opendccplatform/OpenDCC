@@ -43,7 +43,7 @@ struct ConnectionId
         size_t operator()(const ConnectionId& value) const
         {
             size_t hash = 0;
-            hash_combine(hash, value.start_port, value.end_port);
+            base::utils::hash_combine(hash, value.start_port, value.end_port);
             return hash;
         }
     };

@@ -18,6 +18,10 @@
 PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::CommandInterface;
+using base::commands::CommandArgs;
+using base::commands::UndoCommandBlock;
+
 namespace
 {
     class UsdMoveAction : public MoveAction
@@ -302,6 +306,8 @@ void UsdGraphModel::block_usd_notifications(bool block)
 
 UsdPrim UsdGraphModel::create_usd_prim(const TfToken& name, const TfToken& type, const SdfPath& parent_path, bool change_selection)
 {
+    using base::commands::CommandResult;
+
     auto stage = get_node_provider().get_stage();
     if (!stage)
         return UsdPrim();

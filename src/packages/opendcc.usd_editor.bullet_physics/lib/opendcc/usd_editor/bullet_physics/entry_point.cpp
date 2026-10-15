@@ -14,6 +14,8 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 OPENDCC_NAMESPACE_OPEN
 OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
+using base::packaging::Package;
+
 OPENDCC_DEFINE_PACKAGE_ENTRY_POINT(BulletPhysicsEntryPoint);
 
 std::set<BulletPhysicsViewportUIExtension*> BulletPhysicsViewportUIExtension::m_all_instances;

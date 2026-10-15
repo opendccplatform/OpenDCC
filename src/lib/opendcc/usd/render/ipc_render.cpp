@@ -38,6 +38,8 @@ OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.usd.render");
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+namespace ipc = base::ipc;
+
 #if PXR_VERSION >= 2108
 static CameraUtilFraming compute_camera_framing(const GfRect2i& render_rect, const int w, const int h)
 {
@@ -228,7 +230,7 @@ void IpcRender::send_aovs()
             image_desc.num_channels = HgiGetComponentCount(aov.desc.format);
             image_desc.width = params.render_resolution[0];
             image_desc.height = params.render_resolution[1];
-            image_desc.extra_attributes["opendcc/dcc/pid"] = get_pid_string();
+            image_desc.extra_attributes["opendcc/dcc/pid"] = base::utils::get_pid_string();
 
             image_handle = render_view_open_image(m_render_view_ipc->connection, image_handle, image_desc);
             m_render_view_ipc->image_handles[aov.name] = image_handle;
@@ -333,7 +335,7 @@ void IpcRender::create_command_server()
 
     ipc::Command command;
     command.name = "ServerCreated";
-    command.args["pid"] = get_pid_string();
+    command.args["pid"] = base::utils::get_pid_string();
     command.args["hostname"] = info.hostname;
     command.args["input_port"] = std::to_string(info.input_port);
     m_server->send_command(m_main_server_info, command);

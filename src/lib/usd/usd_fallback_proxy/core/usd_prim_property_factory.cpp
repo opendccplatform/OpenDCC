@@ -224,13 +224,13 @@ void UsdPrimPropertyFactory::get_property(const UsdPrim& prim, const TfToken& pr
     if (!shader_node)
         return;
 
-    if (starts_with(property_name.GetString(), s_input_prefix))
+    if (base::utils::starts_with(property_name.GetString(), s_input_prefix))
     {
         const auto name = TfToken(property_name.GetText() + s_input_prefix.size());
         if (auto prop = shader_node->GetShaderInput(name))
             create_property_proxy(prim, property_name, prop, property_gatherer);
     }
-    else if (starts_with(property_name.GetString(), s_output_prefix))
+    else if (base::utils::starts_with(property_name.GetString(), s_output_prefix))
     {
         const auto name = TfToken(property_name.GetText() + s_output_prefix.size());
         if (auto prop = shader_node->GetShaderOutput(name))

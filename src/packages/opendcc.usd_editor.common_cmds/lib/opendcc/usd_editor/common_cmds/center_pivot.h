@@ -18,16 +18,16 @@ OPENDCC_NAMESPACE_OPEN
 
 namespace commands
 {
-    class CenterPivotCommand : public UndoCommand
+    class CenterPivotCommand : public base::commands::UndoCommand
     {
     public:
-        virtual CommandResult execute(const CommandArgs& args) override;
+        virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
         virtual void undo() override;
         virtual void redo() override;
 
         static std::string cmd_name;
-        static CommandSyntax cmd_syntax();
-        static std::shared_ptr<Command> create_cmd();
+        static base::commands::CommandSyntax cmd_syntax();
+        static std::shared_ptr<base::commands::Command> create_cmd();
 
     private:
         void do_cmd();

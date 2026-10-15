@@ -9,6 +9,7 @@
 
 OPENDCC_NAMESPACE_OPEN
 PXR_NAMESPACE_USING_DIRECTIVE
+
 using namespace pybind11;
 
 static Settings::SettingChangedHandle register_setting_changed(Settings* self, const std::string& name, function callback_fn)
@@ -41,7 +42,7 @@ static Settings::SettingChangedHandle register_setting_changed(Settings* self, c
         }
         catch (const error_already_set& exc)
         {
-            py_log_error(exc.what());
+            base::py_utils::py_log_error(exc.what());
         }
     };
 #undef TRY_CALL

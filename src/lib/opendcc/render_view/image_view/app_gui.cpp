@@ -736,8 +736,8 @@ void RenderViewMainWindow::update_pixel_info()
     {
         QString s;
         s = QString::asprintf("x= %d y= %d   %0.5f %0.5f %0.5f %0.5f", m_glwidget->m_mouse_image_x, m_glwidget->m_mouse_image_y,
-                  m_glwidget->m_mouse_image_color[0], m_glwidget->m_mouse_image_color[1], m_glwidget->m_mouse_image_color[2],
-                  m_glwidget->m_mouse_image_color[3]);
+                              m_glwidget->m_mouse_image_color[0], m_glwidget->m_mouse_image_color[1], m_glwidget->m_mouse_image_color[2],
+                              m_glwidget->m_mouse_image_color[3]);
         m_pixelinfo->setText(s);
         float pixel[4] = { m_glwidget->m_mouse_image_color[0], m_glwidget->m_mouse_image_color[1], m_glwidget->m_mouse_image_color[2],
                            m_glwidget->m_mouse_image_color[3] };
@@ -1052,7 +1052,7 @@ void RenderViewMainWindow::toggle_background_slot()
 void RenderViewMainWindow::show_about_dialog()
 {
     char render_view_build_year[5];
-    auto build_date = platform::get_build_date_str();
+    auto build_date = base::app_version::get_build_date_str();
     render_view_build_year[0] = build_date[7];
     render_view_build_year[1] = build_date[8];
     render_view_build_year[2] = build_date[9];
@@ -1066,7 +1066,7 @@ void RenderViewMainWindow::show_about_dialog()
 
     QString text;
     text = QString::asprintf(i18n("render_view.about", "Render View (git_commit: %s build date: %s )").toStdString().c_str(),
-                             platform::get_git_commit_hash_str(), platform::get_build_date_str());
+                             base::app_version::get_git_commit_hash_str(), base::app_version::get_build_date_str());
     text += "\n";
     text += render_view_build_year;
     text += " " + company_name_str + ".";

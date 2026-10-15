@@ -13,6 +13,12 @@
 OPENDCC_NAMESPACE_OPEN
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::UndoCommand;
+using base::commands::CommandRegistry;
+using base::commands::CommandSyntax;
+using base::commands::CommandArgs;
+using base::commands::CommandResult;
+
 TF_REGISTRY_FUNCTION(TfType)
 {
     TfType::Define<DisconnectAfterShakeCommand, TfType::Bases<UndoCommand>>();

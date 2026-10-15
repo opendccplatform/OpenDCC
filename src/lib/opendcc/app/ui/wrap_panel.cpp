@@ -12,6 +12,7 @@
 #include <DockAreaWidget.h>
 
 OPENDCC_NAMESPACE_OPEN
+
 using namespace pybind11;
 
 ads::CDockWidget* create_panel(const std::string panel_type, bool floating = true, ads::CDockAreaWidget* parent_panel = nullptr,
@@ -82,7 +83,7 @@ void py_interp::bind::wrap_panel(pybind11::module& m)
                 "register_panel",
                 [](PanelFactory* self, const std::string& type, PanelFactory::PanelFactoryWidgetCallback callback, const std::string& label = "",
                    bool singleton = false, const std::string& icon = "", const std::string& group = "") {
-                    return self->register_panel(type, pybind_safe_callback(callback), label, singleton, icon, group);
+                    return self->register_panel(type, base::pybind_bridge::pybind_safe_callback(callback), label, singleton, icon, group);
                 },
                 arg("name"), arg("callback_fn"), arg("label") = std::string(), arg("singleton") = false, arg("icon") = std::string(),
                 arg("group") = std::string())

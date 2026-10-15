@@ -40,6 +40,10 @@
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::CommandInterface;
+using base::commands::CommandArgs;
+using base::commands::CommandRegistry;
+
 static const QColor background_color(0.377f * 255, 0.377f * 255, 0.377f * 255);
 static const QColor grid_color(0.325f * 255, 0.325f * 255, 0.325f * 255);
 static const QColor axis_color(0.477f * 255, 0.477f * 255, 0.477f * 255);

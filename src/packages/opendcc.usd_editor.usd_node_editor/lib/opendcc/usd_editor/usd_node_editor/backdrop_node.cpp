@@ -24,6 +24,10 @@
 PXR_NAMESPACE_USING_DIRECTIVE
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::UndoCommandBlock;
+using base::commands::CommandInterface;
+using base::commands::CommandArgs;
+
 namespace
 {
     const QSizeF s_default_start_size = QSizeF(80, 80);

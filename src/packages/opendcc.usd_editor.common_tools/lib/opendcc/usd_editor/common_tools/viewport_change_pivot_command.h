@@ -17,8 +17,8 @@
 OPENDCC_NAMESPACE_OPEN
 
 class ViewportChangePivotCommand
-    : public UndoCommand
-    , public ToolCommand
+    : public base::commands::UndoCommand
+    , public base::commands::ToolCommand
 {
 public:
     struct PivotInfo
@@ -38,12 +38,12 @@ public:
     bool is_recording() const;
     bool can_edit() const;
 
-    virtual CommandArgs make_args() const override;
-    virtual CommandResult execute(const CommandArgs& args) override;
+    virtual base::commands::CommandArgs make_args() const override;
+    virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
 
     static std::string cmd_name;
-    static CommandSyntax cmd_syntax();
-    static std::shared_ptr<Command> create_cmd();
+    static base::commands::CommandSyntax cmd_syntax();
+    static std::shared_ptr<base::commands::Command> create_cmd();
 
 private:
     std::unique_ptr<PivotInfo> m_start_pivot_info;

@@ -13,6 +13,8 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::packaging::Package;
+
 OPENDCC_DEFINE_PACKAGE_ENTRY_POINT(HydraSceneBrowserEntryPoint);
 
 void HydraSceneBrowserEntryPoint::initialize(const Package& package)

@@ -26,7 +26,7 @@ class ViewportRenderAOVs;
 
 class HydraRenderSettings;
 
-namespace ipc
+namespace base::ipc
 {
     class CommandServer;
 }
@@ -60,7 +60,7 @@ private:
     std::unique_ptr<GlContext> m_ctx;
     std::shared_ptr<HydraRenderSettings> m_render_settings;
     std::unique_ptr<RenderViewIpc> m_render_view_ipc;
-    std::unique_ptr<ipc::CommandServer> m_server;
+    std::unique_ptr<base::ipc::CommandServer> m_server;
     std::unique_ptr<ViewportOffscreenRender> m_render;
     std::shared_ptr<ViewportRenderAOVs> m_processor;
     std::shared_ptr<ViewportSceneContext> m_scene_context;
@@ -69,7 +69,7 @@ private:
     PXR_NS::SdfPath m_settings_path;
     PXR_NS::UsdTimeCode m_last_time;
 
-    ipc::ServerInfo m_main_server_info;
+    base::ipc::ServerInfo m_main_server_info;
 
     std::atomic_bool m_crop_update;
     std::mutex m_params_mtx;

@@ -5,6 +5,11 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-PackageEntryPoint::PackageEntryPoint() {}
+namespace base::packaging
+{
+
+    PackageEntryPoint::PackageEntryPoint() {}
+
+}
 
 OPENDCC_NAMESPACE_CLOSE

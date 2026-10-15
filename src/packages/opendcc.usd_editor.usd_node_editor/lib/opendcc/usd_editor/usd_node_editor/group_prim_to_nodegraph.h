@@ -18,10 +18,10 @@ namespace commands
 {
     class ParentPrimCommand;
 
-    class GroupPrimToNodeGraphCommand : public UndoCommand
+    class GroupPrimToNodeGraphCommand : public base::commands::UndoCommand
     {
     public:
-        virtual CommandResult execute(const CommandArgs& args) override;
+        virtual base::commands::CommandResult execute(const base::commands::CommandArgs& args) override;
         virtual void undo() override;
         virtual void redo() override;
 

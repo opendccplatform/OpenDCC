@@ -9,12 +9,12 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-class SentryLoggingDelegate : public LoggingDelegate
+class SentryLoggingDelegate : public base::logging::LoggingDelegate
 {
 public:
     SentryLoggingDelegate();
     ~SentryLoggingDelegate() override;
-    void log(const MessageContext& context, const std::string& message) override;
+    void log(const base::logging::MessageContext& context, const std::string& message) override;
 };
 
 OPENDCC_NAMESPACE_CLOSE

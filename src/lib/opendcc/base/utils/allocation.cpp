@@ -6,22 +6,27 @@
 
 OPENDCC_NAMESPACE_OPEN
 
-std::tuple<std::string, bool> dynamic_alloc_read(size_t init_size, const std::function<bool(char*, size_t&)>& alloc_callback)
+namespace base::utils
 {
-    std::unique_ptr<char, std::default_delete<char[]>> buffer;
-    buffer.reset(new char[init_size]);
 
-    auto cur_size = init_size;
-    while (!alloc_callback(buffer.get(), cur_size))
+    std::tuple<std::string, bool> dynamic_alloc_read(size_t init_size, const std::function<bool(char*, size_t&)>& alloc_callback)
     {
-        if (cur_size == std::numeric_limits<size_t>::max())
+        std::unique_ptr<char, std::default_delete<char[]>> buffer;
+        buffer.reset(new char[init_size]);
+
+        auto cur_size = init_size;
+        while (!alloc_callback(buffer.get(), cur_size))
         {
-            return std::make_tuple<std::string, bool>({}, false);
+            if (cur_size == std::numeric_limits<size_t>::max())
+            {
+                return std::make_tuple<std::string, bool>({}, false);
+            }
+            buffer.reset(new char[cur_size]);
         }
-        buffer.reset(new char[cur_size]);
+
+        return { buffer.get(), true };
     }
 
-    return { buffer.get(), true };
 }
 
 OPENDCC_NAMESPACE_CLOSE

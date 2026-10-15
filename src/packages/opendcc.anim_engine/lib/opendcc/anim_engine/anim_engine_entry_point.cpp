@@ -20,6 +20,7 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::packaging::Package;
 using namespace OPENDCC_NAMESPACE; // TODO use macros
 OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 
@@ -165,10 +166,10 @@ void AnimEngineEntryPoint::transform_keys_command()
     {
         transform_keys_update();
 
-        auto cmd = CommandRegistry::create_command<ChangeKeyframesCommand>("anim_engine_change_keyframes");
+        auto cmd = base::commands::CommandRegistry::create_command<ChangeKeyframesCommand>("anim_engine_change_keyframes");
         cmd->set_start_keyframes(m_start_key_list);
         cmd->set_end_keyframes(m_end_key_list);
-        CommandInterface::finalize(cmd, CommandArgs().arg(m_start_key_list).arg(m_end_key_list));
+        base::commands::CommandInterface::finalize(cmd, base::commands::CommandArgs().arg(m_start_key_list).arg(m_end_key_list));
     }
 
     m_time_selection_begin_start = m_time_selection_end_start;

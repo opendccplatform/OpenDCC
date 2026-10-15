@@ -83,11 +83,14 @@ namespace pybind11
         {
             using value_type = T;
             PYBIND11_TYPE_CASTER(value_type, _<value_type>());
-            bool load(pybind11::handle src, bool) { return OPENDCC_NAMESPACE::pybind_boost_bridge<value_type>::load(value, src); }
+            bool load(pybind11::handle src, bool)
+            {
+                return OPENDCC_NAMESPACE::base::pybind_bridge::pybind_boost_bridge<value_type>::load(value, src);
+            }
 
             static handle cast(value_type src, pybind11::return_value_policy, pybind11::handle)
             {
-                return OPENDCC_NAMESPACE::pybind_boost_bridge<value_type>::cast(src);
+                return OPENDCC_NAMESPACE::base::pybind_bridge::pybind_boost_bridge<value_type>::cast(src);
             }
         };
 
@@ -106,11 +109,14 @@ namespace pybind11
         struct type_caster<PXR_NS::VtArray<U>>
         {
             PYBIND11_TYPE_CASTER(PXR_NS::VtArray<U>, _("pxr.Vt.Array"));
-            bool load(pybind11::handle src, bool) { return OPENDCC_NAMESPACE::pybind_boost_bridge<PXR_NS::VtArray<U>>::load(value, src); }
+            bool load(pybind11::handle src, bool)
+            {
+                return OPENDCC_NAMESPACE::base::pybind_bridge::pybind_boost_bridge<PXR_NS::VtArray<U>>::load(value, src);
+            }
 
             static handle cast(PXR_NS::VtArray<U> src, pybind11::return_value_policy, pybind11::handle)
             {
-                return OPENDCC_NAMESPACE::pybind_boost_bridge<PXR_NS::VtArray<U>>::cast(src);
+                return OPENDCC_NAMESPACE::base::pybind_bridge::pybind_boost_bridge<PXR_NS::VtArray<U>>::cast(src);
             }
         };
     }

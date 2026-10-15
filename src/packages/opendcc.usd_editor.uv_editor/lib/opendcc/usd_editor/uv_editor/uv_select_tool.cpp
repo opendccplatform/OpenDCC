@@ -20,6 +20,9 @@ OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
 
+using base::commands::CommandInterface;
+using base::commands::CommandArgs;
+
 static const int min_rect_size = 2;
 static const auto rect_color = GfVec4f(1.0f, 1.0f, 1.0f, 1.0f);
 static const auto rect_paint_style = ViewportUiDrawManager::PaintStyle::STIPPLED;

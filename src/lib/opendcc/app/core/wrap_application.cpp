@@ -21,6 +21,8 @@
 #include <pxr/base/tf/pyResultConversions.h>
 
 OPENDCC_NAMESPACE_OPEN
+namespace pybind_bridge = base::pybind_bridge;
+
 using namespace pybind11;
 
 QMainWindow* get_main_window(Application* self)
@@ -156,61 +158,62 @@ private:
 void py_interp::bind::wrap_application(pybind11::module& m)
 {
     using namespace pybind11;
-    auto app_scope = class_<Application, std::unique_ptr<Application, nodelete>>(m, "Application")
-                         .def_static("instance", &Application::instance, return_value_policy::reference)
-                         .def("get_opendcc_version_string", &Application::get_opendcc_version_string)
-                         .def("get_build_date", &Application::get_build_date)
-                         .def("get_commit_hash", &Application::get_commit_hash)
-                         .def("get_opendcc_version", &Application::get_opendcc_version)
-                         .def("is_ui_available", &Application::is_ui_available)
-                         .def("get_ui_settings", &get_ui_settings)
-                         .def("get_settings", &Application::get_settings, return_value_policy::reference)
-                         .def("get_ocio_config", &get_ocio_config)
-                         .def("get_settings_path", &Application::get_settings_path)
-                         .def("get_main_window", &get_main_window)
-                         .def("get_undo_stack", &Application::get_undo_stack, return_value_policy::reference)
-                         .def("set_current_time", &Application::set_current_time)
-                         .def("set_current_viewport_tool", app_set_current_viewport_tool)
-                         .def("get_current_viewport_tool", app_get_current_viewport_tool, return_value_policy::reference)
-                         .def_static("get_usd_clipboard", &Application::get_usd_clipboard, return_value_policy::reference)
-                         .def("get_current_time", &Application::get_current_time)
-                         .def("get_prim_selection", &Application::get_prim_selection)
-                         .def("set_prim_selection", &Application::set_prim_selection)
-                         .def("get_selection", &Application::get_selection)
-                         .def("set_selection", &Application::set_selection)
-                         .def("get_selection_mode", &Application::get_selection_mode)
-                         .def("set_selection_mode", &Application::set_selection_mode)
-                         .def("enable_soft_selection", &Application::enable_soft_selection)
-                         .def("is_soft_selection_enabled", &Application::is_soft_selection_enabled)
-                         .def("clear_prim_selection", &Application::clear_prim_selection)
-                         .def("register_event_callback",
-                              [](Application* self, const Application::EventType& event_type, std::function<void()> callback) {
-                                  return self->register_event_callback(event_type, pybind_safe_callback(callback));
-                              })
-                         .def("register_event_callback",
-                              [](Application* self, const std::string& event_type, std::function<void()> callback) {
-                                  return self->register_event_callback(self->string_to_event_type(event_type), pybind_safe_callback(callback));
-                              })
-                         .def("unregister_event_callback", &Application::unregister_event_callback)
-                         .def("unregister_event_callback",
-                              [](Application* self, const std::string& event_type, Application::CallbackHandle handle) {
-                                  return self->unregister_event_callback(self->string_to_event_type(event_type), handle);
-                              })
-                         .def("get_session", &Application::get_session, return_value_policy::reference)
-                         .def("get_application_root_path", &Application::get_application_root_path)
-                         .def("get_active_view", &get_active_view)
-                         .def("set_active_view_scene_context", &Application::set_active_view_scene_context)
-                         .def("get_active_view_scene_context", &Application::get_active_view_scene_context)
-                         .def("set_sound_display", &set_sound_display)
-                         .def("clear_sound_display", &clear_sound_display)
-                         .def("set_layer_selection", &Application::set_layer_selection)
-                         .def("get_layer_selection", &Application::get_layer_selection)
-                         .def_static("set_app_config", &Application::set_app_config)
-                         .def_static("get_app_config", &Application::get_app_config, return_value_policy::reference)
-                         .def_static("get_file_extensions", &get_file_extensions)
-                         .def("get_supported_languages", &get_supported_languages)
-                         .def("set_ui_language", &set_ui_language)
-                         .def("get_package_registry", &Application::get_package_registry);
+    auto app_scope =
+        class_<Application, std::unique_ptr<Application, nodelete>>(m, "Application")
+            .def_static("instance", &Application::instance, return_value_policy::reference)
+            .def("get_opendcc_version_string", &Application::get_opendcc_version_string)
+            .def("get_build_date", &Application::get_build_date)
+            .def("get_commit_hash", &Application::get_commit_hash)
+            .def("get_opendcc_version", &Application::get_opendcc_version)
+            .def("is_ui_available", &Application::is_ui_available)
+            .def("get_ui_settings", &get_ui_settings)
+            .def("get_settings", &Application::get_settings, return_value_policy::reference)
+            .def("get_ocio_config", &get_ocio_config)
+            .def("get_settings_path", &Application::get_settings_path)
+            .def("get_main_window", &get_main_window)
+            .def("get_undo_stack", &Application::get_undo_stack, return_value_policy::reference)
+            .def("set_current_time", &Application::set_current_time)
+            .def("set_current_viewport_tool", app_set_current_viewport_tool)
+            .def("get_current_viewport_tool", app_get_current_viewport_tool, return_value_policy::reference)
+            .def_static("get_usd_clipboard", &Application::get_usd_clipboard, return_value_policy::reference)
+            .def("get_current_time", &Application::get_current_time)
+            .def("get_prim_selection", &Application::get_prim_selection)
+            .def("set_prim_selection", &Application::set_prim_selection)
+            .def("get_selection", &Application::get_selection)
+            .def("set_selection", &Application::set_selection)
+            .def("get_selection_mode", &Application::get_selection_mode)
+            .def("set_selection_mode", &Application::set_selection_mode)
+            .def("enable_soft_selection", &Application::enable_soft_selection)
+            .def("is_soft_selection_enabled", &Application::is_soft_selection_enabled)
+            .def("clear_prim_selection", &Application::clear_prim_selection)
+            .def("register_event_callback",
+                 [](Application* self, const Application::EventType& event_type, std::function<void()> callback) {
+                     return self->register_event_callback(event_type, pybind_bridge::pybind_safe_callback(callback));
+                 })
+            .def("register_event_callback",
+                 [](Application* self, const std::string& event_type, std::function<void()> callback) {
+                     return self->register_event_callback(self->string_to_event_type(event_type), pybind_bridge::pybind_safe_callback(callback));
+                 })
+            .def("unregister_event_callback", &Application::unregister_event_callback)
+            .def("unregister_event_callback",
+                 [](Application* self, const std::string& event_type, Application::CallbackHandle handle) {
+                     return self->unregister_event_callback(self->string_to_event_type(event_type), handle);
+                 })
+            .def("get_session", &Application::get_session, return_value_policy::reference)
+            .def("get_application_root_path", &Application::get_application_root_path)
+            .def("get_active_view", &get_active_view)
+            .def("set_active_view_scene_context", &Application::set_active_view_scene_context)
+            .def("get_active_view_scene_context", &Application::get_active_view_scene_context)
+            .def("set_sound_display", &set_sound_display)
+            .def("clear_sound_display", &clear_sound_display)
+            .def("set_layer_selection", &Application::set_layer_selection)
+            .def("get_layer_selection", &Application::get_layer_selection)
+            .def_static("set_app_config", &Application::set_app_config)
+            .def_static("get_app_config", &Application::get_app_config, return_value_policy::reference)
+            .def_static("get_file_extensions", &get_file_extensions)
+            .def("get_supported_languages", &get_supported_languages)
+            .def("set_ui_language", &set_ui_language)
+            .def("get_package_registry", &Application::get_package_registry);
 
     enum_<Application::SelectionMode>(app_scope, "SelectionMode")
         .value("POINTS", Application::SelectionMode::POINTS)

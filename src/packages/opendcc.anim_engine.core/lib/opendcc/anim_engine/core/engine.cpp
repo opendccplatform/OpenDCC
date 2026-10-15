@@ -23,6 +23,10 @@ PXR_NAMESPACE_USING_DIRECTIVE;
 
 OPENDCC_NAMESPACE_OPEN
 
+using base::commands::CommandInterface;
+using base::commands::CommandArgs;
+using base::commands::CommandRegistry;
+
 AnimEngine::AnimEngine(UsdStageRefPtr stage)
 {
     m_stage_listener.init(stage, { UsdAnimEngineTokens->anim }, this);

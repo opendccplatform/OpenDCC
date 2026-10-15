@@ -41,7 +41,7 @@ void HydraOpNetworkModifier::begin_changes()
 
 void HydraOpNetworkModifier::end_changes()
 {
-    ScopeGuard editing_flag([this] { m_editing = false; });
+    base::utils::ScopeGuard editing_flag([this] { m_editing = false; });
 
     // Gather topology changes
     for (const auto& n : m_removed_nodes)
