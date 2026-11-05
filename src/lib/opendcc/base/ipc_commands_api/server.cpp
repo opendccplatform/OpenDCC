@@ -126,8 +126,6 @@ namespace base::ipc
         {
             try
             {
-                // https://stackoverflow.com/questions/16699890/connect-to-first-free-port-with-tcp-using-0mq
-
                 auto address = info.get_tcp_address();
                 zmq::socket_t socket(m_context, zmq::socket_type::pull);
                 socket.bind(address);
@@ -139,8 +137,8 @@ namespace base::ipc
             }
             catch (const zmq::error_t& error)
             {
-                OPENDCC_ERROR("CommandServer::select_free_port: {}", error.what());
-                return ServerInfo();
+                OPENDCC_ERROR("CommandServer::select_free_port on {}: {}", info.get_tcp_address(), error.what());
+                return {};
             }
         }
 

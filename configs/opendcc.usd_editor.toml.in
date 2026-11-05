@@ -20,6 +20,6 @@ init_ui = "import opendcc.startup;opendcc.startup.init_ui()"
 active_control = "usd"
 
 [ipc.command_server]
-port = 8000
+port = 5558
 
 server_timeout = 1000 # ms

@@ -152,7 +152,7 @@ RenderViewMainWindow::RenderViewMainWindow(RenderViewPreferences&& preferences,
     info = m_server->get_info();
 
     m_main_server_info.hostname = "127.0.0.1";
-    m_main_server_info.input_port = m_app_config.get<uint32_t>("ipc.command_server.port", 8000);
+    m_main_server_info.input_port = m_app_config.get<uint32_t>("ipc.command_server.port", 5558);
 
     ipc::CommandServer::set_server_timeout(m_app_config.get<int>("ipc.command_server.server_timeout", 1000));
 

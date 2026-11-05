@@ -801,13 +801,12 @@ void Application::create_command_server()
     ipc::CommandServer::set_server_timeout(config.get<int>("ipc.command_server.server_timeout", 1000));
     ipc::ServerInfo info;
     info.hostname = "127.0.0.1";
-    info.input_port = config.get<uint32_t>("ipc.command_server.port", 8000);
+    info.input_port = config.get<uint32_t>("ipc.command_server.port", 5558);
 
     s_server = std::make_unique<ipc::CommandServer>(info);
-    info = s_server->get_info();
     if (!s_server->valid())
     {
-        OPENDCC_ERROR("Unable to create CommandServer on port {}", info.input_port);
+        OPENDCC_ERROR("Unable to create CommandServer at {}", info.get_tcp_address());
     }
 }
 

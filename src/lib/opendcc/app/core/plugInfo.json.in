@@ -3,36 +3,36 @@
       {
         "Info": {
           "Types": {
-            "OpenDCC::UndoCommand": {
+            "OpenDCC::base::commands::UndoCommand": {
               "displayName": "Base class for any command in OpenDCC application."
             },
             "OpenDCC::UsdEditUndoCommand": {
                 "bases": [
-                  "OpenDCC::UndoCommand"
+                  "OpenDCC::base::commands::UndoCommand"
                 ],
                 "displayName": "USD Editor command which allows to revert certain USD edits."
             },
             "OpenDCC::ViewportMoveToolCommand": {
                 "bases": [
-                  "OpenDCC::UndoCommand"
+                  "OpenDCC::base::commands::UndoCommand"
                 ],
                 "displayName": "Move command"
             },
             "OpenDCC::ViewportRotateToolCommand": {
                 "bases": [
-                  "OpenDCC::UndoCommand"
+                  "OpenDCC::base::commands::UndoCommand"
                 ],
                 "displayName": "Rotate command"
             },
             "OpenDCC::ViewportScaleToolCommand": {
                 "bases": [
-                  "OpenDCC::UndoCommand"
+                  "OpenDCC::base::commands::UndoCommand"
                 ],
                 "displayName": "Scale command"
             },
             "OpenDCC::ViewportIsolateSelectionCommand": {
                 "bases": [
-                  "OpenDCC::UndoCommand"
+                  "OpenDCC::base::commands::UndoCommand"
                 ],
                 "displayName": "Viewport command which allows to isolate selected prims."
             },
