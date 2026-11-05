@@ -126,7 +126,7 @@ class TimelinePage(QtWidgets.QWidget):
         self.cursor_old = settings.get_int(self.cursor_key, 0)
         self.keyframe_old = settings.get_int(self.keyframe_key, 0)
         self.background_old = settings.get_int(self.background_key, 0)
-        self.subdivisions_old = settings.get_int(self.subdivisions_key, 0)
+        self.subdivisions_old = settings.get_bool(self.subdivisions_key, True)
 
         self.restore_previous_settings()
         self.snap_ui.stateChanged.connect(self.set_snap_value_mode)
@@ -184,7 +184,7 @@ class TimelinePage(QtWidgets.QWidget):
         settings.set_int(self.cursor_key, self.cursor_old)
         settings.set_int(self.keyframe_key, self.keyframe_old)
         settings.set_int(self.background_key, self.background_old)
-        settings.set_bool(self.subdivisions_ui, self.subdivisions_old)
+        settings.set_bool(self.subdivisions_key, self.subdivisions_old)
 
     def restore_previous_settings(self):
         self.snap_ui.setChecked(self.snap_value_old)
