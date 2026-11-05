@@ -16,7 +16,7 @@
 #include "opendcc/base/vendor/eventpp/eventdispatcher.h"
 #include <type_traits>
 #include <opendcc/base/vendor/jsoncpp/json.h>
-#include <opendcc/base/vendor/nonstd/any.hpp>
+#include <any>
 
 OPENDCC_NAMESPACE_OPEN
 OPENDCC_INITIALIZE_LOG_CHANNEL("opendcc.app.settings");
@@ -70,11 +70,11 @@ public:
     /**
      * @brief A function for serializing a value of type `std::any` to JSON.
      */
-    using SerializeFn = std::function<Json::Value(const nonstd::any&)>;
+    using SerializeFn = std::function<Json::Value(const std::any&)>;
     /**
      * @brief A function for deserializing a value of type `Json::Value` to `std::any`.
      */
-    using DeserializeFn = std::function<nonstd::any(const Json::Value&)>;
+    using DeserializeFn = std::function<std::any(const Json::Value&)>;
     /**
      * @brief An enum class for specifying the type of change that occurred to a setting.
      */
@@ -126,7 +126,7 @@ public:
                     const auto result_val = held_type_data->second.from_json(m_value);
                     if (result_val.type() == typeid(TDecayed))
                     {
-                        *result = nonstd::any_cast<TDecayed>(result_val);
+                        *result = std::any_cast<TDecayed>(result_val);
                         return true;
                     }
                 }
@@ -256,7 +256,7 @@ public:
             OPENDCC_ERROR("Attempt to set unknown type. Try register this type via register_type<T> method.");
             return;
         }
-        set(path, converter->second.to_json(nonstd::make_any<TDecayed>(value)), typeid(TDecayed));
+        set(path, converter->second.to_json(std::make_any<TDecayed>(value)), typeid(TDecayed));
     }
     /**
      * @brief Sets the default value of a setting.
@@ -287,7 +287,7 @@ public:
             OPENDCC_ERROR("Attempt to set unknown type. Try register this type via register_type<T> method.");
             return;
         }
-        set_default(path, converter->second.to_json(nonstd::make_any<TDecayed>((value))), typeid(TDecayed));
+        set_default(path, converter->second.to_json(std::make_any<TDecayed>((value))), typeid(TDecayed));
     }
 
     /**
@@ -322,7 +322,7 @@ public:
         {
             const auto holder = converter->second.from_json(result);
             if (holder.type() == typeid(TDecayed))
-                return nonstd::any_cast<TDecayed>(holder);
+                return std::any_cast<TDecayed>(holder);
         }
         return fallback_value;
     }
@@ -358,7 +358,7 @@ public:
         {
             const auto holder = converter->second.from_json(result);
             if (holder.type() == typeid(TDecayed))
-                return nonstd::any_cast<TDecayed>(holder);
+                return std::any_cast<TDecayed>(holder);
         }
         return fallback_value;
     }

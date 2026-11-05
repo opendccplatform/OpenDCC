@@ -8,7 +8,6 @@
 #include "opendcc/opendcc.h"
 #include "opendcc/base/packaging/api.h"
 #include "opendcc/base/packaging/package.h"
-#include "opendcc/base/vendor/nonstd/optional.hpp"
 #include <functional>
 
 OPENDCC_NAMESPACE_OPEN

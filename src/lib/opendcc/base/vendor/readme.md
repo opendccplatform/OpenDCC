@@ -18,9 +18,6 @@ commit a3f50689457c73f45da0e4e2d64cb80142d10958
 **jsoncpp**  
 https://github.com/open-source-parsers/jsoncpp 
 
-**nonstd**  
-https://github.com/martinmoene/any-lite
-
 **tiny_process**  
 https://gitlab.com/eidheim/tiny-process-library
 
