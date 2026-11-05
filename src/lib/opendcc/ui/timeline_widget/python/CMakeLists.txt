@@ -11,3 +11,5 @@ opendcc_make_shiboken_bindings(
     widgets
     PRIVATE_DEFINITIONS
     QT_NOT_GEN)
+
+target_include_directories(timeline_widget_py PRIVATE ${PROJECT_SOURCE_DIR}/src/lib/thirdparty)

@@ -22,16 +22,19 @@ set(SRC
     utils.cpp
     module_deps.cpp)
 
-add_library(usd_fallback_proxy SHARED ${HEADERS} ${SRC})
-
-target_include_directories(
+opendcc_make_library(
     usd_fallback_proxy
-    PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/lib/>" "$<INSTALL_INTERFACE:include>"
-           "$<BUILD_INTERFACE:${USD_FALLBACK_PROXY_INCLUDE_DIR}>" "$<BUILD_INTERFACE:${USD_INCLUDE_DIR}>"
-           "$<BUILD_INTERFACE:${Boost_INCLUDE_DIRS}>" "$<BUILD_INTERFACE:${PYTHON_INCLUDE_DIRS}>")
-
-target_link_libraries(
-    usd_fallback_proxy
+    CPPFILES
+    ${HEADERS}
+    ${SRC}
+    INCLUDE_DIRS
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/lib/>"
+    "$<INSTALL_INTERFACE:include>"
+    "$<BUILD_INTERFACE:${USD_FALLBACK_PROXY_INCLUDE_DIR}>"
+    "$<BUILD_INTERFACE:${USD_INCLUDE_DIR}>"
+    "$<BUILD_INTERFACE:${Boost_INCLUDE_DIRS}>"
+    "$<BUILD_INTERFACE:${PYTHON_INCLUDE_DIRS}>"
+    LIBRARY_DEPENDENCIES
     usd
     ar
     sdr
@@ -39,19 +42,17 @@ target_link_libraries(
     usdUtils
     usdShade
     usdUIExt
-    utils)
-# The 'ndr' library was merged into 'sdr' in USD 25.05 and no longer exists there;
-# link it only when the imported target is present (i.e. older USD like 25.02a).
-if(TARGET ndr)
-    target_link_libraries(usd_fallback_proxy ndr)
-endif()
+    utils
+    LIBRARY_INSTALL_DIR
+    plugin/usd
+    ARCHIVE_INSTALL_DIR
+    plugin/usd)
 
-install(
-    TARGETS usd_fallback_proxy
-    EXPORT usd_fallback_proxy-targets
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION plugin/usd
-    ARCHIVE DESTINATION plugin/usd)
+# The 'ndr' library was merged into 'sdr' in USD 25.05 and no longer exists there; link it only when the imported target
+# is present (i.e. older USD like 25.02a).
+if(TARGET ndr)
+    target_link_libraries(usd_fallback_proxy PUBLIC ndr)
+endif()
 
 install(
     EXPORT usd_fallback_proxy-targets
@@ -73,10 +74,3 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/plugInfo.json.in" "${CMAKE_CURRENT_B
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/plugInfo.json
         DESTINATION ${CMAKE_INSTALL_PREFIX}/plugin/usd/usd_fallback_proxy/resources/)
-
-if(MSVC)
-    install(
-        FILES $<TARGET_PDB_FILE:usd_fallback_proxy>
-        DESTINATION bin
-        OPTIONAL)
-endif()

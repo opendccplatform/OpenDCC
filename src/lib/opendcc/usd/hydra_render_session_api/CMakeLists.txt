@@ -74,16 +74,19 @@ set(src ${GEN_SRC})
 
 set(src_py module.cpp ${GEN_SRC_PY})
 
-add_library(hydra_render_session_api SHARED ${headers} ${src})
-
-add_library(hydra_render_session_api_py SHARED ${headers} ${src_py})
-
-target_include_directories(
-    hydra_render_session_api PUBLIC ${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS} ${USD_INCLUDE_DIR} ${TBB_INCLUDE_DIRS}
-                                    $<BUILD_INTERFACE:${SCHEMA_SOURCES_INCLUDE_DIR}>)
-
-target_link_libraries(
+opendcc_make_library(
     hydra_render_session_api
+    PUBLIC_HEADERS
+    ${headers}
+    CPPFILES
+    ${src}
+    INCLUDE_DIRS
+    ${Boost_INCLUDE_DIRS}
+    ${PYTHON_INCLUDE_DIRS}
+    ${USD_INCLUDE_DIR}
+    ${TBB_INCLUDE_DIRS}
+    $<BUILD_INTERFACE:${SCHEMA_SOURCES_INCLUDE_DIR}>
+    LIBRARY_DEPENDENCIES
     ${TBB_LIBRARIES}
     ${Boost_PYTHON_LIBRARY}
     ${PYTHON_LIBRARY}
@@ -91,62 +94,36 @@ target_link_libraries(
     usdGeom
     tf
     sdf
-    usd
-    vt)
+    vt
+    PRIVATE_DEFINITIONS
+    USDHYDRAEXT_EXPORTS
+    LIBRARY_INSTALL_DIR
+    plugin/usd
+    ARCHIVE_INSTALL_DIR
+    plugin/usd
+    PDB_INSTALL_DIR
+    plugin/usd)
 
-target_compile_definitions(hydra_render_session_api PRIVATE -DUSDHYDRAEXT_EXPORTS)
-
-target_link_libraries(
+opendcc_make_python_module(
     hydra_render_session_api_py
-    ${TBB_LIBRARIES}
-    ${Boost_PYTHON_LIBRARY}
-    ${PYTHON_LIBRARY}
+    PYMODULE_NAME
+    UsdHdSession
+    PYMODULE_SOURCES
+    ${headers}
+    ${src_py}
+    LIBRARY_DEPENDENCIES
     hydra_render_session_api
-    usd
-    usdGeom
-    tf
-    sdf
-    usd
-    vt)
+    PRIVATE_DEFINITIONS
+    MFB_PACKAGE_NAME=UsdHdSession
+    MFB_ALT_PACKAGE_NAME=UsdHdSession
+    MFB_PACKAGE_MODULE=UsdHdSession
+    PYMODULE_INSTALL_DIR
+    opendcc/UsdHdSession)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/plugin/usd/hydra_render_session_api/resources/plugInfo.json
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/plugin/usd/hydra_render_session_api/resources/)
-
-install(FILES ${headers} DESTINATION "include/opendcc/hydra_render_session_api/")
-install(FILES "${OUTPUT_DIR}/generatedSchema.usda" DESTINATION "plugin/usd/hydra_render_session_api/resources/")
+        DESTINATION plugin/usd/hydra_render_session_api/resources)
+install(FILES ${headers} DESTINATION include/opendcc/hydra_render_session_api)
+install(FILES "${OUTPUT_DIR}/generatedSchema.usda" DESTINATION plugin/usd/hydra_render_session_api/resources)
 export(TARGETS hydra_render_session_api FILE hydra_render_session_api.cmake)
-
-install(FILES "schema.usda" DESTINATION "plugin/usd/hydra_render_session_api/resources/hydra_render_session_api/")
-install(
-    TARGETS hydra_render_session_api
-    ARCHIVE DESTINATION "plugin/usd/"
-    LIBRARY DESTINATION "plugin/usd/"
-    RUNTIME DESTINATION "bin")
-
-if(MSVC)
-    install(
-        FILES $<TARGET_PDB_FILE:hydra_render_session_api>
-        DESTINATION plugin/usd/
-        OPTIONAL)
-endif()
-if(MSVC)
-    set_target_properties(hydra_render_session_api_py PROPERTIES SUFFIX ".pyd")
-else()
-    set_target_properties(hydra_render_session_api_py PROPERTIES SUFFIX ".so")
-endif()
-set_target_properties(hydra_render_session_api_py PROPERTIES PREFIX "" OUTPUT_NAME UsdHdSession)
-target_compile_definitions(
-    hydra_render_session_api_py PRIVATE MFB_PACKAGE_NAME=UsdHdSession MFB_ALT_PACKAGE_NAME=UsdHdSession
-                                        MFB_PACKAGE_MODULE=UsdHdSession)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
-        DESTINATION "${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/opendcc/UsdHdSession")
-install(
-    TARGETS hydra_render_session_api_py
-    RUNTIME DESTINATION "${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/opendcc/UsdHdSession"
-    LIBRARY DESTINATION "${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/opendcc/UsdHdSession")
-if(MSVC)
-    install(
-        FILES $<TARGET_PDB_FILE:hydra_render_session_api_py>
-        DESTINATION ${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/opendcc/UsdHdSession
-        OPTIONAL)
-endif()
+install(FILES schema.usda DESTINATION plugin/usd/hydra_render_session_api/resources/hydra_render_session_api)
+install(FILES __init__.py DESTINATION "${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/opendcc/UsdHdSession")

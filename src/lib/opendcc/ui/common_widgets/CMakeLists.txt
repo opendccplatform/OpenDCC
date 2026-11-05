@@ -1,12 +1,3 @@
-include_directories(
-    ${QT_INCLUDE_DIR}
-    ${PXR_INCLUDE_DIRS}
-    ${PYTHON_INCLUDE_DIRS}
-    ${PROJECT_SOURCE_DIR}/src/lib
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty
-    ${Boost_INCLUDE_DIRS})
-
 set(headers
     api.h
     canvas_widget.h
@@ -53,12 +44,25 @@ set(src
     search_widget.cpp
     precision_slider.cpp)
 
-add_library(common_widgets SHARED ${src} ${headers})
-target_compile_definitions(common_widgets PRIVATE -DOPENDCC_UI_COMMON_WIDGETS_EXPORT)
-
-set_property(TARGET common_widgets PROPERTY AUTOMOC ON)
-target_link_libraries(
+opendcc_make_library(
     common_widgets
+    QT_AUTOMOC
+    CPPFILES
+    ${src}
+    ${headers}
+    PRIVATE_INCLUDE_DIRS
+    ${QT_INCLUDE_DIR}
+    ${PXR_INCLUDE_DIRS}
+    ${PYTHON_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/src/lib
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty
+    ${Boost_INCLUDE_DIRS}
+    PRIVATE_DEFINITIONS
+    OPENDCC_UI_COMMON_WIDGETS_EXPORT
+    VS_FOLDER
+    widgets
+    LIBRARY_DEPENDENCIES
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Gui
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -69,22 +73,8 @@ target_link_libraries(
 install(FILES ${headers} DESTINATION "include/opendcc/common_widgets/")
 
 install(
-    TARGETS common_widgets
-    EXPORT common_widgets-targets
-    ARCHIVE DESTINATION "lib"
-    LIBRARY DESTINATION "lib"
-    RUNTIME DESTINATION "bin")
-if(MSVC)
-    install(
-        FILES $<TARGET_PDB_FILE:common_widgets>
-        DESTINATION bin
-        OPTIONAL)
-endif()
-install(
     EXPORT common_widgets-targets
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/common_widgets
     NAMESPACE opendcc::)
-
-make_folder("widgets" common_widgets)
 
 add_subdirectory(bind)

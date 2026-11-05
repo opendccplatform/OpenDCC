@@ -262,8 +262,10 @@ source_group(
 
 setup_update_translations(qm_files)
 
-add_library(
-    opendcc_lib SHARED
+opendcc_make_library(
+    opendcc_lib
+    QT_AUTOMOC
+    CPPFILES
     ${src_core}
     ${headers_core}
     ${src_ui}
@@ -293,7 +295,6 @@ target_include_directories(
             ${PXR_INCLUDE_DIRS}
             ${EMBREE_INCLUDE_DIR})
 
-set_property(TARGET opendcc_lib PROPERTY AUTOMOC ON)
 target_compile_definitions(opendcc_lib PRIVATE -DOPENDCC_EXPORT -DBOOST_ALL_DYN_LINK -DBOOST_ALL_NO_LIB
                                                $<$<BOOL:${DCC_USE_HYDRA_FRAMING_API}>:OPENDCC_USE_HYDRA_FRAMING_API>)
 
@@ -306,90 +307,90 @@ include_directories(${python_include_dir})
 include_directories(${shiboken_include_dir})
 
 if(USD_VERSION VERSION_GREATER_EQUAL 0.22.05)
-    target_link_libraries(opendcc_lib compositing)
+    target_link_libraries(opendcc_lib PUBLIC compositing)
 endif()
 
-target_link_libraries(opendcc_lib ${DCC_SHIBOKEN_LIB_TARGET} ${DCC_PYSIDE_TARGET})
+target_link_libraries(opendcc_lib PUBLIC ${DCC_SHIBOKEN_LIB_TARGET} ${DCC_PYSIDE_TARGET})
 
 # Qt6::Platform injects UNICODE/_UNICODE into every consumer unless this is set, which flips
 # TinyProcessLib::Process::string_type to std::wstring and breaks render_process.cpp.
 set_target_properties(opendcc_lib PROPERTIES QT_NO_UNICODE_DEFINES ON)
-target_link_libraries(opendcc_lib app_version app_config color_theme)
+target_link_libraries(opendcc_lib PUBLIC app_version app_config color_theme)
 set_target_properties(opendcc_lib PROPERTIES OUTPUT_NAME opendcc_core)
 
 include_directories(${OPENMESH_INCLUDE_DIRS})
-target_link_libraries(opendcc_lib ${OPENMESH_LIBRARIES})
+target_link_libraries(opendcc_lib PUBLIC ${OPENMESH_LIBRARIES})
 
-target_link_libraries(opendcc_lib crash_reporting Qt${QT_VERSION_MAJOR}::Network)
+target_link_libraries(opendcc_lib PUBLIC crash_reporting Qt${QT_VERSION_MAJOR}::Network)
 
 if(USD_VERSION VERSION_LESS_EQUAL 0.20.08)
-    target_link_libraries(opendcc_lib ${GLEW_LIBRARY})
+    target_link_libraries(opendcc_lib PUBLIC ${GLEW_LIBRARY})
     target_include_directories(opendcc_lib PUBLIC ${GLEW_INCLUDE_DIR})
 endif()
 
 target_link_libraries(
     opendcc_lib
-    ${DCC_ADS_TARGET}
-    test_runner
-    packaging
-    common_widgets
-    timeline_widget
-    layer_tree_watcher
-    usd_ipc_serialization
-    utils
-    ipc_commands_api
-    usd_fallback_proxy
-    usd_live_share
-    logger_panel
-    $<$<BOOL:${DCC_BUILD_RENDER_VIEW}>:render_view_display_driver_api>
-    render_system
-    opendcc_base_tiny_process
-    ocio_color_widgets
-    hydra_render_session_api
-    utils
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Gui
-    ${DCC_QT_SVG_TARGETS}
-    Qt${QT_VERSION_MAJOR}::Widgets
-    ${DCC_QT_OPENGL_TARGETS}
-    $<$<BOOL:${DCC_HOUDINI_SUPPORT}>:OpenGL::GL>
-    $<$<BOOL:${DCC_KATANA_SUPPORT}>:OpenGL::GL>
-    Qt${QT_VERSION_MAJOR}::Multimedia
-    pybind11::pybind11
-    ${Boost_PYTHON_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY}
-    ${PYTHON_LIBRARY}
-    ${TBB_LIBRARIES}
-    ${OCIO_LIBRARIES}
-    ${EMBREE_LIBRARY}
-    ${OIIO_OpenImageIO_LIBRARY}
-    ${OIIO_OpenImageIO_Util_LIBRARY}
-    py_commands_api
-    ar
-    arch
-    cameraUtil
-    garch
-    gf
-    glf
-    hd
-    kind
-    plug
-    sdf
-    tf
-    usd
-    usdGeom
-    usdHydra
-    usdImaging
-    usdImagingGL
-    usdRender
-    usdUtils
-    usdVol
-    usdLux
-    vt
-    hdx
-    hgiGL
-    jsoncpp
-    opendcc.usd_editor.scene_indices)
+    PUBLIC ${DCC_ADS_TARGET}
+           test_runner
+           packaging
+           common_widgets
+           timeline_widget
+           layer_tree_watcher
+           usd_ipc_serialization
+           utils
+           ipc_commands_api
+           usd_fallback_proxy
+           usd_live_share
+           logger_panel
+           $<$<BOOL:${DCC_BUILD_RENDER_VIEW}>:render_view_display_driver_api>
+           render_system
+           opendcc_base_tiny_process
+           ocio_color_widgets
+           hydra_render_session_api
+           utils
+           Qt${QT_VERSION_MAJOR}::Core
+           Qt${QT_VERSION_MAJOR}::Gui
+           ${DCC_QT_SVG_TARGETS}
+           Qt${QT_VERSION_MAJOR}::Widgets
+           ${DCC_QT_OPENGL_TARGETS}
+           $<$<BOOL:${DCC_HOUDINI_SUPPORT}>:OpenGL::GL>
+           $<$<BOOL:${DCC_KATANA_SUPPORT}>:OpenGL::GL>
+           Qt${QT_VERSION_MAJOR}::Multimedia
+           pybind11::pybind11
+           ${Boost_PYTHON_LIBRARY}
+           ${Boost_SYSTEM_LIBRARY}
+           ${PYTHON_LIBRARY}
+           ${TBB_LIBRARIES}
+           ${OCIO_LIBRARIES}
+           ${EMBREE_LIBRARY}
+           ${OIIO_OpenImageIO_LIBRARY}
+           ${OIIO_OpenImageIO_Util_LIBRARY}
+           py_commands_api
+           ar
+           arch
+           cameraUtil
+           garch
+           gf
+           glf
+           hd
+           kind
+           plug
+           sdf
+           tf
+           usd
+           usdGeom
+           usdHydra
+           usdImaging
+           usdImagingGL
+           usdRender
+           usdUtils
+           usdVol
+           usdLux
+           vt
+           hdx
+           hgiGL
+           jsoncpp
+           opendcc.usd_editor.scene_indices)
 
 target_include_directories(opendcc_lib PUBLIC ${OCIO_INCLUDE_DIRS} ${OIIO_INCLUDE_DIR} ${ILMBASE_INCLUDE_DIR}
                                               ${ILMBASE_INCLUDE_DIR}/OpenEXR ${ILMBASE_INCLUDE_DIR}/Imath)
@@ -420,37 +421,20 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/viewport/shaders/depth_compositor.gl
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/viewport/shaders"
         DESTINATION "${CMAKE_INSTALL_PREFIX}/plugin/opendcc/core_extension/resources/")
 
-add_library(opendcc_lib_python_core SHARED core/python_module.cpp ${python_headers} ${python_src})
-target_link_libraries(opendcc_lib_python_core py_utils opendcc_lib)
-
-if(MSVC)
-    set_target_properties(opendcc_lib_python_core PROPERTIES SUFFIX ".pyd")
-else()
-    set_target_properties(opendcc_lib_python_core PROPERTIES SUFFIX ".so")
-endif()
-
-set_target_properties(opendcc_lib_python_core PROPERTIES PREFIX "" OUTPUT_NAME _core)
-
-install(
-    TARGETS opendcc_lib_python_core
-    RUNTIME DESTINATION ${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/opendcc/core
-    LIBRARY DESTINATION ${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/opendcc/core)
-
-if(MSVC)
-    install(
-        FILES $<TARGET_PDB_FILE:opendcc_lib_python_core>
-        DESTINATION ${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/opendcc/core
-        OPTIONAL)
-endif()
-
-install(
-    TARGETS opendcc_lib
-    # EXPORT opendcc_lib-targets
-    RUNTIME DESTINATION bin
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    INCLUDES
-    DESTINATION include/opendcc)
+opendcc_make_python_module(
+    opendcc_lib_python_core
+    NO_BOOST_PYTHON
+    PYMODULE_NAME
+    _core
+    PYMODULE_SOURCES
+    core/python_module.cpp
+    ${python_headers}
+    ${python_src}
+    LIBRARY_DEPENDENCIES
+    py_utils
+    opendcc_lib
+    PYMODULE_INSTALL_DIR
+    opendcc/core)
 
 install(
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/" # source directory
@@ -458,13 +442,6 @@ install(
     FILES_MATCHING # install only matched files
     PATTERN "*.h" # select header files
 )
-
-if(MSVC)
-    install(
-        FILES $<TARGET_PDB_FILE:opendcc_lib>
-        DESTINATION bin
-        OPTIONAL)
-endif()
 
 install(
     CODE "file(WRITE \"${CMAKE_INSTALL_PREFIX}/plugin/opendcc/plugInfo.json\" \"{\n    \\\"Includes\\\": [ \\\"*/resources/\\\" ]\n}\")"

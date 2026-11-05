@@ -9,3 +9,6 @@ opendcc_make_shiboken_bindings(
     widgets
     PRIVATE_DEFINITIONS
     QT_NOT_GEN)
+
+target_include_directories(common_widgets_shiboken PRIVATE ${Boost_INCLUDE_DIRS}
+                                                           ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty)

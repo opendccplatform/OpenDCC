@@ -189,10 +189,9 @@ if(DCC_HOUDINI_SUPPORT)
     execute_process(COMMAND "${CMAKE_COMMAND}" -E create_symlink "${Boost_INCLUDE_DIR}/hboost"
                             "${PROJECT_BINARY_DIR}/include/boost")
     add_definitions(-DOPENDCC_HOUDINI_SUPPORT -DHBOOST_ALL_DYN_LINK -DHBOOST_ALL_NO_LIB)
-    add_library(_houdini_compatibility INTERFACE)
+    opendcc_make_library(_houdini_compatibility TYPE INTERFACE)
     target_precompile_headers(_houdini_compatibility INTERFACE "${CMAKE_CURRENT_LIST_DIR}/houdini_compatibility_pch.h")
     export(TARGETS _houdini_compatibility FILE _houdini_compatibility-targets.cmake)
-    install(TARGETS _houdini_compatibility EXPORT _houdini_compatibility-targets)
     install(
         EXPORT _houdini_compatibility-targets
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/_houdini_compatibility
@@ -367,10 +366,9 @@ if(DCC_KATANA_SUPPORT)
                    "${CMAKE_CURRENT_BINARY_DIR}/katana_compatibility_pch.h" @ONLY)
 
     add_definitions(-DOPENDCC_KATANA_SUPPORT)
-    add_library(_katana_compatibility INTERFACE)
+    opendcc_make_library(_katana_compatibility TYPE INTERFACE)
     target_precompile_headers(_katana_compatibility INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/katana_compatibility_pch.h")
     export(TARGETS _katana_compatibility FILE _katana_compatibility-targets.cmake)
-    install(TARGETS _katana_compatibility EXPORT _katana_compatibility-targets)
     install(
         EXPORT _katana_compatibility-targets
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/_katana_compatibility
