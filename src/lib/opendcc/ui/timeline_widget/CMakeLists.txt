@@ -1,6 +1,3 @@
-include_directories(${QT_INCLUDE_DIR} ${PXR_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}
-                    ${PROJECT_SOURCE_DIR}/src/lib/thirdparty)
-
 set(headers
     api.h
     audio_decoder.h
@@ -22,24 +19,29 @@ set(src
     timeline_slider.cpp
     range_slider.cpp)
 
-add_library(timeline_widget SHARED ${src} ${moc} ${headers})
-target_link_libraries(
+opendcc_make_library(
     timeline_widget
+    QT_AUTOMOC
+    CPPFILES
+    ${src}
+    ${moc}
+    ${headers}
+    PRIVATE_INCLUDE_DIRS
+    ${QT_INCLUDE_DIR}
+    ${PXR_INCLUDE_DIRS}
+    ${PYTHON_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/src/lib/thirdparty
+    PRIVATE_DEFINITIONS
+    OPENDCC_UI_TIMELINE_EXPORT
+    VS_FOLDER
+    widgets
+    LIBRARY_DEPENDENCIES
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Multimedia
     vt
     color_theme)
-
-set_property(TARGET timeline_widget PROPERTY AUTOMOC ON)
-target_compile_definitions(timeline_widget PRIVATE -DOPENDCC_UI_TIMELINE_EXPORT)
-
-install(
-    TARGETS timeline_widget
-    EXPORT timeline_widget-targets
-    ARCHIVE DESTINATION "lib"
-    LIBRARY DESTINATION "lib"
-    RUNTIME DESTINATION "bin")
 
 install(
     EXPORT timeline_widget-targets
@@ -47,4 +49,3 @@ install(
     NAMESPACE opendcc::)
 
 add_subdirectory(python)
-make_folder("widgets" timeline_widget)

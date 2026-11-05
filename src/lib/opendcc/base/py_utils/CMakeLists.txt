@@ -1,7 +1,12 @@
-add_library(py_utils INTERFACE)
-target_link_libraries(py_utils INTERFACE logging pybind11::pybind11 Python3::Python)
+opendcc_make_library(
+    py_utils
+    TYPE
+    INTERFACE
+    LIBRARY_DEPENDENCIES
+    logging
+    pybind11::pybind11
+    Python3::Python)
 
-install(TARGETS py_utils EXPORT py_utils-targets)
 install(
     DIRECTORY .
     DESTINATION "include/opendcc/base/py_utils"
