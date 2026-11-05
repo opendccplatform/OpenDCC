@@ -77,8 +77,8 @@ namespace
     {
         static_assert(GfIsGfVec<T>::value, "Specified type is not GfVec");
         Settings::register_type<T>(
-            [](const nonstd::any& val) {
-                const auto vec_val = nonstd::any_cast<T>(val);
+            [](const std::any& val) {
+                const auto vec_val = std::any_cast<T>(val);
                 Json::Value result(Json::ValueType::arrayValue);
                 result.resize(T::dimension);
                 for (int i = 0; i < T::dimension; i++)
@@ -87,16 +87,16 @@ namespace
             },
             [](const Json::Value& val) {
                 if (!val.isArray())
-                    return nonstd::any();
+                    return std::any();
 
                 T result;
                 for (int i = 0; i < T::dimension; i++)
                 {
                     if (!val[i].isDouble())
-                        return nonstd::any();
+                        return std::any();
                     result[i] = val[i].asDouble();
                 }
-                return nonstd::make_any<T>(std::move(result));
+                return std::make_any<T>(std::move(result));
             });
     }
     void register_extra_settings_types()
@@ -115,8 +115,8 @@ namespace
         register_settings_pxr_vector<GfVec4d>();
 
         Settings::register_type<VtValue>(
-            [](const nonstd::any& val) {
-                auto vt_val = nonstd::any_cast<VtValue>(val);
+            [](const std::any& val) {
+                auto vt_val = std::any_cast<VtValue>(val);
                 if (vt_val.IsHolding<bool>())
                 {
                     return Json::Value(vt_val.UncheckedGet<bool>());
@@ -136,15 +136,15 @@ namespace
             },
             [](const Json::Value& val) {
                 if (val.isBool())
-                    return nonstd::make_any<VtValue>(VtValue(val.asBool()));
+                    return std::make_any<VtValue>(VtValue(val.asBool()));
                 else if (val.isInt())
-                    return nonstd::make_any<VtValue>(VtValue(val.asInt()));
+                    return std::make_any<VtValue>(VtValue(val.asInt()));
                 else if (val.isDouble())
-                    return nonstd::make_any<VtValue>(VtValue(val.asDouble()));
+                    return std::make_any<VtValue>(VtValue(val.asDouble()));
                 else if (val.isString())
-                    return nonstd::make_any<VtValue>(VtValue(val.asString()));
+                    return std::make_any<VtValue>(VtValue(val.asString()));
                 // TODO: arrays
-                return nonstd::any();
+                return std::any();
             });
     }
 };

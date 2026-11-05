@@ -179,8 +179,8 @@ DOCTEST_TEST_SUITE("SettingsTests")
     DOCTEST_TEST_CASE("register_custom_type")
     {
         Settings::register_type<TestClassAsObject>(
-            [](const nonstd::any& val) {
-                auto my_class = nonstd::any_cast<TestClassAsObject>(val);
+            [](const std::any& val) {
+                auto my_class = std::any_cast<TestClassAsObject>(val);
                 Json::Value result(Json::ValueType::objectValue);
                 result["int_val"] = my_class.int_val;
                 result["double_val"] = my_class.double_val;
@@ -188,7 +188,7 @@ DOCTEST_TEST_SUITE("SettingsTests")
             },
             [](const Json::Value& val) {
                 if (!val.isObject())
-                    return nonstd::any();
+                    return std::any();
                 if (val.isMember("int_val") && val.isMember("double_val") && val.size() == 2)
                 {
                     const auto int_val = val["int_val"];
@@ -198,14 +198,14 @@ DOCTEST_TEST_SUITE("SettingsTests")
                         TestClassAsObject result;
                         result.int_val = int_val.asInt();
                         result.double_val = double_val.asDouble();
-                        return nonstd::make_any<TestClassAsObject>(result);
+                        return std::make_any<TestClassAsObject>(result);
                     }
                 }
-                return nonstd::any();
+                return std::any();
             });
         Settings::register_type<TestClass>(
-            [](const nonstd::any& val) {
-                auto my_class = nonstd::any_cast<TestClass>(val);
+            [](const std::any& val) {
+                auto my_class = std::any_cast<TestClass>(val);
                 Json::Value result(Json::ValueType::arrayValue);
                 result[0] = my_class.int_val;
                 result[1] = my_class.double_val;
@@ -213,7 +213,7 @@ DOCTEST_TEST_SUITE("SettingsTests")
             },
             [](const Json::Value& val) {
                 if (!val.isArray())
-                    return nonstd::any();
+                    return std::any();
                 if (val.size() == 2)
                 {
                     const auto int_val = val[0];
@@ -223,10 +223,10 @@ DOCTEST_TEST_SUITE("SettingsTests")
                         TestClass result;
                         result.int_val = int_val.asInt();
                         result.double_val = double_val.asDouble();
-                        return nonstd::make_any<TestClass>(result);
+                        return std::make_any<TestClass>(result);
                     }
                 }
-                return nonstd::any();
+                return std::any();
             });
         Settings settings;
         settings.set("custom", TestClassAsObject { 4, 3.2 });
