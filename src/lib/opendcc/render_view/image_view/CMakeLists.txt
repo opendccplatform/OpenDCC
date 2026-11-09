@@ -1,15 +1,3 @@
-include_directories(
-    ${OPENGL_INCLUDE_DIR}
-    ${GLEW_INCLUDE_DIR}
-    ${OIIO_INCLUDE_DIR}
-    ${ILMBASE_INCLUDE_DIR}
-    ${OCIO_INCLUDE_DIR}
-    ${Boost_INCLUDE_DIRS}
-    ${ZMQ_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${RENDER_VIEW_SOURCE_DIR}
-    ${PYTHON_INCLUDE_DIRS})
-
 set(src
     gl_widget.cpp
     app.cpp
@@ -42,21 +30,33 @@ set(headers
     stylesheet.h
     translator.h)
 
-set(CMAKE_AUTOMOC ON)
 qt_add_resources(resources shaders/shaders.qrc)
-include_directories(${PROJECT_SOURCE_DIR}/src/lib)
-include_directories(${RENDER_VIEW_SOURCE_DIR}/thirdparty/qtsingleapplication/src)
 
-add_library(image_view SHARED ${src} ${headers} ${resources})
-target_compile_definitions(image_view PRIVATE -DOPENDCC_RENDER_VIEW_EXPORT)
-if(DCC_EMBEDDED_PYTHON_HOME)
-    target_compile_definitions(image_view PRIVATE -DOPENDCC_EMBEDDED_PYTHON_HOME)
-endif()
-
-make_folder("render_view" image_view)
-
-target_link_libraries(
+opendcc_make_library(
     image_view
+    QT_AUTOMOC
+    CPPFILES
+    ${src}
+    ${headers}
+    ${resources}
+    PRIVATE_INCLUDE_DIRS
+    ${OPENGL_INCLUDE_DIR}
+    ${GLEW_INCLUDE_DIR}
+    ${OIIO_INCLUDE_DIR}
+    ${ILMBASE_INCLUDE_DIR}
+    ${OCIO_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIRS}
+    ${ZMQ_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${RENDER_VIEW_SOURCE_DIR}
+    ${PYTHON_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/src/lib
+    ${RENDER_VIEW_SOURCE_DIR}/thirdparty/qtsingleapplication/src
+    PRIVATE_DEFINITIONS
+    OPENDCC_RENDER_VIEW_EXPORT
+    VS_FOLDER
+    render_view
+    LIBRARY_DEPENDENCIES
     Imath::Imath
     OpenEXR::OpenEXR
     ${Boost_REGEX_LIBRARY}
@@ -71,9 +71,7 @@ target_link_libraries(
     ${OIIO_OpenImageIO_Util_LIBRARY}
     ${OCIO_LIBRARIES}
     ${PYTHON_LIBRARY}
-    ipc_commands_api)
-target_link_libraries(
-    image_view
+    ipc_commands_api
     render_view_display_driver_api
     app_version
     app_config
@@ -82,16 +80,6 @@ target_link_libraries(
     Qt${QT_VERSION_MAJOR}::Widgets
     ${DCC_QT_OPENGL_TARGETS}
     Qt${QT_VERSION_MAJOR}::Network)
-
-install(
-    TARGETS image_view
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
-
-if(MSVC)
-    install(
-        FILES $<TARGET_PDB_FILE:image_view>
-        DESTINATION bin
-        OPTIONAL)
+if(DCC_EMBEDDED_PYTHON_HOME)
+    target_compile_definitions(image_view PRIVATE -DOPENDCC_EMBEDDED_PYTHON_HOME)
 endif()

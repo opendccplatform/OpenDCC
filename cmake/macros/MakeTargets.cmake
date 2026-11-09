@@ -6,6 +6,23 @@ else()
     set(OS_LIBRARY_ENV_NAME "LD_LIBRARY_PATH")
 endif()
 
+#[=[
+opendcc_add_package(PACKAGE_NAME)
+
+Add the package subdirectory named PACKAGE_NAME, relative to the current source
+directory. Inside that directory, OPENDCC_CURRENT_PACKAGE_NAME is set to the
+package name. opendcc_make_library() and opendcc_make_python_module() use it to
+add the private definition OPENDCC_PACKAGE_NAME="<package name>" to their targets.
+
+On Windows, build files go to ${CMAKE_BINARY_DIR}/p/<PACKAGE_NAME> to keep paths
+short. Other platforms use the normal add_subdirectory() binary directory.
+This function does not install package.toml, Python files or resources; the
+package's CMakeLists.txt must supply those installation rules.
+
+Example, from src/packages/CMakeLists.txt:
+
+    opendcc_add_package(opendcc.ui.node_editor)
+]=]
 function(opendcc_add_package PACKAGE_NAME)
     set(OPENDCC_CURRENT_PACKAGE_NAME "${PACKAGE_NAME}")
     if(WIN32)
@@ -16,6 +33,26 @@ function(opendcc_add_package PACKAGE_NAME)
     endif()
 endfunction()
 
+#[=[
+get_usd_env(EXTRA_ENVIRONMENT USD_ENVIRONMENT_VAR)
+
+Build a search-path string for USD generator subprocesses. EXTRA_ENVIRONMENT is
+one positional argument containing additional directories as a quoted CMake
+list, or an empty string. USD_ENVIRONMENT_VAR is the name of the output variable;
+the result is returned in the caller's scope, without changing the environment.
+
+The result includes USD_LIBRARY_DIR, Boost_LIBRARY_DIR_RELEASE, the lib and bin
+directories beside TBB_INCLUDE_DIRS, USD_GENSCHEMA_DIR, the extra directories,
+and the existing PATH. On non-Windows platforms it also includes the existing
+LD_LIBRARY_PATH. Entries are joined with OS_ENV_SEPARATOR: ';' on Windows and
+':' elsewhere. These dependency variables must already be configured.
+
+Example:
+
+    set(_extra_runtime_dirs "${CMAKE_INSTALL_PREFIX}/bin;${CMAKE_INSTALL_PREFIX}/lib")
+    get_usd_env("${_extra_runtime_dirs}" _usd_env)
+    # Pass "PATH=${_usd_env}" to a generator via cmake -E env.
+]=]
 function(get_usd_env EXTRA_ENVIRONMENT USD_ENVIRONMENT_VAR)
     set(_result "")
     list(APPEND _result "${USD_LIBRARY_DIR}")
@@ -38,6 +75,41 @@ function(get_usd_env EXTRA_ENVIRONMENT USD_ENVIRONMENT_VAR)
         PARENT_SCOPE)
 endfunction()
 
+#[=[
+parse_schema_file(
+    SCHEMA_FILE USD_ENV OUTPUT_DIR
+    GEN_HEADERS GEN_SRC GEN_SRC_PY SCHEMA_NAME SCHEMA_PREFIX HAVE_CLASSES)
+
+Internal configure-time helper used by opendcc_make_usd_schema(). All arguments
+are positional; the final six arguments are output VARIABLE NAMES, returned in
+the caller's scope.
+
+Inputs:
+    SCHEMA_FILE    Path to the existing USD schema file.
+    USD_ENV        Search-path string produced by get_usd_env(); quote it.
+    OUTPUT_DIR     Directory used to calculate generated file paths.
+
+Outputs:
+    GEN_HEADERS    List of generated C++ header paths.
+    GEN_SRC        List of generated C++ implementation paths.
+    GEN_SRC_PY     List of generated Python-wrapper C++ paths.
+    SCHEMA_NAME    Library name read from the schema metadata.
+    SCHEMA_PREFIX  Library prefix read from the schema metadata.
+    HAVE_CLASSES   TRUE if the schema declares classes, otherwise FALSE.
+
+Runs parse_usd_schema.py using PYTHON_EXECUTABLE and USD_GENSCHEMA_SCRIPT, with
+USD_LIBRARY_DIR/python on PYTHONPATH and USD_ENV on PATH/LD_LIBRARY_PATH.
+It inspects the schema without generating the actual C++ files. Script failure
+is a fatal configuration error; opendcc_make_usd_schema() handles generation.
+
+Example, inside a schema helper:
+
+    get_usd_env("" _usd_env)
+    parse_schema_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/schema.usda" "${_usd_env}"
+        "${CMAKE_CURRENT_BINARY_DIR}/generated_src/example"
+        _headers _sources _python_sources _name _prefix _have_classes)
+]=]
 function(
     parse_schema_file
     SCHEMA_FILE
@@ -95,10 +167,84 @@ function(
         PARENT_SCOPE)
 endfunction()
 
+#[=[
+opendcc_make_python_module(TARGET_NAME
+    PYMODULE_NAME <name>
+    PYMODULE_SOURCES <files...>
+    [NO_BOOST_PYTHON] [NO_INSTALL]
+    [VS_FOLDER <folder>]
+    [PYMODULE_INSTALL_DIR <directory>]
+    [PYMODULE_INSTALL_PATH <path>]
+    [LIBRARY_DEPENDENCIES <libraries...>]
+    [PRIVATE_LIBRARY_DEPENDENCIES <libraries...>]
+    [INCLUDE_DIRS <directories...>] [PRIVATE_INCLUDE_DIRS <directories...>]
+    [PUBLIC_DEFINITIONS <definitions...>] [PRIVATE_DEFINITIONS <definitions...>])
+
+Create a SHARED Python extension target. TARGET_NAME identifies the CMake target;
+PYMODULE_NAME sets its output filename and the private PYMODULE_NAME definition.
+The source must supply a matching Python initialization function. If either
+PYMODULE_NAME or PYMODULE_SOURCES is empty, no target is created.
+
+Flags (present = enabled; omit to disable, rather than passing ON/OFF):
+    NO_BOOST_PYTHON
+        Link pybind11::pybind11 and Python3::Python instead of the default
+        pybind11::pybind11, Boost_PYTHON_LIBRARY and PYTHON_LIBRARY. Use this for
+        extensions that do not need Boost.Python; it does not remove Boost
+        dependencies inherited from other linked targets.
+    NO_INSTALL
+        Build the extension without registering installation or PDB rules.
+
+Single-value arguments:
+    PYMODULE_NAME
+        Required Python module basename, without a platform suffix.
+    VS_FOLDER
+        Optional Visual Studio solution folder; ignored by other generators.
+    PYMODULE_INSTALL_DIR
+        Directory below DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT. Defaults to
+        'opendcc', with a warning if no installation destination was supplied.
+    PYMODULE_INSTALL_PATH
+        Path relative to CMAKE_INSTALL_PREFIX, e.g. packages/example/python.
+        Takes precedence over PYMODULE_INSTALL_DIR. Do not pass an absolute path.
+
+List arguments:
+    PYMODULE_SOURCES                 Extension sources and headers.
+    LIBRARY_DEPENDENCIES             Additional PUBLIC link dependencies.
+    PRIVATE_LIBRARY_DEPENDENCIES     Additional PRIVATE link dependencies.
+    INCLUDE_DIRS                    PUBLIC compiler include directories.
+    PRIVATE_INCLUDE_DIRS            PRIVATE compiler include directories.
+    PUBLIC_DEFINITIONS              PUBLIC compile definitions, without -D.
+    PRIVATE_DEFINITIONS             PRIVATE compile definitions, without -D.
+
+The output has no library prefix and uses .pyd with MSVC, .so otherwise. Library,
+archive, runtime and PDB output directories are set to
+${CMAKE_CURRENT_BINARY_DIR}/<TARGET_NAME>; multi-config generators append the
+configuration directory. Installation uses install(TARGETS), including install
+RPATH handling; MSVC PDB installation is optional. Python .py files and package
+__init__.py files require separate install() rules. The enclosing package name,
+when set by opendcc_add_package(), becomes a private OPENDCC_PACKAGE_NAME define.
+
+Example, for the existing app_config wrapper:
+
+    opendcc_make_python_module(
+        py_app_config
+        NO_BOOST_PYTHON
+        PYMODULE_NAME app_config
+        PYMODULE_SOURCES wrap_config.cpp
+        LIBRARY_DEPENDENCIES app_config
+        PYMODULE_INSTALL_DIR opendcc
+        VS_FOLDER base/app_config)
+]=]
 function(opendcc_make_python_module TARGET_NAME)
-    set(options NO_BOOST_PYTHON)
+    set(options NO_BOOST_PYTHON NO_INSTALL)
     set(one_value_args PYMODULE_NAME VS_FOLDER PYMODULE_INSTALL_DIR PYMODULE_INSTALL_PATH)
-    set(multi_value_args PYMODULE_SOURCES LIBRARY_DEPENDENCIES PUBLIC_DEFINITIONS PRIVATE_DEFINITIONS)
+    set(multi_value_args
+        PYMODULE_SOURCES
+        LIBRARY_DEPENDENCIES
+        PRIVATE_LIBRARY_DEPENDENCIES
+        INCLUDE_DIRS
+        PRIVATE_INCLUDE_DIRS
+        PUBLIC_DEFINITIONS
+        PRIVATE_DEFINITIONS)
 
     cmake_parse_arguments(args "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
     if(NOT args_PYMODULE_SOURCES OR NOT args_PYMODULE_NAME)
@@ -127,6 +273,11 @@ function(opendcc_make_python_module TARGET_NAME)
         target_link_libraries(${_pymodule_target} PUBLIC pybind11::pybind11 ${Boost_PYTHON_LIBRARY} ${PYTHON_LIBRARY})
     endif()
     target_link_libraries(${TARGET_NAME} PUBLIC ${args_LIBRARY_DEPENDENCIES})
+    target_link_libraries(${TARGET_NAME} PRIVATE ${args_PRIVATE_LIBRARY_DEPENDENCIES})
+    target_include_directories(
+        ${TARGET_NAME}
+        PUBLIC ${args_INCLUDE_DIRS}
+        PRIVATE ${args_PRIVATE_INCLUDE_DIRS})
 
     if(args_PUBLIC_DEFINITIONS)
         target_compile_definitions(${TARGET_NAME} PUBLIC ${args_PUBLIC_DEFINITIONS})
@@ -145,17 +296,11 @@ function(opendcc_make_python_module TARGET_NAME)
                    PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${_pymodule_target}"
                    CLEAN_DIRECT_OUTPUT 1)
 
+    if(args_NO_INSTALL)
+        return()
+    endif()
     if(args_PYMODULE_INSTALL_PATH)
-        install(FILES "$<TARGET_FILE:${_pymodule_target}>"
-                DESTINATION "${CMAKE_INSTALL_PREFIX}/${args_PYMODULE_INSTALL_PATH}")
-
-        if(MSVC)
-            install(
-                FILES "$<TARGET_PDB_FILE:${_pymodule_target}>"
-                DESTINATION "${CMAKE_INSTALL_PREFIX}/${args_PYMODULE_INSTALL_PATH}"
-                OPTIONAL)
-        endif()
-
+        set(_pymodule_install_dir "${CMAKE_INSTALL_PREFIX}/${args_PYMODULE_INSTALL_PATH}")
     else()
         if(NOT args_PYMODULE_INSTALL_DIR)
             message(
@@ -165,18 +310,156 @@ function(opendcc_make_python_module TARGET_NAME)
             set(args_PYMODULE_INSTALL_DIR opendcc)
         endif()
 
-        install(FILES "$<TARGET_FILE:${_pymodule_target}>"
-                DESTINATION "${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/${args_PYMODULE_INSTALL_DIR}")
-
-        if(MSVC)
-            install(
-                FILES "$<TARGET_PDB_FILE:${_pymodule_target}>"
-                DESTINATION "${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/${args_PYMODULE_INSTALL_DIR}"
-                OPTIONAL)
-        endif()
+        set(_pymodule_install_dir "${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/${args_PYMODULE_INSTALL_DIR}")
+    endif()
+    # Target installation also applies the install RPATH on Unix platforms.
+    install(
+        TARGETS ${_pymodule_target}
+        RUNTIME DESTINATION "${_pymodule_install_dir}"
+        LIBRARY DESTINATION "${_pymodule_install_dir}")
+    if(MSVC)
+        install(
+            FILES "$<TARGET_PDB_FILE:${_pymodule_target}>"
+            DESTINATION "${_pymodule_install_dir}"
+            OPTIONAL)
     endif()
 endfunction()
 
+#[=[
+opendcc_make_library(TARGET_NAME
+    [TYPE <STATIC|SHARED|PLUGIN|INTERFACE>] [QT_AUTOMOC] [VS_FOLDER <folder>]
+    [PACKAGE_DIR <path>] [PLUGIN_DIR <path>] [RESOURCES_DIR <path>]
+    [RUNTIME_INSTALL_DIR <path>] [LIBRARY_INSTALL_DIR <path>]
+    [ARCHIVE_INSTALL_DIR <path>] [PDB_INSTALL_DIR <path>]
+    [PUBLIC_HEADERS <files...>] [PRIVATE_HEADERS <files...>] [CPPFILES <files...>]
+    [LIBRARY_DEPENDENCIES <libraries...>]
+    [PRIVATE_LIBRARY_DEPENDENCIES <libraries...>]
+    [INCLUDE_DIRS <directories...>] [PRIVATE_INCLUDE_DIRS <directories...>]
+    [PUBLIC_DEFINITIONS <definitions...>] [PRIVATE_DEFINITIONS <definitions...>]
+    [RESOURCES <files...>]
+    [PYMODULE_NAME <name>] [PYMODULE_SOURCES <files...>]
+    [PYMODULE_INSTALL_DIR <directory>] [PYMODULE_INSTALL_PATH <path>]
+    [PYMODULE_NO_BOOST_PYTHON])
+
+Create a library and register binary/PDB installation rules. Paths supplied as
+sources are normally relative to the current source directory. Installation
+paths below are relative to CMAKE_INSTALL_PREFIX.
+
+Flags (omit to disable):
+    QT_AUTOMOC
+        Enable AUTOMOC for this target, with generated files under
+        ${CMAKE_BINARY_DIR}/ag/<TARGET_NAME> to keep Windows paths short.
+        Qt resources still require qt_add_resources() or other explicit rules.
+    PYMODULE_NO_BOOST_PYTHON
+        Forward NO_BOOST_PYTHON to the optional Python extension helper.
+
+Single-value arguments:
+    TYPE
+        STATIC, SHARED (default), PLUGIN, or INTERFACE; case-insensitive. PLUGIN
+        creates a SHARED library with plugin/package installation rules, not a CMake
+        MODULE library. PLUGIN requires PACKAGE_DIR or the legacy PLUGIN_DIR.
+        INTERFACE creates a usage-requirements target with no binary. It accepts
+        LIBRARY_DEPENDENCIES, INCLUDE_DIRS and PUBLIC_DEFINITIONS as INTERFACE
+        requirements, plus VS_FOLDER. Other arguments are rejected for this type.
+        The target is registered in the usual export set; install headers and
+        the export file separately.
+    VS_FOLDER
+        Optional Visual Studio solution folder for the library and its optional
+        Python extension; ignored by other generators.
+    PACKAGE_DIR
+        Install library artifacts into packages/<path>. Also applies to TYPE
+        STATIC or SHARED when supplied. Include a '/lib' suffix if desired.
+    PLUGIN_DIR
+        Deprecated legacy destination plugin/<path>; prefer PACKAGE_DIR for new
+        packages. With TYPE STATIC/SHARED and no PACKAGE_DIR it is ignored.
+        In the plugin/package branch, PLUGIN_DIR wins if both are supplied;
+        specify only one of the two arguments.
+    RESOURCES_DIR
+        Override the resource destination, relative to CMAKE_INSTALL_PREFIX.
+        Without it, resources go to <plugin-root>/<TARGET_NAME>; no automatic
+        '/resources' suffix is added.
+    RUNTIME_INSTALL_DIR / LIBRARY_INSTALL_DIR / ARCHIVE_INSTALL_DIR
+        Override individual binary destinations relative to CMAKE_INSTALL_PREFIX,
+        after TYPE/PACKAGE_DIR/PLUGIN_DIR defaults are resolved. For example,
+        RUNTIME_INSTALL_DIR bin LIBRARY_INSTALL_DIR plugin/usd
+        ARCHIVE_INSTALL_DIR plugin/usd preserves a split Windows/Unix layout.
+        These overrides do not change the default resource destination.
+    PDB_INSTALL_DIR
+        Override the optional MSVC PDB destination relative to the install prefix.
+        Defaults to the resolved runtime destination for shared libraries, or the
+        resolved library destination for static libraries.
+    PYMODULE_NAME
+        Optional extension basename. Together with nonempty PYMODULE_SOURCES,
+        creates the additional CMake target <TARGET_NAME>_py for a shared or
+        plugin library. STATIC libraries do not create an extension.
+    PYMODULE_INSTALL_DIR / PYMODULE_INSTALL_PATH
+        Forwarded to opendcc_make_python_module(). The former is below the Python
+        site-packages root (default 'opendcc'); the latter is below the install
+        prefix and takes precedence. The C++ library's PACKAGE_DIR does not
+        automatically relocate the Python extension.
+
+List arguments:
+    PUBLIC_HEADERS / PRIVATE_HEADERS
+        Headers included in the target's source list. These labels do not set
+        header visibility or install headers; add explicit install() rules.
+    CPPFILES                        Implementation sources, including generated
+                                    Qt resources when needed.
+    LIBRARY_DEPENDENCIES             PUBLIC link dependencies.
+    PRIVATE_LIBRARY_DEPENDENCIES     PRIVATE link dependencies.
+    INCLUDE_DIRS                    PUBLIC compiler include directories.
+    PRIVATE_INCLUDE_DIRS            PRIVATE compiler include directories.
+    PUBLIC_DEFINITIONS              PUBLIC compile definitions, without -D.
+    PRIVATE_DEFINITIONS             PRIVATE compile definitions, without -D.
+    RESOURCES                       Resource files to install. Directory
+                                    structure is flattened into the destination.
+    PYMODULE_SOURCES                Sources for the optional Python extension.
+                                    That extension links PUBLIC to this library;
+                                    private library settings are not forwarded.
+
+Default installation for ordinary STATIC/SHARED libraries: runtime DLLs to bin,
+shared libraries and archives to lib, resource root plugin/opendcc/<TARGET_NAME>.
+For package/plugin libraries, all binary artifact types go to PACKAGE_DIR or
+PLUGIN_DIR as described above; resources default to the same root plus the target
+name. RESOURCES files named exactly 'plugInfo.json' are configured with @ONLY and
+LIBRARY_LOCATION set relative to the resource destination's parent directory.
+A file named 'plugInfo.json.in' does not trigger that special handling.
+
+The target is added to the <TARGET_NAME>-targets export set. This function does
+not install the export file or headers: use install(EXPORT ...) and install(FILES
+...)/install(DIRECTORY ...) separately. MSVC PDB installation is optional. The
+enclosing package name becomes a private OPENDCC_PACKAGE_NAME definition.
+
+Example, a Qt library with a pybind11 extension:
+
+    opendcc_make_library(
+        example_widgets
+        QT_AUTOMOC
+        PUBLIC_HEADERS api.h widget.h
+        CPPFILES widget.cpp
+        LIBRARY_DEPENDENCIES Qt${QT_VERSION_MAJOR}::Widgets
+        PRIVATE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/internal
+        PRIVATE_DEFINITIONS EXAMPLE_WIDGETS_EXPORT
+        PYMODULE_NO_BOOST_PYTHON
+        PYMODULE_NAME example_widgets
+        PYMODULE_SOURCES wrap_widget.cpp
+        PYMODULE_INSTALL_DIR opendcc
+        VS_FOLDER widgets)
+
+    install(FILES api.h widget.h DESTINATION include/opendcc/example_widgets)
+    install(EXPORT example_widgets-targets
+        DESTINATION lib/cmake/example_widgets NAMESPACE opendcc::)
+
+For a packaged plugin, add TYPE PLUGIN PACKAGE_DIR example.package/lib. To put
+its resources in a sibling directory, use RESOURCES_DIR
+packages/example.package/resources and list the files with RESOURCES.
+
+Example, an interface target that propagates Python usage requirements:
+
+    opendcc_make_library(
+        py_utils
+        TYPE INTERFACE
+        LIBRARY_DEPENDENCIES logging pybind11::pybind11 Python3::Python)
+]=]
 function(opendcc_make_library TARGET_NAME)
     set(options QT_AUTOMOC PYMODULE_NO_BOOST_PYTHON)
     set(one_value_args
@@ -187,14 +470,20 @@ function(opendcc_make_library TARGET_NAME)
         PYMODULE_NAME
         PYMODULE_INSTALL_DIR
         PYMODULE_INSTALL_PATH
-        RESOURCES_DIR)
+        RESOURCES_DIR
+        RUNTIME_INSTALL_DIR
+        LIBRARY_INSTALL_DIR
+        ARCHIVE_INSTALL_DIR
+        PDB_INSTALL_DIR)
 
     set(multi_value_args
         PUBLIC_HEADERS
         PRIVATE_HEADERS
         CPPFILES
         LIBRARY_DEPENDENCIES
+        PRIVATE_LIBRARY_DEPENDENCIES
         INCLUDE_DIRS
+        PRIVATE_INCLUDE_DIRS
         PUBLIC_DEFINITIONS
         PRIVATE_DEFINITIONS
         RESOURCES
@@ -212,6 +501,26 @@ function(opendcc_make_library TARGET_NAME)
         set(_library_type "SHARED")
     else()
         string(TOUPPER ${args_TYPE} _library_type)
+    endif()
+
+    if(_library_type STREQUAL "INTERFACE")
+        foreach(_argument IN LISTS options one_value_args multi_value_args)
+            if(NOT _argument MATCHES "^(TYPE|VS_FOLDER|LIBRARY_DEPENDENCIES|INCLUDE_DIRS|PUBLIC_DEFINITIONS)$"
+               AND DEFINED args_${_argument})
+                if(args_${_argument})
+                    message(FATAL_ERROR "${TARGET_NAME}: ${_argument} is not supported for TYPE INTERFACE")
+                endif()
+            endif()
+        endforeach()
+        add_library(${TARGET_NAME} INTERFACE)
+        target_link_libraries(${TARGET_NAME} INTERFACE ${args_LIBRARY_DEPENDENCIES})
+        target_include_directories(${TARGET_NAME} INTERFACE ${args_INCLUDE_DIRS})
+        target_compile_definitions(${TARGET_NAME} INTERFACE ${args_PUBLIC_DEFINITIONS})
+        if(args_VS_FOLDER)
+            make_folder(${args_VS_FOLDER} ${TARGET_NAME})
+        endif()
+        install(TARGETS ${TARGET_NAME} EXPORT ${TARGET_NAME}-targets)
+        return()
     endif()
 
     add_library(${TARGET_NAME} ${_library_type} ${args_PUBLIC_HEADERS} ${args_PRIVATE_HEADERS} ${args_CPPFILES})
@@ -234,9 +543,13 @@ function(opendcc_make_library TARGET_NAME)
         set_property(TARGET ${TARGET_NAME} PROPERTY AUTOGEN_BUILD_DIR "${CMAKE_BINARY_DIR}/ag/${TARGET_NAME}")
     endif()
 
-    target_include_directories(${TARGET_NAME} PUBLIC ${args_INCLUDE_DIRS})
+    target_include_directories(
+        ${TARGET_NAME}
+        PUBLIC ${args_INCLUDE_DIRS}
+        PRIVATE ${args_PRIVATE_INCLUDE_DIRS})
 
     target_link_libraries(${TARGET_NAME} PUBLIC ${args_LIBRARY_DEPENDENCIES})
+    target_link_libraries(${TARGET_NAME} PRIVATE ${args_PRIVATE_LIBRARY_DEPENDENCIES})
 
     if(args_VS_FOLDER)
         make_folder(${args_VS_FOLDER} ${TARGET_NAME})
@@ -264,6 +577,20 @@ function(opendcc_make_library TARGET_NAME)
         endif()
     endif()
 
+    foreach(_artifact RUNTIME LIBRARY ARCHIVE)
+        if(DEFINED args_${_artifact}_INSTALL_DIR)
+            string(TOLOWER ${_artifact} _artifact_lower)
+            set(_${_artifact_lower}_destination "${args_${_artifact}_INSTALL_DIR}")
+        endif()
+    endforeach()
+    if(DEFINED args_PDB_INSTALL_DIR)
+        set(_pdb_destination "${args_PDB_INSTALL_DIR}")
+    elseif(_library_type STREQUAL "SHARED")
+        set(_pdb_destination "${_runtime_destination}")
+    else()
+        set(_pdb_destination "${_library_destination}")
+    endif()
+
     install(
         TARGETS ${TARGET_NAME}
         EXPORT ${TARGET_NAME}-targets
@@ -274,12 +601,12 @@ function(opendcc_make_library TARGET_NAME)
         if(${_library_type} STREQUAL "SHARED")
             install(
                 FILES "$<TARGET_PDB_FILE:${TARGET_NAME}>"
-                DESTINATION ${_runtime_destination}
+                DESTINATION ${_pdb_destination}
                 OPTIONAL)
         else()
             install(
                 FILES "$<TARGET_FILE_DIR:${TARGET_NAME}>/$<TARGET_FILE_NAME:${TARGET_NAME}>.pdb"
-                DESTINATION ${_library_destination}
+                DESTINATION ${_pdb_destination}
                 OPTIONAL)
         endif()
     endif()
@@ -330,6 +657,235 @@ function(opendcc_make_library TARGET_NAME)
     endif()
 endfunction()
 
+#[=[
+opendcc_make_executable(TARGET_NAME
+    CPPFILES <files...>
+    [LINUX_LAUNCHER] [WIN32] [QT_AUTOMOC] [VS_DEBUG_FROM_BUILD_TREE]
+    [VS_FOLDER <folder>]
+    [LIBRARY_DEPENDENCIES <libraries...>] [INCLUDE_DIRS <directories...>]
+    [PRIVATE_DEFINITIONS <definitions...>])
+
+Create an executable and install it to bin below CMAKE_INSTALL_PREFIX. TARGET_NAME
+is the logical application name. Flags are enabled by their presence; omit a flag
+to disable it, rather than passing ON/OFF.
+
+Flags:
+    LINUX_LAUNCHER
+        On UNIX AND NOT APPLE, create the actual CMake target <TARGET_NAME>.bin
+        and install a shell launcher named <TARGET_NAME>. The launcher sources
+        opendcc_setup.sh from the install prefix and executes the .bin file.
+        On Windows/macOS, the target keeps TARGET_NAME and no launcher is added.
+        If configuring the target after this call on Linux, use its .bin name.
+    WIN32
+        Pass WIN32 to add_executable(), selecting the GUI subsystem on Windows.
+        This does not automatically add Qt5::WinMain; link it explicitly when
+        the entry point requires it. Omit the flag for a console application.
+    QT_AUTOMOC
+        Enable AUTOMOC with AUTOGEN_BUILD_DIR under
+        ${CMAKE_BINARY_DIR}/ag/<actual-target-name>. Qt resources still need
+        explicit qt_add_resources() calls.
+    VS_DEBUG_FROM_BUILD_TREE
+        With MSVC, run the built executable in its build output directory when
+        debugging. By default the debugger runs the installed executable from
+        ${CMAKE_INSTALL_PREFIX}/bin. Has no effect outside the MSVC branch.
+
+Single-value argument:
+    VS_FOLDER                       Optional Visual Studio solution folder.
+
+List arguments:
+    CPPFILES                        Executable sources, headers and generated
+                                    resources; supply the sources to build.
+    LIBRARY_DEPENDENCIES             PRIVATE link dependencies.
+    INCLUDE_DIRS                    PRIVATE compiler include directories.
+    PRIVATE_DEFINITIONS             PRIVATE compile definitions, without -D.
+
+On Windows, WIN32_MANIFEST is added as a source independently of the WIN32 flag.
+With MSVC, PDB installation is optional. If DCC_MAKE_VSDEBUG_LAUNCHER is enabled,
+VS_ENVIRONMENT is also assigned to VS_DEBUGGER_ENVIRONMENT. The helper does not
+install runtime dependencies or generate opendcc_setup.sh; the root project's
+installation machinery supplies them.
+
+Example:
+
+    opendcc_make_executable(
+        usd_render
+        LINUX_LAUNCHER
+        CPPFILES main.cpp
+        LIBRARY_DEPENDENCIES usd_render_app
+        INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/src/bin
+        VS_FOLDER usd)
+]=]
+function(opendcc_make_executable TARGET_NAME)
+    set(options LINUX_LAUNCHER WIN32 QT_AUTOMOC VS_DEBUG_FROM_BUILD_TREE)
+    set(one_value_args VS_FOLDER)
+    set(multi_value_args CPPFILES LIBRARY_DEPENDENCIES INCLUDE_DIRS PRIVATE_DEFINITIONS)
+    cmake_parse_arguments(args "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
+
+    set(_binary_name ${TARGET_NAME})
+    if(args_LINUX_LAUNCHER
+       AND UNIX
+       AND NOT APPLE)
+        set(_binary_name "${TARGET_NAME}.bin")
+    endif()
+    set(_executable_options)
+    if(args_WIN32)
+        list(APPEND _executable_options WIN32)
+    endif()
+    add_executable(${_binary_name} ${_executable_options} ${args_CPPFILES})
+    if(WIN32)
+        target_sources(${_binary_name} PRIVATE ${WIN32_MANIFEST})
+    endif()
+    target_link_libraries(${_binary_name} PRIVATE ${args_LIBRARY_DEPENDENCIES})
+    target_include_directories(${_binary_name} PRIVATE ${args_INCLUDE_DIRS})
+    target_compile_definitions(${_binary_name} PRIVATE ${args_PRIVATE_DEFINITIONS})
+    if(args_QT_AUTOMOC)
+        set_target_properties(${_binary_name} PROPERTIES AUTOMOC ON AUTOGEN_BUILD_DIR
+                                                                    "${CMAKE_BINARY_DIR}/ag/${_binary_name}")
+    endif()
+    if(args_VS_FOLDER)
+        make_folder(${args_VS_FOLDER} ${_binary_name})
+    endif()
+
+    install(TARGETS ${_binary_name} RUNTIME DESTINATION bin)
+    if(MSVC)
+        if(args_VS_DEBUG_FROM_BUILD_TREE)
+            set(_debugger_command "$<TARGET_FILE:${_binary_name}>")
+            set(_debugger_directory "$<TARGET_FILE_DIR:${_binary_name}>")
+        else()
+            set(_debugger_command "${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_FILE_NAME:${_binary_name}>")
+            set(_debugger_directory "${CMAKE_INSTALL_PREFIX}/bin")
+        endif()
+        set_target_properties(${_binary_name} PROPERTIES VS_DEBUGGER_COMMAND "${_debugger_command}"
+                                                         VS_DEBUGGER_WORKING_DIRECTORY "${_debugger_directory}")
+        if(DCC_MAKE_VSDEBUG_LAUNCHER)
+            set_target_properties(${_binary_name} PROPERTIES VS_DEBUGGER_ENVIRONMENT "${VS_ENVIRONMENT}")
+        endif()
+        install(
+            FILES "$<TARGET_PDB_FILE:${_binary_name}>"
+            DESTINATION bin
+            OPTIONAL)
+    elseif(
+        args_LINUX_LAUNCHER
+        AND UNIX
+        AND NOT APPLE)
+        configure_file("${PROJECT_SOURCE_DIR}/cmake/macros/launch_script.sh"
+                       "${CMAKE_CURRENT_BINARY_DIR}/launch_script.sh" @ONLY NEWLINE_STYLE UNIX)
+        install(
+            PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/launch_script.sh"
+            DESTINATION bin
+            RENAME ${TARGET_NAME})
+    endif()
+endfunction()
+
+#[=[
+opendcc_make_usd_schema(TARGET_NAME
+    [PACKAGE_DIR <path>] [PLUGIN_DIR <path>]
+    [SCHEMA_FILE <file>] [VS_FOLDER <folder>]
+    [CUSTOM_RUNTIME_DIR <path>] [HEADER_INSTALL_DIR <path>]
+    [SRC_GENERATION_DIR <path>] [PYTHON_INSTALL_DIR <path>]
+    [PUBLIC_HEADERS <files...>] [PRIVATE_HEADERS <files...>]
+    [CPPFILES <files...>] [PYMODULE_CPPFILES <files...>]
+    [INCLUDE_DIRS <directories...>] [LIBRARY_DEPENDENCIES <libraries...>]
+    [SCHEMA_DEPENDENCIES <targets...>] [EXTRA_USD_ENVIRONMENT <directories...>]
+    [PUBLIC_DEFINITIONS <definitions...>] [PRIVATE_DEFINITIONS <definitions...>]
+    [AFTER_GEN_SCRIPT <script> <arguments...>] [PYTHON_FILES <files...>])
+
+Parse a USD schema at configure time, then generate and build its C++ and Python
+bindings at build time. Creates SHARED targets TARGET_NAME and <TARGET_NAME>_py.
+There are no boolean flags. USD, Boost.Python, Python and TBB dependencies must
+already be configured, including USD_GENSCHEMA and USD_GENSCHEMA_SCRIPT.
+
+Single-value arguments:
+    PACKAGE_DIR
+        Schema plugin root packages/<path>, relative to the install prefix.
+    PLUGIN_DIR
+        Deprecated alternative root plugin/<path>. One of PACKAGE_DIR or
+        PLUGIN_DIR is required; PLUGIN_DIR wins if both are given. Prefer
+        PACKAGE_DIR for new packages and do not specify both.
+    SCHEMA_FILE
+        Path relative to the current source directory; defaults to schema.usda.
+    VS_FOLDER
+        Optional Visual Studio solution folder for both generated targets.
+    CUSTOM_RUNTIME_DIR
+        Destination for all C++ binary artifact types and its MSVC PDB, relative
+        to CMAKE_INSTALL_PREFIX. Defaults to the schema plugin root above.
+    HEADER_INSTALL_DIR
+        Installation destination for generated headers and PUBLIC_HEADERS.
+        Supply it explicitly; this helper provides no project-specific default.
+    SRC_GENERATION_DIR
+        Generated source subdirectory below
+        ${CMAKE_CURRENT_BINARY_DIR}/generated_src. Defaults to the basename of
+        CMAKE_CURRENT_BINARY_DIR. Use a relative path, including nested include
+        directories when required by generated #include directives.
+    PYTHON_INSTALL_DIR
+        Base destination for the Python package; defaults to
+        DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT. The schema's library prefix is
+        appended as a subdirectory. Unlike PYMODULE_INSTALL_PATH on the regular
+        module helper, this is a direct install destination, not an automatically
+        prefix-prepended path. An absolute path or a prefix-relative path works.
+
+List arguments:
+    PUBLIC_HEADERS                  Extra C++ headers, installed alongside the
+                                    generated headers via PUBLIC_HEADER.
+    PRIVATE_HEADERS                 Extra headers in both target source lists;
+                                    not installed by this helper.
+    CPPFILES                        Extra C++ implementation sources.
+    PYMODULE_CPPFILES               Extra Python-wrapper C++ sources, such as
+                                    the module entry point.
+    INCLUDE_DIRS                    Additional PUBLIC C++ include directories.
+    LIBRARY_DEPENDENCIES             Additional transitive C++ link dependencies;
+                                    the Python wrapper links to the C++ target.
+    SCHEMA_DEPENDENCIES              Targets needed by schema generation. Their
+                                    binary directories are exposed through the
+                                    USD plugin-path environment variable, and
+                                    they are dependencies of the generation rule.
+                                    Add them to LIBRARY_DEPENDENCIES as well if
+                                    the resulting library must link to them.
+    EXTRA_USD_ENVIRONMENT            Declared extra generator runtime directories.
+                                    Current limitation: the get_usd_env() call
+                                    forwards this list without quoting and with
+                                    an extra argument. Nonempty values do not
+                                    reliably populate _usd_env; leave unset until
+                                    that forwarding is corrected.
+    PUBLIC_DEFINITIONS              PUBLIC definitions on the C++ target.
+    PRIVATE_DEFINITIONS             PRIVATE definitions on the C++ target.
+                                    Neither definition list is passed as command
+                                    line options to usdGenSchema.
+    AFTER_GEN_SCRIPT                Python script relative to the current source
+                                    directory, followed by its arguments. Runs
+                                    after usdGenSchema and after plugInfo.json
+                                    has been copied to plugInfo.json.in, before
+                                    final plugInfo configuration. Its working
+                                    directory is the generated source directory.
+    PYTHON_FILES                    Python files installed beside the extension;
+                                    normally includes __init__.py.
+
+The schema metadata supplies the library name and prefix; they need not equal
+TARGET_NAME. The C++ target receives <UPPERCASE_SCHEMA_NAME>_EXPORTS. The Python
+extension is named _<schema-name>.pyd with MSVC, .so otherwise, and receives the
+MFB_PACKAGE_NAME, MFB_ALT_PACKAGE_NAME and MFB_PACKAGE_MODULE definitions.
+
+Plugin metadata and generatedSchema.usda are installed under
+<schema-plugin-root>/<schema-name>/resources. The input schema is installed in a
+further <schema-name> directory there. A build-tree plugInfo.json is also written
+beside the C++ library. The helper installs the C++ target export under
+lib/cmake/<TARGET_NAME> with namespace opendcc:: and optionally installs MSVC PDBs.
+Package manifests and unrelated Python directories need separate install rules.
+
+Example, in a package containing schema.usda and module.cpp:
+
+    opendcc_make_usd_schema(
+        example_schema
+        PACKAGE_DIR example.package/pxr_plugins
+        SCHEMA_FILE schema.usda
+        SRC_GENERATION_DIR opendcc/example/schema
+        HEADER_INSTALL_DIR include/opendcc/example/schema
+        CUSTOM_RUNTIME_DIR packages/example.package/lib
+        PYTHON_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/packages/example.package/python"
+        PYMODULE_CPPFILES module.cpp
+        PYTHON_FILES __init__.py
+        VS_FOLDER packages/example)
+]=]
 function(opendcc_make_usd_schema TARGET_NAME)
     set(options "")
     set(one_value_args
@@ -589,6 +1145,31 @@ function(opendcc_make_usd_schema TARGET_NAME)
 
 endfunction()
 
+#[=[
+parse_pyside_typesystem(
+    TYPESYSTEM_FILE MODULE_NAME SRC_PATH HEADERS SOURCES TYPESYSTEMS)
+
+Internal configure-time helper used by opendcc_make_shiboken_bindings(). Runs
+make_shiboken_target.py parse_typesystem using PYTHON_EXECUTABLE. All arguments
+are positional. TYPESYSTEM_FILE is the existing XML file path; the remaining
+arguments are output VARIABLE NAMES returned in the caller's scope:
+
+    MODULE_NAME    Module basename from the XML package attribute.
+    SRC_PATH       Relative wrapper directory beneath the build's wrap directory.
+    HEADERS        Expected generated wrapper header paths.
+    SOURCES        Expected generated wrapper C++ source paths.
+    TYPESYSTEMS    Names from load-typesystem elements in the XML.
+
+The parser assumes the OpenDCC Python namespace and calculates file names from
+the XML object-type/value-type declarations. It does not run Shiboken or generate
+the wrapper files. Script failure is a fatal configuration error.
+
+Example:
+
+    parse_pyside_typesystem(
+        "${CMAKE_CURRENT_SOURCE_DIR}/common_widgets.xml"
+        _module_name _source_path _headers _sources _dependent_typesystems)
+]=]
 function(
     parse_pyside_typesystem
     TYPESYSTEM_FILE
@@ -636,6 +1217,91 @@ function(
         PARENT_SCOPE)
 endfunction()
 
+#[=[
+opendcc_make_shiboken_bindings(TARGET_NAME
+    TARGET <cpp-target> SOURCE_DIR <directory>
+    [VERBOSE] [VS_FOLDER <folder>]
+    [LEGACY_HEADER_FILEPATH <file>] [CUSTOM_PROJECT_FILE <file>]
+    [PYTHON_INSTALL_DIR <path>]
+    [GLUE_FILES <files...>] [LIBRARY_DEPENDENCIES <libraries...>]
+    [INCLUDE_DIRS <directories...>] [GEN_CONFIG_INCLUDE_DIRS <directories...>]
+    [PUBLIC_DEFINITIONS <definitions...>] [PRIVATE_DEFINITIONS <definitions...>])
+
+Generate a SHARED Python extension with the configured Shiboken/PySide toolchain.
+TARGET_NAME names the new wrapper target; TARGET names the existing C++ target
+being wrapped. Qt, Python, PySide and Shiboken must already be configured.
+
+Flag (omit to disable):
+    VERBOSE
+        Print parsed module, source and typesystem information during CMake
+        configuration. For an automatically generated project file, request
+        Shiboken warnings instead of passing the silent option. Usually supplied
+        via ${_verbose_shiboken_output}, controlled by DCC_VERBOSE_SHIBOKEN_OUTPUT.
+
+Single-value arguments:
+    TARGET
+        Required existing C++ target to wrap and link against.
+    SOURCE_DIR
+        Directory relative to the current source directory, containing
+        <TARGET>.xml and, by default, the umbrella header <TARGET>.h. Use '.' for
+        the current directory. XML package metadata determines the module name.
+    LEGACY_HEADER_FILEPATH
+        Override the umbrella header name/path relative to SOURCE_DIR. The XML
+        filename remains <TARGET>.xml.
+    CUSTOM_PROJECT_FILE
+        Existing Shiboken project file, passed directly to --project-file. Use
+        an absolute path to avoid build/source directory ambiguity. Skips automatic
+        side_config generation, but the XML is still parsed and configured to
+        calculate wrapper outputs. The custom file must provide its own paths
+        and parser configuration.
+    VS_FOLDER
+        Optional Visual Studio solution folder for the wrapper target.
+    PYTHON_INSTALL_DIR
+        Direct installation destination for the extension and optional MSVC PDB.
+        Defaults to ${DCC_PYTHON_INSTALL_SITE_PACKAGES_ROOT}/opendcc. Use an absolute
+        path or an install-prefix-relative path. The XML package directory is not
+        automatically appended; supply the complete destination directory.
+
+List arguments:
+    GLUE_FILES                      Additional inputs that trigger wrapper
+                                    regeneration when changed. Also included in
+                                    the target source list, so C++ glue files
+                                    are compiled into the extension.
+    LIBRARY_DEPENDENCIES             Additional transitive wrapper link libraries.
+    INCLUDE_DIRS                    Additional PUBLIC include directories for
+                                    compiling the wrapper, not for parsing it.
+    GEN_CONFIG_INCLUDE_DIRS         Include paths passed to Shiboken through the
+                                    generated project file, not compiler include
+                                    paths. Supply both lists when both phases
+                                    need a directory. With CUSTOM_PROJECT_FILE,
+                                    place generator include paths in that file.
+    PUBLIC_DEFINITIONS              PUBLIC wrapper compile definitions, without -D.
+    PRIVATE_DEFINITIONS             PRIVATE wrapper compile definitions, without -D.
+                                    These definitions are not automatically
+                                    forwarded to the Shiboken parser.
+
+The helper reads known Qt/PySide/USD/Boost/Python include paths, discovers loaded
+typesystems, configures the XML with @ONLY, and generates wrappers under
+${CMAKE_CURRENT_BINARY_DIR}/wrap. An automatically generated side_config.txt uses
+CMAKE_CXX_STANDARD. The target links to TARGET, the configured PySide/Shiboken
+libraries, pybind11 and Python. It has no output prefix; its suffix is .pyd with
+MSVC and .so otherwise. PYSIDE_TYPESYSTEM_PATH and PYSIDE_SOURCES_DIR target
+properties expose its configured typesystem and generated source directory.
+
+QT_AUTOMOC is not a supported flag here, and PYMODULE_INSTALL_DIR is not an
+accepted argument; use PYTHON_INSTALL_DIR. The helper does not install .py files.
+
+Example, with common_widgets.xml and common_widgets.h in the current directory:
+
+    opendcc_make_shiboken_bindings(
+        common_widgets_py
+        TARGET common_widgets
+        SOURCE_DIR .
+        GEN_CONFIG_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src/lib"
+        INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/src/lib"
+        PRIVATE_DEFINITIONS QT_NOT_GEN
+        VS_FOLDER widgets)
+]=]
 function(opendcc_make_shiboken_bindings TARGET_NAME)
     set(options VERBOSE
                 # QT_AUTOMOC

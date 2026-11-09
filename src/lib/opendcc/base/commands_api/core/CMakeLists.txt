@@ -1,7 +1,8 @@
 set(TARGET_NAME commands_api)
 
-add_library(
-    ${TARGET_NAME} SHARED
+opendcc_make_library(
+    ${TARGET_NAME}
+    CPPFILES
     api.h
     args.h
     args.cpp
@@ -16,18 +17,16 @@ add_library(
     command_registry.h
     command_registry.cpp
     command_interface.h
-    command_interface.cpp)
+    command_interface.cpp
+    VS_FOLDER
+    base/commands_api
+    PRIVATE_DEFINITIONS
+    OPENDCC_BASE_COMMANDS_EXPORT
+    INCLUDE_DIRS
+    ${CMAKE_SOURCE_DIR}/src/lib
+    ${Boost_INCLUDE_DIR}
+    LIBRARY_DEPENDENCIES
+    test_runner
+    logging)
 
-make_folder("base/commands_api" ${TARGET_NAME})
-
-target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR}/src/lib ${Boost_INCLUDE_DIR})
 target_precompile_headers(${TARGET_NAME} PRIVATE ${PRECOMPILED_INCLUDES})
-target_compile_definitions(${TARGET_NAME} PRIVATE -DOPENDCC_BASE_COMMANDS_EXPORT)
-target_link_libraries(${TARGET_NAME} test_runner logging)
-install(TARGETS ${TARGET_NAME})
-if(MSVC)
-    install(
-        FILES $<TARGET_PDB_FILE:${TARGET_NAME}>
-        DESTINATION bin
-        OPTIONAL)
-endif()
