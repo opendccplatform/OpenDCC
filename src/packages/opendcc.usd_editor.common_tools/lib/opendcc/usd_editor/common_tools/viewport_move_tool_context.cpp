@@ -379,7 +379,7 @@ bool ViewportMoveToolContext::on_key_press(QKeyEvent* key_event, const ViewportV
         }
         return true;
     }
-    else if (key_event->key() == Qt::Key_D) // TODO: make separate class with hotkey D logic to get rid of copypast in move, rotate and scale tools
+    else if (key_event->key() == Qt::Key_D && key_event->modifiers() == Qt::NoModifier) // TODO: share pivot hotkey handling between transform tools
     {
         if (!m_edit_pivot)
         {
@@ -400,7 +400,7 @@ bool ViewportMoveToolContext::on_key_release(QKeyEvent* key_event, const Viewpor
 {
     if (m_move_command && m_move_command->is_recording())
         return true;
-    if (key_event->key() == Qt::Key_D)
+    if (key_event->key() == Qt::Key_D && m_edit_pivot)
     {
         if (key_event->isAutoRepeat())
         {
