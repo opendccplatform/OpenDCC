@@ -8,6 +8,7 @@
 
 #include "opendcc/app/core/application.h"
 #include "opendcc/app/core/session.h"
+#include "opendcc/app/viewport/viewport_manipulator_utils.h"
 #include <pxr/usd/sdf/changeBlock.h>
 #include <pxr/usd/sdf/layer.h>
 #include <pxr/usd/usdGeom/xformCommonAPI.h>
@@ -53,6 +54,7 @@ CommandResult commands::CenterPivotCommand::execute(const CommandArgs& args)
     }
 
     auto bbox_cache = session->get_stage_bbox_cache(session->get_current_stage_id());
+    const auto time = UsdTimeCode(Application::instance().get_current_time());
 
     UsdEditsBlock block;
 
@@ -67,13 +69,36 @@ CommandResult commands::CenterPivotCommand::execute(const CommandArgs& args)
                 auto xform_api = UsdGeomXformCommonAPI(xformable_prim);
                 if (xform_api)
                 {
-                    auto bbox = bbox_cache.ComputeLocalBound(prim);
-                    auto center = GfVec3f(bbox.ComputeCentroid());
+                    const auto bbox = bbox_cache.ComputeUntransformedBound(prim);
+                    if (bbox.GetRange().IsEmpty())
+                        continue;
+
+                    GfVec3d translation;
+                    GfVec3f rotation, scale, pivot;
+                    UsdGeomXformCommonAPI::RotationOrder rotation_order;
+                    if (!xform_api.GetXformVectors(&translation, &rotation, &scale, &pivot, &rotation_order, time))
+                        continue;
+
+                    const auto center = GfVec3f(bbox.ComputeCentroid());
                     GfMatrix4d matrix;
                     bool resetsXformStack = false;
-                    xformable_prim.GetLocalTransformation(&matrix, &resetsXformStack, Application::instance().get_current_time());
-                    center = GfVec3f(matrix.GetInverse().Transform(center));
-                    xform_api.SetPivot(center);
+                    xformable_prim.GetLocalTransformation(&matrix, &resetsXformStack, time);
+                    const auto pivot_delta = GfVec3d(center) - GfVec3d(pivot);
+                    // Changing the scale/rotate pivot must not change the composed transform.
+                    translation += matrix.TransformDir(pivot_delta) - pivot_delta;
+
+                    const auto animated = xformable_prim.TransformMightBeTimeVarying();
+                    const auto pivot_time = animated ? time : manipulator_utils::get_non_varying_time(
+                                                                 prim.GetAttribute(TfToken("xformOp:translate:pivot")));
+                    const auto translation_time = animated ? time : manipulator_utils::get_non_varying_time(
+                                                                       prim.GetAttribute(TfToken("xformOp:translate")));
+                    const auto ops = xform_api.CreateXformOps(UsdGeomXformCommonAPI::OpTranslate, UsdGeomXformCommonAPI::OpPivot);
+                    if (!ops.translateOp || !ops.pivotOp)
+                        continue;
+
+                    SdfChangeBlock change_block;
+                    ops.pivotOp.Set(center, pivot_time);
+                    ops.translateOp.Set(translation, translation_time);
                 }
             }
         }
