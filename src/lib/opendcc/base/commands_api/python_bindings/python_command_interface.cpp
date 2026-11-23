@@ -27,7 +27,7 @@ namespace base::commands::python
             if (converter_fn != pimpl->to_python_converters.end())
             {
                 const auto result = converter_fn->second(arg);
-                if (!result.is_none())
+                if (result && !result.is_none())
                     return result;
             }
         }

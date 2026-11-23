@@ -1,6 +1,11 @@
 opendcc_add_package(opendcc.ui.code_editor)
 opendcc_add_package(opendcc.ui.script_editor)
 
+opendcc_add_package(opendcc.ui.scene_outliner)
+if(DCC_PACKAGE_OPENDCC_USD_EDITOR_USD_OUTLINER)
+    opendcc_add_package(opendcc.usd_editor.usd_outliner)
+endif()
+
 opendcc_add_package(opendcc.usd_editor.common_cmds)
 opendcc_add_package(opendcc.usd_editor.common_tools)
 

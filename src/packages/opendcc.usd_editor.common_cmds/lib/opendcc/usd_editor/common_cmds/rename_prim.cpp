@@ -6,6 +6,9 @@
 
 #include "opendcc/app/core/application.h"
 #include "opendcc/app/core/session.h"
+#include "opendcc/app/core/undo/block.h"
+#include "opendcc/app/core/undo/router.h"
+#include "opendcc/usd/layer_tree_watcher/layer_state_delegates_registry.h"
 #include "opendcc/base/commands_api/core/command_registry.h"
 
 OPENDCC_NAMESPACE_OPEN
@@ -68,7 +71,7 @@ CommandResult commands::RenamePrimCommand::execute(const CommandArgs& args)
         return CommandResult(CommandResult::Status::INVALID_ARG);
 
     auto new_name = args.get_arg<TfToken>(0)->get_value();
-    auto valid_name = TfToken(TfMakeValidIdentifier(new_name));
+    auto valid_name = SdfPath::IsValidIdentifier(new_name.GetString()) ? new_name : TfToken(TfMakeValidIdentifier(new_name));
     if (valid_name.IsEmpty())
     {
         OPENDCC_WARN("Failed to rename prim at path '{}': new name is empty.", m_old_path.GetText());
@@ -76,27 +79,33 @@ CommandResult commands::RenamePrimCommand::execute(const CommandArgs& args)
     }
 
     if (valid_name == prim_to_rename.GetName())
-    {
-        m_new_name = valid_name;
         return CommandResult(CommandResult::Status::SUCCESS, prim_to_rename.GetPath());
-    }
-    else
-    {
-        m_new_name = utils::get_new_name_for_prim(valid_name, prim_to_rename.GetParent());
-    }
 
-    redo();
-    return CommandResult(CommandResult::Status::SUCCESS, m_old_path);
+    const auto name = utils::get_new_name_for_prim(valid_name, prim_to_rename.GetParent());
+    m_new_path = m_old_path.GetParentPath().AppendChild(name);
+    if (!rename_prim())
+        return CommandResult(CommandResult::Status::FAIL);
+    get_notifier().notify(m_old_path, m_new_path);
+    update_selection(m_old_path, m_new_path);
+    return CommandResult(CommandResult::Status::SUCCESS, m_new_path);
 }
 
 void commands::RenamePrimCommand::undo()
 {
-    do_cmd();
+    if (!m_layer || !m_inverse)
+        return;
+    m_inverse->invert();
+    get_notifier().notify(m_new_path, m_old_path);
+    update_selection(m_new_path, m_old_path);
 }
 
 void commands::RenamePrimCommand::redo()
 {
-    do_cmd();
+    if (!m_layer || !m_inverse)
+        return;
+    m_inverse->invert();
+    get_notifier().notify(m_old_path, m_new_path);
+    update_selection(m_old_path, m_new_path);
 }
 
 commands::RenameCommandNotifier& commands::RenamePrimCommand::get_notifier()
@@ -123,33 +132,51 @@ UsdPrim commands::RenamePrimCommand::get_prim_to_rename() const
     return UsdPrim();
 }
 
-bool commands::RenamePrimCommand::rename_prim() const
+bool commands::RenamePrimCommand::rename_prim()
 {
-    SdfChangeBlock change_block;
-
-    auto edit = SdfNamespaceEdit::Rename(m_old_path, m_new_name);
-    SdfBatchNamespaceEdit batch({ edit });
-
-    const auto& layer = m_stage->GetEditTarget().GetLayer();
-    SdfNamespaceEditDetailVector details;
-    if (layer->CanApply(batch, &details))
+    const auto target = m_stage->GetEditTarget();
+    const auto& layer = target.GetLayer();
+    if (!target.GetMapFunction().IsIdentityPathMapping() || !layer->PermissionToEdit())
     {
-        utils::rename_targets(m_stage, edit.currentPath, edit.newPath);
-        if (!layer->Apply(batch))
-        {
-            OPENDCC_WARN("Failed to rename prims.");
-            return false;
-        }
+        OPENDCC_WARN("Failed to rename prim at path '{}': edit target must be writable and preserve prim paths.", m_old_path.GetText());
+        return false;
     }
-    else
+    const SdfBatchNamespaceEdit batch({ SdfNamespaceEdit::Rename(m_old_path, m_new_path.GetNameToken()) });
+    SdfNamespaceEditDetailVector details;
+    if (!layer->CanApply(batch, &details))
     {
         for (const auto& detail : details)
             OPENDCC_WARN("Failed to rename prim at path {}: {}", m_old_path.GetText(), detail.reason.c_str());
         return false;
     }
 
-    get_notifier().notify(edit.currentPath, edit.newPath);
-    return true;
+    auto delegate = TfDynamic_cast<LayerStateDelegateProxyRefPtr>(layer->GetStateDelegate());
+    if (!delegate)
+    {
+        const bool was_dirty = layer->IsDirty();
+        delegate = LayerStateDelegateProxy::create();
+        layer->SetStateDelegate(delegate);
+        delegate->set_dirty(was_dirty);
+    }
+    const TfToken undo_delegate("UndoStateDelegate");
+    delegate->add_delegate(undo_delegate, LayerStateDelegateRegistry::create(undo_delegate, LayerStateDelegateProxyPtr(delegate)));
+
+    UsdEditsBlock block;
+    auto prior_edits = block.take_edits();
+    bool success;
+    {
+        SdfChangeBlock change_block;
+        success = layer->Apply(batch);
+        if (success)
+            utils::rename_targets(m_stage, m_old_path, m_new_path);
+    }
+    m_inverse = block.take_edits();
+    UndoRouter::get_inversions() = std::move(*prior_edits);
+    if (success)
+        m_layer = layer;
+    else
+        OPENDCC_WARN("Failed to rename prims.");
+    return success;
 }
 
 void commands::RenamePrimCommand::update_selection(const SdfPath& old_path, const SdfPath& new_path) const
@@ -162,7 +189,7 @@ void commands::RenamePrimCommand::update_selection(const SdfPath& old_path, cons
         auto path = sel_data.first;
         const auto& data = sel_data.second;
 
-        if (path.HasPrefix(m_old_path))
+        if (path.HasPrefix(old_path))
         {
             dirty_selection = true;
             path = path.ReplacePrefix(old_path, new_path);
@@ -174,14 +201,4 @@ void commands::RenamePrimCommand::update_selection(const SdfPath& old_path, cons
         Application::instance().set_selection(new_selection);
 }
 
-void commands::RenamePrimCommand::do_cmd()
-{
-    if (!m_stage || !rename_prim())
-        return;
-
-    const auto new_path = m_old_path.GetParentPath().AppendChild(m_new_name);
-    update_selection(m_old_path, new_path);
-    m_new_name = m_old_path.GetNameToken();
-    m_old_path = new_path;
-}
 OPENDCC_NAMESPACE_CLOSE

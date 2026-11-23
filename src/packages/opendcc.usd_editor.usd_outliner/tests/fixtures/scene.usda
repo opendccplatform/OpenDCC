@@ -1,0 +1,28 @@
+#usda 1.0
+def Xform "Root" (
+    variants = { string look = "red" }
+    prepend variantSets = "look"
+)
+{
+    def Xform "Child"
+    {
+        double3 xformOp:translate = (1, 2, 3)
+        uniform token[] xformOpOrder = ["xformOp:translate"]
+    }
+    def Xform "Payload" {}
+    variantSet "look" = {
+        "red"
+        {
+            def Xform "red" {}
+        }
+        "blue"
+        {
+            def Xform "blue" {}
+        }
+    }
+}
+def Xform "Other"
+{
+    double3 xformOp:translate = (10, 0, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}

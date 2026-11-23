@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<typesystem package="opendcc.ui.scene_outliner._scene_outliner">
+    <load-typesystem name="typesystem_core.xml" generate="no"/>
+    <load-typesystem name="typesystem_gui.xml" generate="no"/>
+    <load-typesystem name="typesystem_widgets.xml" generate="no"/>
+    <primitive-type name="std::string"/>
+    <container-type name="std::vector" type="list">
+        <include file-name="vector" location="global"/>
+        <conversion-rule>
+            <native-to-target><insert-template name="@_outliner_to_python_template@"/></native-to-target>
+            <target-to-native><add-conversion type="PySequence"><insert-template name="@_outliner_to_cpp_template@"/></add-conversion></target-to-native>
+        </conversion-rule>
+    </container-type>
+    <template name="validate_owner_thread">
+        if (%CPPSELF.thread() != QThread::currentThread()) {
+            PyErr_SetString(PyExc_RuntimeError, "The outliner must be used from its owning thread.");
+            return nullptr;
+        }
+    </template>
+    <template name="validate_adapter_thread">
+        <insert-template name="validate_owner_thread"/>
+        if (%1 &amp;&amp; %1-&gt;thread() != %CPPSELF.thread()) {
+            PyErr_SetString(PyExc_RuntimeError, "The adapter must belong to the GUI thread.");
+            return nullptr;
+        }
+    </template>
+    <inject-code class="target" position="end">
+        auto* items_converter = Shiboken::Conversions::getConverter("std::vector&lt;OpenDCC::SceneItemId&gt;");
+        Shiboken::Conversions::registerConverterName(items_converter, "SceneItemList");
+        Shiboken::Conversions::registerConverterName(items_converter, "OpenDCC::SceneItemList");
+    </inject-code>
+    <namespace-type name="OpenDCC" generate="no">
+        <value-type name="SceneItemId" hash-function="OpenDCC::hash_scene_item_id" operator-bool="yes">
+            <modify-function signature="data()const" remove="all"/>
+            <modify-function signature="owner()const" remove="all"/>
+            <property name="owner" type="std::string" get="owner" generate-getsetdef="yes"/>
+            <modify-function signature="key()const" remove="all"/>
+            <property name="key" type="std::string" get="key" generate-getsetdef="yes"/>
+            <modify-function signature="type_id()const" remove="all"/>
+            <property name="type_id" type="std::string" get="type_id" generate-getsetdef="yes"/>
+            <modify-function signature="SceneItemId(const std::string&amp;,const std::string&amp;)">
+                <inject-code class="target" position="beginning">
+                    if (%1.empty() || %2.empty()) {
+                        PyErr_SetString(PyExc_ValueError, "Extension item owner and key must be non-empty.");
+                        return -1;
+                    }
+                </inject-code>
+            </modify-function>
+        </value-type>
+        <value-type name="SceneOutlinerColumn" target-lang-name="Column"><enum-type name="Role"/></value-type>
+        <value-type name="SceneOutlinerChange" target-lang-name="Change"><enum-type name="Type"/></value-type>
+        <value-type name="SceneOutlinerFilter" target-lang-name="Filter"/>
+        <object-type name="ISceneOutlinerDataSource" target-lang-name="DataSource">
+            <modify-function signature="search_async(const std::string&amp;,OpenDCC::SceneOutlinerSearchRequest*)const" remove="all"/>
+            <modify-function signature="start_search(const std::string&amp;,OpenDCC::SceneOutlinerSearchRequest*)const" remove="all"/>
+            <modify-function signature="children()const" remove="all"/>
+            <enum-type name="DisplayHint" python-type="IntFlag"/>
+        </object-type>
+        <object-type name="ISceneOutlinerSelection" target-lang-name="Selection"/>
+        <object-type name="SceneOutliner">
+            <extra-includes><include file-name="opendcc/ui/scene_outliner/python/binding_helpers.h" location="local"/></extra-includes>
+            <modify-function signature="selection_context()const"><modify-argument index="return"><define-ownership class="target" owner="default"/></modify-argument></modify-function>
+            <modify-function signature="data_source()const"><modify-argument index="return"><define-ownership class="target" owner="default"/></modify-argument></modify-function>
+            <modify-function signature="model()const"><modify-argument index="return"><define-ownership class="target" owner="default"/></modify-argument></modify-function>
+            <modify-function signature="SceneOutliner(OpenDCC::ISceneOutlinerDataSource*,OpenDCC::ISceneOutlinerSelection*,QWidget*)">
+                <inject-code class="target" position="beginning">
+                    if ((%1 &amp;&amp; %1-&gt;thread() != QThread::currentThread()) ||
+                        (%2 &amp;&amp; %2-&gt;thread() != QThread::currentThread())) {
+                        PyErr_SetString(PyExc_RuntimeError, "Adapters must belong to the GUI thread.");
+                        return -1;
+                    }
+                </inject-code>
+                <inject-code class="target" position="end">
+                    OpenDCC::outliner_bindings::initialize(%PYSELF, %0);
+                </inject-code>
+            </modify-function>
+            <modify-function signature="set_data_source(OpenDCC::ISceneOutlinerDataSource*)">
+                <inject-code class="target" position="beginning"><insert-template name="validate_adapter_thread"/></inject-code>
+                <inject-code class="target" position="end">OpenDCC::outliner_bindings::initialize(%PYSELF, %CPPSELF);</inject-code>
+            </modify-function>
+            <modify-function signature="set_selection_context(OpenDCC::ISceneOutlinerSelection*)">
+                <inject-code class="target" position="beginning"><insert-template name="validate_adapter_thread"/></inject-code>
+                <inject-code class="target" position="end">OpenDCC::outliner_bindings::initialize(%PYSELF, %CPPSELF);</inject-code>
+            </modify-function>
+        </object-type>
+        <object-type name="SceneOutlinerModel">
+            <modify-function signature="mimeData(QModelIndexList)const" remove="all"/>
+            <add-function signature="mimeData(const QModelIndexList&amp;)" return-type="QMimeData*">
+                <inject-code class="target">
+                    auto* mime = %CPPSELF.mimeData(%1);
+                    %PYARG_0 = %CONVERTTOPYTHON[QMimeData*](mime);
+                    if (mime)
+                        Shiboken::Object::getOwnership(%PYARG_0);
+                </inject-code>
+            </add-function>
+            <modify-function signature="pending_data_source()const" remove="all"/>
+            <extra-includes><include file-name="opendcc/ui/scene_outliner/python/binding_helpers.h" location="local"/></extra-includes>
+            <modify-function signature="data_source()const"><modify-argument index="return"><define-ownership class="target" owner="default"/></modify-argument></modify-function>
+            <enum-type name="CustomRole"/>
+            <modify-function signature="SceneOutlinerModel(QObject*)">
+                <inject-code class="target" position="end">OpenDCC::outliner_bindings::initialize(%PYSELF, %0);</inject-code>
+            </modify-function>
+            <modify-function signature="set_data_source(OpenDCC::ISceneOutlinerDataSource*)">
+                <inject-code class="target" position="beginning"><insert-template name="validate_adapter_thread"/></inject-code>
+                <inject-code class="target" position="end">OpenDCC::outliner_bindings::initialize(%PYSELF, %CPPSELF);</inject-code>
+            </modify-function>
+        </object-type>
+        <object-type name="SceneOutlinerProxyModel">
+            <modify-function signature="set_hidden_filters(const QSet&lt;QString&gt;&amp;)" remove="all"/>
+        </object-type>
+        <object-type name="SceneOutlinerTreeView">
+            <modify-function signature="set_models(OpenDCC::SceneOutlinerProxyModel*,OpenDCC::SceneOutlinerModel*)" remove="all"/>
+            <modify-function signature="expand_branch_to(const OpenDCC::SceneItemId&amp;,const OpenDCC::SceneOutlinerItemPredicate&amp;)" remove="all"/>
+            <modify-function signature="collapse_branch_to(const OpenDCC::SceneItemId&amp;,const OpenDCC::SceneOutlinerItemPredicate&amp;)" remove="all"/>
+        </object-type>
+    </namespace-type>
+</typesystem>

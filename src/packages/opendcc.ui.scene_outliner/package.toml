@@ -1,0 +1,8 @@
+[base]
+name = 'opendcc.ui.scene_outliner'
+
+[[python.path]]
+path = 'python'
+
+[[native.load]]
+path='lib/${LIB_PREFIX}opendcc.ui.scene_outliner${LIB_EXT}'

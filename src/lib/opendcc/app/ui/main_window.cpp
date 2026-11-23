@@ -393,12 +393,12 @@ void MainWindow::close_panels()
     }
     for (auto widget : m_main_container_widget->floatingWidgets())
     {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        widget->hideAndDeleteLater();
-#else
         // Deleting the floating window directly leaves its dock widgets in the manager's map.
         for (auto dock_widget : widget->dockWidgets())
             dock_widget->deleteDockWidget();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        widget->hideAndDeleteLater();
+#else
         widget->finishDropOperation();
 #endif
     }
@@ -424,12 +424,12 @@ void MainWindow::load_layout(const std::string& path)
     }
     for (auto widget : m_main_container_widget->floatingWidgets())
     {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        widget->hideAndDeleteLater();
-#else
         // Deleting the floating window directly leaves its dock widgets in the manager's map.
         for (auto dock_widget : widget->dockWidgets())
             dock_widget->deleteDockWidget();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        widget->hideAndDeleteLater();
+#else
         widget->finishDropOperation();
 #endif
     }

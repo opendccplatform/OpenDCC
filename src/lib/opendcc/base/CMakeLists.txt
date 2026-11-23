@@ -10,6 +10,8 @@ add_subdirectory(packaging)
 add_subdirectory(crash_reporting)
 
 install(FILES export.h defines.h DESTINATION "include/opendcc/base")
+install(FILES pybind_bridge/boost_python.h pybind_bridge/boost_python_conversions.h pybind_bridge/shiboken_helpers.h
+              pybind_bridge/shiboken_dependencies.h DESTINATION "include/opendcc/base/pybind_bridge")
 
 opendcc_make_library(
     app_version

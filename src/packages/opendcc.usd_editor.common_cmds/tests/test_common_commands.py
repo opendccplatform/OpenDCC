@@ -237,6 +237,22 @@ class TestCommonCommands(unittest.TestCase):
         self.assertEqual({child.GetName() for child in group.GetChildren()}, {"Item", "Target"})
         self.assert_undo_redo_restores_state(before)
 
+    def test_failed_read_only_rename_cannot_be_applied_by_undo(self):
+        before = self.snapshot_state()
+        layer = self.stage.GetRootLayer()
+        layer.SetPermissionToEdit(False)
+        try:
+            result = cmds.rename_prim("Renamed", path=Sdf.Path("/World/Item"))
+            self.assertFalse(result.is_successful())
+            self.assertEqual(self.stack.get_size(), 0)
+            self.assertEqual(self.snapshot_state(), before)
+        finally:
+            layer.SetPermissionToEdit(True)
+        self.stack.undo()
+        self.assertEqual(self.snapshot_state(), before)
+        self.assertTrue(self.stage.GetPrimAtPath("/World/Item"))
+        self.assertFalse(self.stage.GetPrimAtPath("/World/Renamed"))
+
     def test_selection_replace_add_remove_clear_are_undoable(self):
         for options, expected in (
             ({}, [Sdf.Path("/World/Target")]),

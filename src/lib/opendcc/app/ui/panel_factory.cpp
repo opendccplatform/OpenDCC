@@ -45,7 +45,7 @@ bool PanelFactory::unregister_panel(const std::string& type)
     auto find_it = m_registry_map.find(type);
     if (find_it != m_registry_map.end())
     {
-        m_registry_map.erase(find_it, m_registry_map.end());
+        m_registry_map.erase(find_it);
         return true;
     }
     return false;

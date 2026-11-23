@@ -26,6 +26,7 @@
 #include "opendcc/usd_editor/common_cmds/remove_prims.h"
 #include "opendcc/usd_editor/common_cmds/rename_prim.h"
 #include "opendcc/usd_editor/common_cmds/selection.h"
+#include "opendcc/usd_editor/common_cmds/prim_properties.h"
 
 OPENDCC_NAMESPACE_OPEN
 
@@ -39,6 +40,7 @@ OPENDCC_INITIALIZE_LIBRARY_LOG_CHANNEL(OPENDCC_PACKAGE_NAME);
 void UsdEditorCommonCmdsEntryPoint::initialize(const Package& package)
 {
     using base::commands::CommandRegistry;
+    commands::register_prim_property_commands();
 
     CommandRegistry::register_command(SelectPrimCommand::cmd_name, SelectPrimCommand::cmd_syntax(), &SelectPrimCommand::create_cmd);
     CommandRegistry::register_command(commands::AssignMaterialCommand::cmd_name, commands::AssignMaterialCommand::cmd_syntax(),
@@ -88,6 +90,7 @@ void UsdEditorCommonCmdsEntryPoint::initialize(const Package& package)
 void UsdEditorCommonCmdsEntryPoint::uninitialize(const Package& package)
 {
     using base::commands::CommandRegistry;
+    commands::unregister_prim_property_commands();
 
     CommandRegistry::unregister_command(SelectPrimCommand::cmd_name);
     CommandRegistry::unregister_command(commands::RenamePrimCommand::cmd_name);

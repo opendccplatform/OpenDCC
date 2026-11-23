@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<typesystem package="opendcc.usd_editor.usd_outliner._usd_outliner">
+    <extra-includes>
+        <include file-name="opendcc/usd_editor/usd_outliner/usd_stage_data_source.h" location="local"/>
+        <include file-name="opendcc/usd_editor/usd_outliner/usd_item_id.h" location="local"/>
+    </extra-includes>
+    <load-typesystem name="typesystem_core.xml" generate="no"/>
+    <load-typesystem name="typesystem_gui.xml" generate="no"/>
+    <load-typesystem name="typesystem_widgets.xml" generate="no"/>
+    <load-typesystem name="opendcc.ui.scene_outliner.xml" generate="no"/>
+    <rejection class="QObject" function-name="children"/>
+    <primitive-type name="OpenDCC::UsdOutlinerStage" target-lang-api-name="PyObject">
+        <include file-name="opendcc/base/pybind_bridge/boost_python_conversions.h" location="local"/>
+        <conversion-rule>
+            <native-to-target>return OpenDCC::base::pybind_bridge::to_python(%in);</native-to-target>
+            <target-to-native>
+                <add-conversion type="PyObject" check="(%in == Py_None || OpenDCC::base::pybind_bridge::is_python_convertible&lt;OpenDCC::UsdOutlinerStage&gt;(%in))">
+                    %out = (%in == Py_None ? OpenDCC::UsdOutlinerStage() : OpenDCC::base::pybind_bridge::from_python&lt;OpenDCC::UsdOutlinerStage&gt;(%in));
+                </add-conversion>
+            </target-to-native>
+        </conversion-rule>
+    </primitive-type>
+    <primitive-type name="OpenDCC::UsdOutlinerPath" target-lang-api-name="PyObject">
+        <include file-name="opendcc/base/pybind_bridge/boost_python_conversions.h" location="local"/>
+        <conversion-rule>
+            <native-to-target>return OpenDCC::base::pybind_bridge::to_python(%in);</native-to-target>
+            <target-to-native>
+                <add-conversion type="PyObject" check="OpenDCC::base::pybind_bridge::is_python_convertible&lt;OpenDCC::UsdOutlinerPath&gt;(%in)">
+                    %out = OpenDCC::base::pybind_bridge::from_python&lt;OpenDCC::UsdOutlinerPath&gt;(%in);
+                </add-conversion>
+            </target-to-native>
+        </conversion-rule>
+    </primitive-type>
+    <namespace-type name="OpenDCC" visible="no">
+        <modify-function signature="make_usd_item_id(const OpenDCC::UsdOutlinerPath&amp;)" remove="all"/>
+        <modify-function signature="usd_path_of(const OpenDCC::SceneItemId&amp;)" remove="all"/>
+        <object-type name="UsdStageDataSource">
+            <modify-function signature="set_stage(const OpenDCC::UsdOutlinerStage&amp;)">
+                <modify-argument index="1" pyi-type="Optional[pxr.Usd.Stage]"/>
+            </modify-function>
+            <modify-function signature="stage()const" remove="all"/>
+            <property name="stage" type="OpenDCC::UsdOutlinerStage" get="stage" generate-getsetdef="yes"/>
+        </object-type>
+        <object-type name="UsdSelectionContext"/>
+    </namespace-type>
+    <!-- Shiboken 6.5 includes hidden namespaces in free-function error paths. -->
+    <add-function signature="usd_item_id(const OpenDCC::UsdOutlinerPath&amp;)" return-type="OpenDCC::SceneItemId">
+        <modify-argument index="1" pyi-type="pxr.Sdf.Path"/>
+        <inject-code>
+            auto result = OpenDCC::make_usd_item_id(%1);
+            %PYARG_0 = %CONVERTTOPYTHON[OpenDCC::SceneItemId](result);
+        </inject-code>
+    </add-function>
+    <add-function signature="usd_path_of(const OpenDCC::SceneItemId&amp;)" return-type="OpenDCC::UsdOutlinerPath">
+        <modify-argument index="return" pyi-type="pxr.Sdf.Path"/>
+        <inject-code>
+            auto result = OpenDCC::usd_path_of(%1);
+            %PYARG_0 = %CONVERTTOPYTHON[OpenDCC::UsdOutlinerPath](result);
+        </inject-code>
+    </add-function>
+</typesystem>

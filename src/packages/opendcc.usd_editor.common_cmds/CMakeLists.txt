@@ -34,6 +34,7 @@ opendcc_make_library(
     ${_src_dir}/remove_prims.h
     ${_src_dir}/rename_prim.h
     ${_src_dir}/selection.h
+    ${_src_dir}/prim_properties.h
     CPPFILES
     ${_src_dir}/entry_point.cpp
     ${_src_dir}/assign_material.cpp
@@ -56,6 +57,7 @@ opendcc_make_library(
     ${_src_dir}/remove_prims.cpp
     ${_src_dir}/rename_prim.cpp
     ${_src_dir}/selection.cpp
+    ${_src_dir}/prim_properties.cpp
     PRIVATE_DEFINITIONS
     OPENDCC_USD_EDITOR_COMMON_CMDS_EXPORT
     LIBRARY_DEPENDENCIES

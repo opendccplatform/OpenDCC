@@ -65,6 +65,7 @@ set(DCC_LANG
 option(DCC_BUILD_HYDRA_OP "" OFF)
 
 # Packages
+option(DCC_PACKAGE_OPENDCC_USD_EDITOR_USD_OUTLINER "opendcc.usd_editor.usd_outliner" ON)
 option(DCC_PACKAGE_OPENDCC_USD_EDITOR_UV_EDITOR "opendcc.usd_editor.uv_editor" ON)
 option(DCC_PACKAGE_OPENDCC_USD_EDITOR_PAINT_PRIMVAR_TOOL "opendcc.usd_editor.paint_primvar_tool" ON)
 option(DCC_PACKAGE_OPENDCC_USD_EDITOR_SCULPT_TOOL "opendcc.usd_editor.sculpt_tool" ON)

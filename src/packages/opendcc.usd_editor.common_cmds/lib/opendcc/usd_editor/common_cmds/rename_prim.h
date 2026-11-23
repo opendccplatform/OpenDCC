@@ -8,6 +8,7 @@
 #include "opendcc/usd_editor/common_cmds/api.h"
 #include "opendcc/base/commands_api/core/command.h"
 #include "opendcc/app/core/command_utils.h"
+#include "opendcc/app/core/undo/inverse.h"
 
 #include <pxr/usd/usd/stage.h>
 #include <pxr/usd/sdf/path.h>
@@ -34,15 +35,15 @@ namespace commands
 
     private:
         PXR_NS::UsdPrim get_prim_to_rename() const;
-        bool rename_prim() const;
+        bool rename_prim();
         void update_selection(const PXR_NS::SdfPath& old_path, const PXR_NS::SdfPath& new_path) const;
-        void do_cmd();
 
         PXR_NS::SdfPath m_old_path;
-        PXR_NS::TfToken m_new_name;
+        PXR_NS::SdfPath m_new_path;
         PXR_NS::UsdStageWeakPtr m_stage;
+        PXR_NS::SdfLayerHandle m_layer;
+        std::unique_ptr<UndoInverse> m_inverse;
     };
-
 }
 
 OPENDCC_NAMESPACE_CLOSE
