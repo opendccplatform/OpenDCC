@@ -6,7 +6,8 @@ from opendcc import cmds
 from opendcc.i18n import i18n
 from . import open_with, utils
 from opendcc.packaging import PackageEntryPoint
-from Qt import QtGui, QtWidgets
+from Qt import QtWidgets
+from opendcc.usd_ui_utils import add_layer_copy_actions
 from pxr import Sdf
 
 from ._usd_layers import UsdLayersModel, UsdLayersView
@@ -18,13 +19,6 @@ PANEL_TYPE = "usd_layers"
 def _current_stage():
     session = dcc_core.Application.instance().get_session()
     return session.get_current_stage() if session else None
-
-
-def _copy_to_clipboard(text):
-    clipboard = QtWidgets.QApplication.clipboard()
-    if clipboard.supportsSelection():
-        clipboard.setText(text, QtGui.QClipboard.Selection)
-    clipboard.setText(text, QtGui.QClipboard.Clipboard)
 
 
 def _on_context_menu(panel, menu, identifier, parent_identifier):
@@ -106,13 +100,7 @@ def _on_context_menu(panel, menu, identifier, parent_identifier):
 
     menu.addSeparator()
 
-    action = menu.addAction("Copy Layer Identifier")
-    action.triggered.connect(lambda: _copy_to_clipboard(identifier))
-
-    resolved_path = layer.realPath
-    action = menu.addAction("Copy Layer Resolved Path")
-    action.setEnabled(bool(resolved_path))
-    action.triggered.connect(lambda: _copy_to_clipboard(resolved_path))
+    add_layer_copy_actions(menu, layer)
 
 
 def _make_panel():

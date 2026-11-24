@@ -65,6 +65,7 @@ set(DCC_LANG
 option(DCC_BUILD_HYDRA_OP "" OFF)
 
 # Packages
+option(DCC_PACKAGE_OPENDCC_USD_EDITOR_USD_DETAILS_VIEW "opendcc.usd_editor.usd_details_view" ON)
 option(DCC_PACKAGE_OPENDCC_USD_EDITOR_USD_OUTLINER "opendcc.usd_editor.usd_outliner" ON)
 option(DCC_PACKAGE_OPENDCC_USD_EDITOR_LAYER_CMDS "opendcc.usd_editor.layer_cmds" ON)
 option(DCC_PACKAGE_OPENDCC_USD_EDITOR_USD_LAYERS "opendcc.usd_editor.usd_layers" ON)

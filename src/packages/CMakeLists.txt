@@ -25,6 +25,10 @@ if(DCC_PACKAGE_OPENDCC_USD_EDITOR_USD_LAYERS)
 endif()
 opendcc_add_package(opendcc.usd_editor.common_tools)
 
+if(DCC_PACKAGE_OPENDCC_USD_EDITOR_USD_DETAILS_VIEW)
+    opendcc_add_package(opendcc.usd_editor.usd_details_view)
+endif()
+
 if(DCC_BUILD_ANIM_ENGINE)
     opendcc_add_package(opendcc.vendor.animx)
     opendcc_add_package(opendcc.anim_engine.schema)

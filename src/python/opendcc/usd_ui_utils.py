@@ -1,8 +1,26 @@
 # Copyright Contributors to the OpenDCC project
 # SPDX-License-Identifier: Apache-2.0
 
-from Qt import QtWidgets
+from Qt import QtGui, QtWidgets
 from pxr import Sdf
+
+
+def add_layer_copy_actions(menu, layer):
+    """Add identifier and resolved-path actions for a layer to a context menu."""
+
+    def copy_text(text):
+        clipboard = QtWidgets.QApplication.clipboard()
+        if clipboard.supportsSelection():
+            clipboard.setText(text, QtGui.QClipboard.Selection)
+        clipboard.setText(text, QtGui.QClipboard.Clipboard)
+
+    identifier = layer.identifier
+    action = menu.addAction("Copy Layer Identifier")
+    action.triggered.connect(lambda: copy_text(identifier))
+    resolved_path = layer.realPath
+    action = menu.addAction("Copy Layer Resolved Path")
+    action.setEnabled(bool(resolved_path))
+    action.triggered.connect(lambda: copy_text(resolved_path))
 
 
 def reload_layers(layers, widget_parent):

@@ -1,0 +1,8 @@
+[base]
+name = 'opendcc.usd_editor.usd_details_view'
+
+[[python.path]]
+path = 'python'
+
+[[python.entry_point]]
+module = 'opendcc.usd_editor.usd_details_view'
