@@ -194,22 +194,23 @@ void SceneOutlinerProxyModel::setSourceModel(QAbstractItemModel* source)
         }));
         m_filter_connections.push_back(connect(source, &QAbstractItemModel::rowsRemoved, this, refresh));
         m_filter_connections.push_back(connect(source, &QAbstractItemModel::rowsMoved, this, refresh));
-        m_filter_connections.push_back(connect(source, &QAbstractItemModel::dataChanged, this,
-                                               [this](const QModelIndex& first, const QModelIndex& last, const QVector<int>& roles) {
-                                                   if (roles.size() == 1 && roles.front() == SceneOutlinerModel::SEARCH_FILTER)
-                                                       return;
-                                                   m_filter_token.restart();
-                                                   m_search_rows.erase(first.parent().internalPointer());
-                                                   m_parent_filters.clear();
-                                                   auto* model = qobject_cast<SceneOutlinerModel*>(sourceModel());
-                                                   if (!model || m_hidden_filters.isEmpty())
-                                                       return;
-                                                   SceneItemSet items;
-                                                   for (int row = first.row(); row <= last.row(); ++row)
-                                                       items.insert(model->item_for_index(first.sibling(row, 0)));
-                                                   if (refresh_filter_items(items))
-                                                       apply_category_filter();
-                                               }));
+        m_filter_connections.push_back(connect(
+            source, &QAbstractItemModel::dataChanged, this, [this](const QModelIndex& first, const QModelIndex& last, const QVector<int>& roles) {
+                if (roles.size() == 1 &&
+                    (roles.front() == SceneOutlinerModel::SEARCH_FILTER || roles.front() == SceneOutlinerModel::CHILD_HINT_CHANGED))
+                    return;
+                m_filter_token.restart();
+                m_search_rows.erase(first.parent().internalPointer());
+                m_parent_filters.clear();
+                auto* model = qobject_cast<SceneOutlinerModel*>(sourceModel());
+                if (!model || m_hidden_filters.isEmpty())
+                    return;
+                SceneItemSet items;
+                for (int row = first.row(); row <= last.row(); ++row)
+                    items.insert(model->item_for_index(first.sibling(row, 0)));
+                if (refresh_filter_items(items))
+                    apply_category_filter();
+            }));
     }
     QSortFilterProxyModel::setSourceModel(source);
     if (self)

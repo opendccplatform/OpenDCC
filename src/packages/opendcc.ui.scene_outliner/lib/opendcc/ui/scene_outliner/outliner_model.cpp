@@ -297,7 +297,7 @@ void SceneOutlinerModel::apply_pending_child_queries()
             if (!self || cache != m_cache || !hint)
                 return;
             if (hint != displayed_hint)
-                Q_EMIT dataChanged(index_for_item(query.first), index_for_item(query.first, columnCount() - 1));
+                Q_EMIT dataChanged(index_for_item(query.first), index_for_item(query.first, columnCount() - 1), { CHILD_HINT_CHANGED });
         }
     }
 }
@@ -388,7 +388,7 @@ bool SceneOutlinerModel::load_children(Proxy* proxy, bool complete)
         if (count)
             endInsertRows();
         else
-            Q_EMIT dataChanged(index, index);
+            Q_EMIT dataChanged(index, index, { CHILD_HINT_CHANGED });
     }
     if (!self)
         return false;

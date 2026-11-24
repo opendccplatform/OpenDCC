@@ -206,6 +206,8 @@ QString SceneOutliner::search_text() const
 
 void SceneOutliner::update_hidden_filters()
 {
+    if (!m_proxy)
+        return;
     const QPointer<SceneOutliner> self(this);
     {
         SelectionSyncGuard syncing(this, m_syncing_selection);
@@ -217,6 +219,8 @@ void SceneOutliner::update_hidden_filters()
 
 SceneItemList SceneOutliner::selected_items() const
 {
+    if (!m_proxy)
+        return {};
     SceneItemList items;
     const auto rows = m_view->selectionModel()->selectedRows(0);
     items.reserve(static_cast<std::size_t>(rows.size()));
@@ -231,6 +235,8 @@ SceneItemList SceneOutliner::selected_items() const
 
 void SceneOutliner::edit_item(const SceneItemId& item)
 {
+    if (!m_proxy)
+        return;
     const QModelIndex source = m_model->index_for_item(item, m_model->tree_column());
     if (!source.isValid())
         return;
@@ -297,8 +303,10 @@ SceneOutliner::~SceneOutliner()
     if (m_model)
         disconnect(m_model, nullptr, this, nullptr);
     // Python may release providers during QWidget destruction, resetting the child model.
-    disconnect(m_proxy, nullptr, this, nullptr);
-    disconnect(m_view->selectionModel(), nullptr, this, nullptr);
+    if (m_proxy)
+        disconnect(m_proxy, nullptr, this, nullptr);
+    if (auto* selection = m_view->selectionModel())
+        disconnect(selection, nullptr, this, nullptr);
     disconnect_selection_context();
 }
 
@@ -362,14 +370,15 @@ void SceneOutliner::reset_model()
         SelectionSyncGuard syncing(this, m_syncing_selection);
         m_model = new SceneOutlinerModel(this);
         connect_model();
-        m_proxy->setSourceModel(m_model);
+        if (m_proxy)
+            m_proxy->setSourceModel(m_model);
         if (!self)
             return;
         m_view->set_models(m_proxy, m_model);
         if (!self)
             return;
-        connect(m_view->selectionModel(), &QItemSelectionModel::selectionChanged, this, &SceneOutliner::on_view_selection_changed,
-                Qt::UniqueConnection);
+        if (auto* selection = m_view->selectionModel())
+            connect(selection, &QItemSelectionModel::selectionChanged, this, &SceneOutliner::on_view_selection_changed, Qt::UniqueConnection);
         refresh_filters();
     }
     if (!self)
@@ -468,6 +477,11 @@ void SceneOutliner::update_search_filter()
     const auto operation = cancel_search();
     if (!self || operation.is_cancelled())
         return;
+    if (!m_proxy)
+    {
+        m_search_pending = false;
+        return;
+    }
     if (m_pending_filter.isEmpty() || !m_model->data_source())
     {
         apply_search_results({});
@@ -525,6 +539,11 @@ void SceneOutliner::continue_search_results(const std::shared_ptr<SearchResults>
 {
     if (results->operation.is_cancelled())
         return;
+    if (!m_proxy)
+    {
+        m_search_pending = false;
+        return;
+    }
     QElapsedTimer timer;
     timer.start();
     if (collect_search_matches(results, timer) && prepare_search_rows(results, timer))
@@ -578,8 +597,10 @@ bool SceneOutliner::collect_search_matches(const std::shared_ptr<SearchResults>&
 bool SceneOutliner::prepare_search_rows(const std::shared_ptr<SearchResults>& results, const QElapsedTimer& timer)
 {
     const SceneOutlinerProxyModel::SearchCheck is_current = [self = QPointer<SceneOutliner>(this), operation = results->operation]() {
-        return self && !operation.is_cancelled();
+        return self && self->m_proxy && !operation.is_cancelled();
     };
+    if (!is_current())
+        return false;
     if (!results->preparing)
     {
         results->preparing = true;
@@ -657,6 +678,8 @@ void SceneOutliner::finish_search_results(const std::shared_ptr<SearchResults>& 
 
 void SceneOutliner::update_ancestor_highlight()
 {
+    if (!m_proxy)
+        return;
     auto* selection_model = m_view->selectionModel();
     const auto selection = selection_model->selection();
     SceneItemList ancestors;
@@ -686,12 +709,12 @@ void SceneOutliner::update_ancestor_highlight()
 
 void SceneOutliner::on_view_selection_changed()
 {
-    if (m_syncing_selection || !m_model || m_model->m_updating || m_proxy->m_filtering)
+    if (m_syncing_selection || !m_model || !m_proxy || m_model->m_updating || m_proxy->m_filtering)
         return;
     const QPointer<SceneOutliner> self(this);
     update_ancestor_highlight();
 
-    if (!self || !m_selection)
+    if (!self || !m_proxy || !m_selection)
         return;
 
     {
@@ -713,6 +736,8 @@ void SceneOutliner::apply_selection_from_context(bool wait_for_rows)
     do
     {
         m_selection_sync_pending = false;
+        if (!m_proxy)
+            return;
         if (!m_selection)
         {
             update_ancestor_highlight();
@@ -722,7 +747,7 @@ void SceneOutliner::apply_selection_from_context(bool wait_for_rows)
         const auto context = m_selection_context;
         const auto search = m_search_token;
         const auto is_current = [&]() {
-            return self && context == m_selection_context && !search.is_cancelled();
+            return self && m_proxy && context == m_selection_context && !search.is_cancelled();
         };
         auto items = m_selection->selected_items();
         if (!self)

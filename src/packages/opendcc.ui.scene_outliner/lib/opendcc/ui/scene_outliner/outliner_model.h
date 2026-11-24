@@ -91,6 +91,7 @@ private:
     friend class SceneOutliner;
     friend class SceneOutlinerTreeView;
     friend class SceneOutlinerProxyModel;
+    static constexpr int CHILD_HINT_CHANGED = Qt::UserRole + 3;
     void begin_update();
     void finish_update();
     void apply_pending_data_source();

@@ -117,7 +117,7 @@ private:
     void toggle_search(bool on);
 
     QPointer<SceneOutlinerModel> m_model;
-    SceneOutlinerProxyModel* m_proxy = nullptr;
+    QPointer<SceneOutlinerProxyModel> m_proxy;
     SceneOutlinerTreeView* m_view = nullptr;
     QLineEdit* m_filter = nullptr;
     QToolButton* m_search_button = nullptr;
