@@ -109,6 +109,7 @@ Q_SIGNALS:
 private:
     void add_create_panel_btn(ads::CDockAreaWidget* dock_widget);
     void restore_widgets(const QByteArray& content);
+    void save_viewport_states(QSettings& settings);
     void update_timeline_samples();
 
     void cleanup_timeline_ui();

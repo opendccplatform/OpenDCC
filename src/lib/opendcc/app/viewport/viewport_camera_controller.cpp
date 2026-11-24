@@ -16,6 +16,9 @@
 #include <pxr/usd/usdGeom/metrics.h>
 #include "opendcc/app/viewport/def_cam_settings.h"
 #include "opendcc/app/core/session.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
 
 OPENDCC_NAMESPACE_OPEN
 
@@ -23,6 +26,33 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 namespace
 {
+    using Preset = ViewportCameraController::ViewPreset;
+    const std::string preview_settings_prefix = "session.def_cam.named";
+
+    std::string preset_settings_path(Preset preset)
+    {
+        switch (preset)
+        {
+        case Preset::PERSPECTIVE:
+            return "def_cam.named.persp";
+        case Preset::TOP:
+            return "def_cam.named.top";
+        case Preset::FRONT:
+            return "def_cam.named.front";
+        case Preset::SIDE:
+            return "def_cam.named.side";
+        default:
+            return {};
+        }
+    }
+
+    bool valid_preset_settings(const std::vector<double>& values, bool perspective)
+    {
+        return values.size() == 4 &&
+               std::all_of(values.begin(), values.end(), [](double value) { return std::abs(value) <= std::numeric_limits<float>::max(); }) &&
+               values[0] > 0 && values[1] > 0 && (!perspective || values[2] > 0) && values[3] > values[2];
+    }
+
     double get_orthographic_size(double horizontal_aperture)
     {
         return horizontal_aperture * GfCamera::APERTURE_UNIT;
@@ -155,6 +185,32 @@ public:
             m_camera.SetOrthographicFromAspectRatioAndSize(m_camera.GetAspectRatio(), m_ortho_size, GfCamera::FOVHorizontal);
         }
     }
+    void restore_camera(const GfCamera& camera)
+    {
+        m_camera = camera;
+        extract_params_from_camera();
+        set_display_size(m_display_size[0], m_display_size[1]);
+        m_is_camera_transform_dirty = false;
+    }
+    void apply_preset(ViewportCameraController::ViewPreset preset, const GfCamera& settings)
+    {
+        using Preset = ViewportCameraController::ViewPreset;
+        m_camera.SetProjection(settings.GetProjection());
+        m_rot_theta = preset == Preset::SIDE ? -90 : (preset == Preset::PERSPECTIVE ? 45 : 0);
+        m_rot_phi = preset == Preset::TOP ? 90 : (preset == Preset::PERSPECTIVE ? 45 : 0);
+        m_rot_psi = 0;
+        m_camera.SetClippingRange(settings.GetClippingRange());
+        const auto aspect_ratio = m_display_size[0] / double(m_display_size[1]);
+        if (preset == Preset::PERSPECTIVE)
+            m_camera.SetPerspectiveFromAspectRatioAndFieldOfView(aspect_ratio, settings.GetFieldOfView(GfCamera::FOVHorizontal),
+                                                                 GfCamera::FOVHorizontal, settings.GetHorizontalAperture());
+        else
+        {
+            m_ortho_size = get_orthographic_size(settings.GetHorizontalAperture());
+            m_camera.SetOrthographicFromAspectRatioAndSize(aspect_ratio, m_ortho_size, GfCamera::FOVHorizontal);
+        }
+        FollowModeStrategy::push();
+    }
     virtual void pull() = 0;
     virtual ViewportCameraController::FollowMode get_follow_mode() const = 0;
     virtual GfCamera get_camera() = 0;
@@ -258,7 +314,7 @@ protected:
 class DefCamFollowStrategy : public FollowModeStrategy
 {
 public:
-    DefCamFollowStrategy(const FollowModeStrategy* other)
+    DefCamFollowStrategy(const FollowModeStrategy* other, bool independent = false)
         : FollowModeStrategy(other)
     {
         auto& camera_settings = DefCamSettings::instance();
@@ -270,21 +326,24 @@ public:
                                                            get_orthographic_size(camera_settings.get_horizontal_aperture()), GfCamera::FOVHorizontal);
 
         m_camera.SetClippingRange(GfRange1f(camera_settings.get_near_clip_plane(), camera_settings.get_far_clip_plane()));
-        m_def_cam_settings_dispatcher_handle = DefCamSettings::instance().register_event_callback([this](const GfCamera& camera) {
-            if (camera.GetProjection() == GfCamera::Projection::Perspective)
-            {
-                m_camera = GfCamera(m_camera.GetTransform(), camera.GetProjection(), camera.GetHorizontalAperture(), camera.GetVerticalAperture(),
-                                    camera.GetHorizontalApertureOffset(), camera.GetVerticalApertureOffset(), camera.GetFocalLength(),
-                                    camera.GetClippingRange(), camera.GetClippingPlanes(), m_camera.GetFStop(), m_camera.GetFocusDistance());
-            }
-            else
-            {
-                m_camera = GfCamera(m_camera.GetTransform(), camera.GetProjection(), m_camera.GetHorizontalAperture(), m_camera.GetVerticalAperture(),
-                                    m_camera.GetHorizontalApertureOffset(), m_camera.GetVerticalApertureOffset(), m_camera.GetFocalLength(),
-                                    camera.GetClippingRange(), camera.GetClippingPlanes(), m_camera.GetFStop(), m_camera.GetFocusDistance());
-                m_camera.SetOrthographicFromAspectRatioAndSize(m_display_size[0] / (double)m_display_size[1], m_ortho_size, GfCamera::FOVHorizontal);
-            }
-        });
+        if (!independent)
+            m_def_cam_settings_dispatcher_handle = DefCamSettings::instance().register_event_callback([this](const GfCamera& camera) {
+                if (camera.GetProjection() == GfCamera::Projection::Perspective)
+                {
+                    m_camera = GfCamera(m_camera.GetTransform(), camera.GetProjection(), camera.GetHorizontalAperture(), camera.GetVerticalAperture(),
+                                        camera.GetHorizontalApertureOffset(), camera.GetVerticalApertureOffset(), camera.GetFocalLength(),
+                                        camera.GetClippingRange(), camera.GetClippingPlanes(), m_camera.GetFStop(), m_camera.GetFocusDistance());
+                }
+                else
+                {
+                    m_camera =
+                        GfCamera(m_camera.GetTransform(), camera.GetProjection(), m_camera.GetHorizontalAperture(), m_camera.GetVerticalAperture(),
+                                 m_camera.GetHorizontalApertureOffset(), m_camera.GetVerticalApertureOffset(), m_camera.GetFocalLength(),
+                                 camera.GetClippingRange(), camera.GetClippingPlanes(), m_camera.GetFStop(), m_camera.GetFocusDistance());
+                    m_camera.SetOrthographicFromAspectRatioAndSize(m_display_size[0] / (double)m_display_size[1], m_ortho_size,
+                                                                   GfCamera::FOVHorizontal);
+                }
+            });
         m_rot_psi = 0;
         FollowModeStrategy::push();
     }
@@ -295,6 +354,8 @@ public:
         FollowModeStrategy::set_display_size(w, h);
         if (!is_perspective())
             m_camera.SetOrthographicFromAspectRatioAndSize(w / (double)h, m_ortho_size, GfCamera::FOVHorizontal);
+        else
+            m_camera.SetVerticalAperture(m_camera.GetHorizontalAperture() * h / double(w));
     }
     void push() override
     {
@@ -491,9 +552,14 @@ ViewportCameraController::ViewportCameraController(ViewportCameraMapperPtr camer
         });
     }
     update_follow_mode_strategy();
+    m_preset_settings_changed =
+        Application::instance().get_settings()->register_setting_changed(preview_settings_prefix, [this] { update_preset_camera_settings(); });
 }
 
-ViewportCameraController::~ViewportCameraController() {}
+ViewportCameraController::~ViewportCameraController()
+{
+    Application::instance().get_settings()->unregister_setting_changed(preview_settings_prefix, m_preset_settings_changed);
+}
 
 void ViewportCameraController::truck(double delta_right, double delta_up)
 {
@@ -502,11 +568,15 @@ void ViewportCameraController::truck(double delta_right, double delta_up)
 
 void ViewportCameraController::pan_tilt(double delta_pan, double delta_tilt)
 {
+    if (get_follow_mode() == FollowMode::DefCam && m_view_preset != ViewPreset::DEFAULT && m_view_preset != ViewPreset::PERSPECTIVE)
+        return;
     m_follow_mode_strategy->pan_tilt(delta_pan, delta_tilt);
 }
 
 void ViewportCameraController::tumble(double delta_theta, double delta_phi)
 {
+    if (get_follow_mode() == FollowMode::DefCam && m_view_preset != ViewPreset::DEFAULT && m_view_preset != ViewPreset::PERSPECTIVE)
+        return;
     m_follow_mode_strategy->tumble(delta_theta, delta_phi);
 }
 
@@ -517,7 +587,11 @@ SdfPath ViewportCameraController::get_follow_prim_path() const
 
 void ViewportCameraController::set_up_axis(const TfToken& up_axis)
 {
+    const bool changed = m_up_axis != up_axis;
+    m_up_axis = up_axis;
     m_follow_mode_strategy->set_up_axis(up_axis);
+    if (changed && get_follow_mode() == FollowMode::DefCam && m_view_preset != ViewPreset::DEFAULT)
+        m_follow_mode_strategy->apply_preset(m_view_preset, m_preset_camera_settings);
 }
 
 GfCamera ViewportCameraController::get_gf_camera()
@@ -534,6 +608,8 @@ GfFrustum ViewportCameraController::get_frustum()
 
 void ViewportCameraController::set_follow_prim(const SdfPath& prim_path)
 {
+    if (!prim_path.IsEmpty() && get_follow_mode() == FollowMode::DefCam)
+        m_navigation_camera = get_gf_camera();
     m_camera_mapper->set_path(prim_path);
     update_follow_mode_strategy();
     camera_changed(prim_path);
@@ -554,6 +630,8 @@ ViewportCameraController::FollowMode ViewportCameraController::get_follow_mode()
 
 void ViewportCameraController::update_camera_mapper(ViewportCameraMapperPtr camera_mapper)
 {
+    if (m_follow_mode_strategy && get_follow_mode() == FollowMode::DefCam)
+        m_navigation_camera = get_gf_camera();
     m_camera_mapper = camera_mapper;
     if (m_camera_mapper)
     {
@@ -568,7 +646,9 @@ void ViewportCameraController::update_camera_mapper(ViewportCameraMapperPtr came
             }
         });
     }
-    m_follow_mode_strategy = std::make_unique<DefCamFollowStrategy>(m_follow_mode_strategy.get());
+    m_follow_mode_strategy = std::make_unique<DefCamFollowStrategy>(m_follow_mode_strategy.get(), m_view_preset != ViewPreset::DEFAULT);
+    if (m_view_preset != ViewPreset::DEFAULT)
+        m_follow_mode_strategy->restore_camera(m_navigation_camera);
     update_follow_mode_strategy();
     camera_mapper_changed();
 }
@@ -585,7 +665,11 @@ void ViewportCameraController::update_follow_mode_strategy()
     if (!m_camera_mapper->is_valid())
     {
         if (current_follow_mode != FollowMode::DefCam)
-            m_follow_mode_strategy = std::make_unique<DefCamFollowStrategy>(m_follow_mode_strategy.get());
+        {
+            m_follow_mode_strategy = std::make_unique<DefCamFollowStrategy>(m_follow_mode_strategy.get(), m_view_preset != ViewPreset::DEFAULT);
+            if (m_view_preset != ViewPreset::DEFAULT)
+                m_follow_mode_strategy->restore_camera(m_navigation_camera);
+        }
     }
     else if (m_camera_mapper->is_read_only())
     {
@@ -607,6 +691,103 @@ void ViewportCameraController::update_follow_mode_strategy()
     {
         m_follow_mode_strategy->pull();
     }
+}
+
+void ViewportCameraController::set_view_preset(ViewPreset preset)
+{
+    m_view_preset = preset;
+    m_camera_mapper->set_path(SdfPath::EmptyPath());
+    m_follow_mode_strategy = std::make_unique<DefCamFollowStrategy>(m_follow_mode_strategy.get(), preset != ViewPreset::DEFAULT);
+    if (preset != ViewPreset::DEFAULT)
+    {
+        m_preset_camera_settings = get_preset_camera_settings(preset);
+        m_follow_mode_strategy->apply_preset(preset, m_preset_camera_settings);
+    }
+    m_navigation_camera = get_gf_camera();
+    camera_changed(SdfPath::EmptyPath());
+}
+
+GfCamera ViewportCameraController::get_preset_camera_settings(ViewPreset preset)
+{
+    const bool perspective = preset == ViewPreset::PERSPECTIVE;
+    const auto& defaults = DefCamSettings::instance();
+    const auto path = preset_settings_path(preset);
+    auto settings = Application::instance().get_settings();
+    auto values = settings->get("session." + path, settings->get<std::vector<double>>(path));
+    if (!valid_preset_settings(values, perspective))
+    {
+        values = { perspective ? defaults.get_horizontal_aperture() : 20.0 / GfCamera::APERTURE_UNIT, defaults.get_focal_length(),
+                   defaults.get_near_clip_plane(), defaults.get_far_clip_plane() };
+    }
+    GfCamera camera;
+    camera.SetProjection(perspective ? GfCamera::Perspective : GfCamera::Orthographic);
+    camera.SetHorizontalAperture(values[0]);
+    camera.SetFocalLength(values[1]);
+    camera.SetClippingRange(GfRange1f(values[2], values[3]));
+    return camera;
+}
+
+void ViewportCameraController::preview_preset_camera_settings(ViewPreset preset, const GfCamera& camera)
+{
+    const auto path = preset_settings_path(preset);
+    const std::vector<double> values { camera.GetHorizontalAperture(), camera.GetFocalLength(), camera.GetClippingRange().GetMin(),
+                                       camera.GetClippingRange().GetMax() };
+    if (!path.empty() && valid_preset_settings(values, preset == ViewPreset::PERSPECTIVE))
+        Application::instance().get_settings()->set("session." + path, values);
+}
+
+void ViewportCameraController::finish_preset_camera_settings_edit(ViewPreset preset, bool save)
+{
+    const auto path = preset_settings_path(preset);
+    auto settings = Application::instance().get_settings();
+    const auto preview = "session." + path;
+    if (path.empty() || !settings->has(preview))
+        return;
+    if (save)
+        settings->set(path, settings->get<std::vector<double>>(preview));
+    settings->remove(preview);
+}
+
+void ViewportCameraController::update_preset_camera_settings()
+{
+    if (m_view_preset == ViewPreset::DEFAULT)
+        return;
+    const auto settings = get_preset_camera_settings(m_view_preset);
+    if (settings == m_preset_camera_settings)
+        return;
+
+    auto camera = get_navigation_camera();
+    apply_preset_camera_settings(camera, m_preset_camera_settings, settings);
+    m_preset_camera_settings = settings;
+    set_navigation_camera(camera);
+}
+
+void ViewportCameraController::apply_preset_camera_settings(GfCamera& camera, const GfCamera& previous, const GfCamera& settings)
+{
+    const auto aperture_scale = settings.GetHorizontalAperture() / previous.GetHorizontalAperture();
+    const auto focal_scale = settings.GetFocalLength() / previous.GetFocalLength();
+    camera.SetHorizontalAperture(camera.GetHorizontalAperture() * aperture_scale);
+    camera.SetFocalLength(camera.GetFocalLength() * focal_scale);
+
+    const auto clipping = camera.GetClippingRange();
+    const auto old_range = previous.GetClippingRange();
+    const auto new_range = settings.GetClippingRange();
+    const auto near_clip = new_range.GetMin() == old_range.GetMin() ? clipping.GetMin() : new_range.GetMin();
+    const auto far_clip = new_range.GetMax() == old_range.GetMax() ? clipping.GetMax() : new_range.GetMax();
+    camera.SetClippingRange(near_clip < far_clip ? GfRange1f(near_clip, far_clip) : new_range);
+}
+
+GfCamera ViewportCameraController::get_navigation_camera()
+{
+    return get_follow_mode() == FollowMode::DefCam ? get_gf_camera() : m_navigation_camera;
+}
+
+void ViewportCameraController::set_navigation_camera(const GfCamera& camera)
+{
+    m_navigation_camera = camera;
+    if (get_follow_mode() == FollowMode::DefCam)
+        m_follow_mode_strategy->restore_camera(camera);
+    camera_changed(get_follow_prim_path());
 }
 
 void ViewportCameraController::set_default_camera()
@@ -631,7 +812,7 @@ void ViewportCameraController::frame_selection(const PXR_NS::GfBBox3d& selection
 
 void ViewportCameraController::set_display_size(int w, int h)
 {
-    m_follow_mode_strategy->set_display_size(w, h);
+    m_follow_mode_strategy->set_display_size(std::max(w, 1), std::max(h, 1));
 }
 
 OPENDCC_NAMESPACE_CLOSE

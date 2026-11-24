@@ -42,6 +42,7 @@
 #include "opendcc/app/ui/panel_factory.h"
 #include "opendcc/app/core/session.h"
 #include "opendcc/app/viewport/viewport_widget.h"
+#include "opendcc/app/viewport/viewport_panel.h"
 #include "opendcc/app/viewport/viewport_scene_context.h"
 #include "opendcc/app/viewport/iviewport_tool_context.h"
 
@@ -192,9 +193,7 @@ MainWindow::MainWindow()
     ViewportCameraMapperFactory::register_camera_mapper(TfToken("UI"), [] { return std::make_shared<UICameraMapper>(); });
 
     PanelFactory::instance().register_panel(
-        "viewport",
-        []() -> QWidget* { return new ViewportWidget(ViewportSceneContextRegistry::get_instance().create_scene_context(TfToken("USD"))); },
-        i18n("panels", "Viewport").toStdString(), false, ":icons/panel_viewport");
+        "viewport", []() -> QWidget* { return new ViewportPanel; }, i18n("panels", "Viewport").toStdString(), false, ":icons/panel_viewport");
 
     PanelFactory::instance().register_panel(
         "logger", [this] { return new LoggerView(m_logger_panel_manager); }, i18n("panels", "Logger").toStdString(), false, ":icons/panel_logger");
@@ -296,6 +295,10 @@ void MainWindow::load_panel_layout(QSettings* settings)
             item->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
     }
 
+    for (auto dock : m_main_container_widget->dockWidgetsMap())
+        if (auto panel = qobject_cast<ViewportPanel*>(dock->widget()))
+            panel->restore_state(settings->value("ui/viewport_panels/" + dock->objectName()).toByteArray());
+
     // restoreGeometry(m_settings->value("ui/main_window_geometry", saveGeometry()).toByteArray());
     const auto main_window_state = settings->value("ui/main_window_state", QByteArray()).toByteArray();
     if (!main_window_state.isEmpty())
@@ -309,6 +312,7 @@ void MainWindow::closeEvent(QCloseEvent* evt)
     QByteArray content = m_main_container_widget->saveState();
     auto settings = ApplicationUI::instance().get_main_window()->get_settings();
     settings->setValue("ui/panel_layout", content);
+    save_viewport_states(*settings);
     settings->setValue("ui/main_window_geometry", saveGeometry());
     settings->setValue("ui/main_window_state", saveState());
     DefCamSettings::instance().save_settings();
@@ -404,12 +408,21 @@ void MainWindow::close_panels()
     }
 }
 
+void MainWindow::save_viewport_states(QSettings& settings)
+{
+    settings.remove("ui/viewport_panels");
+    for (auto dock : m_main_container_widget->dockWidgetsMap())
+        if (auto panel = qobject_cast<ViewportPanel*>(dock->widget()))
+            settings.setValue("ui/viewport_panels/" + dock->objectName(), panel->save_state());
+}
+
 void MainWindow::save_layout(const std::string& path)
 {
     QSettings settings(path.c_str(), QSettings::IniFormat);
 
     QByteArray content = m_main_container_widget->saveState();
     settings.setValue("ui/panel_layout", content);
+    save_viewport_states(settings);
     settings.setValue("ui/main_window_geometry", saveGeometry());
     settings.setValue("ui/main_window_state", saveState());
 }

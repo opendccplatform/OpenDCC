@@ -10,6 +10,7 @@
 #include <pxr/usd/sdf/path.h>
 #include "opendcc/app/viewport/viewport_camera_mapper.h"
 #include "opendcc/app/core/application.h"
+#include "opendcc/app/core/settings.h"
 
 OPENDCC_NAMESPACE_OPEN
 
@@ -32,6 +33,29 @@ public:
 
     ViewportCameraController(ViewportCameraMapperPtr camera_mapper, QObject* parent = nullptr);
     ~ViewportCameraController();
+
+    /** @brief Independent navigation presets; DEFAULT retains global camera preferences. */
+    enum class ViewPreset
+    {
+        DEFAULT, ///< Use global camera preferences.
+        PERSPECTIVE, ///< Independent perspective navigation.
+        TOP, ///< Orthographic view along the stage up axis.
+        FRONT, ///< Orthographic front view with rotation disabled.
+        SIDE ///< Orthographic side view with rotation disabled.
+    };
+
+    void set_view_preset(ViewPreset preset);
+    ViewPreset get_view_preset() const { return m_view_preset; }
+    /** @brief Return the shared optics for a named built-in camera. */
+    static PXR_NS::GfCamera get_preset_camera_settings(ViewPreset preset);
+    /** @brief Apply an unsaved settings edit to views using the given preset. */
+    static void preview_preset_camera_settings(ViewPreset preset, const PXR_NS::GfCamera& camera);
+    /** @brief Save or discard the unsaved settings for a preset. */
+    static void finish_preset_camera_settings_edit(ViewPreset preset, bool save);
+    /** @brief Capture the local navigation camera, including while following a scene camera. */
+    PXR_NS::GfCamera get_navigation_camera();
+    /** @brief Restore a local camera without authoring a USD camera. */
+    void set_navigation_camera(const PXR_NS::GfCamera& camera);
 
     void truck(double delta_right, double delta_up);
     void pan_tilt(double delta_pan, double delta_tilt);
@@ -57,8 +81,16 @@ Q_SIGNALS:
     void camera_mapper_changed();
 
 private:
+    friend class ViewportPanel;
+    static void apply_preset_camera_settings(PXR_NS::GfCamera& camera, const PXR_NS::GfCamera& previous, const PXR_NS::GfCamera& settings);
     void update_follow_mode_strategy();
+    void update_preset_camera_settings();
 
+    PXR_NS::TfToken m_up_axis = PXR_NS::TfToken("y");
+    ViewPreset m_view_preset = ViewPreset::DEFAULT;
+    PXR_NS::GfCamera m_navigation_camera;
+    PXR_NS::GfCamera m_preset_camera_settings;
+    Settings::SettingChangedHandle m_preset_settings_changed;
     ViewportCameraMapperPtr m_camera_mapper;
     std::unique_ptr<FollowModeStrategy> m_follow_mode_strategy;
 };

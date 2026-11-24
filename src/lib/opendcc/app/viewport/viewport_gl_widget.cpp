@@ -21,6 +21,7 @@
 #include <QMenu>
 #include <QTimer>
 #include <QPainter>
+#include <QPaintEvent>
 #include <QSurfaceFormat>
 #include <QGuiApplication>
 #include <QScreen>
@@ -44,6 +45,7 @@
 #include "opendcc/app/viewport/viewport_ui_draw_manager.h"
 #include "opendcc/app/viewport/viewport_color_correction.h"
 #include "opendcc/app/viewport/viewport_camera_controller.h"
+#include "opendcc/app/viewport/viewport_camera_labels.h"
 #include "opendcc/app/viewport/viewport_usd_camera_mapper.h"
 #include "opendcc/app/viewport/viewport_background_filler.h"
 #include "opendcc/app/viewport/viewport_context_menu_registry.h"
@@ -149,6 +151,7 @@ ViewportGLWidget::~ViewportGLWidget()
 
     UsdViewportRefineManager::instance().unregister_refine_level_changed_callback(m_usd_refine_level_changed_cid);
     UsdViewportRefineManager::instance().unregister_stage_cleared_callback(m_usd_stage_cleared_cid);
+    m_scene_context->unregister_event_handler(ViewportSceneContext::EventType::DirtyRenderSettings, m_render_settings_cid);
     DefCamSettings::instance().unregister_event_callback(m_def_cam_settings_dispatcher_handle);
     for (const auto& cid : m_setting_changed_cids)
         Application::instance().get_settings()->unregister_setting_changed(cid.first, cid.second);
@@ -201,9 +204,10 @@ void ViewportGLWidget::initializeGL()
         m_background_drawer = std::make_unique<GradientBackgroundFiller>(this);
     else
         m_background_drawer = std::make_unique<SolidBackgroundFiller>(this);
-    const auto up_axis = get_up_axis(m_scene_context->get_context_name(), Application::instance().get_session()->get_current_stage());
+    const auto stage = Application::instance().get_session()->get_current_stage();
+    const auto up_axis = get_up_axis(m_scene_context->get_context_name(), stage);
     m_grid = std::make_unique<ViewportGrid>(m_grid_settings.lines_color, m_grid_settings.min_step, m_grid_settings.enable, up_axis);
-    m_camera_controller->set_up_axis(up_axis);
+    update_stage_camera(stage, up_axis, false);
     ViewportColorCorrection::ColorCorrectionMode mode;
     if (m_params.color_correction_mode == "openColorIO")
         mode = ViewportColorCorrection::OCIO;
@@ -214,6 +218,12 @@ void ViewportGLWidget::initializeGL()
     m_color_correction =
         std::make_unique<ViewportColorCorrection>(mode, m_params.view_OCIO, m_params.input_color_space, m_params.gamma, m_params.exposure);
     set_render_settings_to_engine();
+    if (m_scene_context->get_context_name() == TfToken("USD"))
+    {
+        get_engine()->set_selected(Application::instance().get_selection(), Application::instance().get_rich_selection());
+        const auto prims = Application::instance().get_highlighted_prims();
+        m_params.repr_paths = std::unordered_set<SdfPath, SdfPath::Hash>(prims.begin(), prims.end());
+    }
 
 #if PXR_VERSION >= 2205
     auto compositor = IViewportCompositingExtension::create_compositor(this);
@@ -225,7 +235,7 @@ void ViewportGLWidget::initializeGL()
 
 void ViewportGLWidget::paintGL()
 {
-    if (!m_engine_enabled)
+    if (!m_engine_enabled || width() <= 0 || height() <= 0)
         return;
 
     // Qt's composition can leave depth writes disabled; glClear respects the depth mask.
@@ -312,7 +322,7 @@ void ViewportGLWidget::paintGL()
     m_background_drawer->draw_display();
     glPopDebugGroup();
 
-    if (!engine->is_converged())
+    if (isVisible() && !engine->is_converged())
     {
         QTimer::singleShot(5, this, qOverload<>(&QOpenGLWidget::update));
     }
@@ -340,6 +350,18 @@ void ViewportGLWidget::paintGL()
     m_compositor->composite(app_draw_fbo, hgi);
 #endif
 
+    const auto preset = m_camera_controller->get_view_preset();
+    if (m_camera_controller->get_follow_mode() == ViewportCameraController::FollowMode::DefCam &&
+        preset != ViewportCameraController::ViewPreset::DEFAULT && preset != ViewportCameraController::ViewPreset::PERSPECTIVE)
+    {
+        const auto direction = frustum.ComputeViewDirection();
+        const auto normal = GfVec3d(std::abs(direction[0]), std::abs(direction[1]), std::abs(direction[2]));
+        m_grid->set_plane(normal[0] > normal[1] && normal[0] > normal[2]
+                              ? ViewportGrid::Plane::YZ
+                              : (normal[1] > normal[2] ? ViewportGrid::Plane::XZ : ViewportGrid::Plane::XY));
+    }
+    else
+        m_grid->set_up_axis(get_up_axis(m_scene_context->get_context_name(), Application::instance().get_session()->get_current_stage()));
     m_grid->draw(frustum);
 
     m_ui_draw_manager->execute_draw_queue(m_params.render_resolution[0], m_params.render_resolution[1], m_mousex * devicePixelRatio(),
@@ -372,6 +394,25 @@ std::shared_ptr<ViewportEngineProxy> ViewportGLWidget::get_engine() const
 void ViewportGLWidget::close_engine()
 {
     m_engine = nullptr;
+}
+
+void ViewportGLWidget::showEvent(QShowEvent* event)
+{
+    QOpenGLWidget::showEvent(event);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+    if (!isValid() || !defaultFramebufferObject())
+        return;
+
+    // Reparenting drops Qt's wrapper for the existing framebuffer texture. Refresh it
+    // before the backing store collects textures, with updates disabled to avoid an extra render.
+    const bool updates_enabled = updatesEnabled();
+    if (updates_enabled)
+        setUpdatesEnabled(false);
+    QPaintEvent paint_event(rect());
+    QOpenGLWidget::paintEvent(&paint_event);
+    if (updates_enabled)
+        setUpdatesEnabled(true);
+#endif
 }
 
 void ViewportGLWidget::resizeEvent(QResizeEvent* e)
@@ -568,7 +609,10 @@ SelectionList ViewportGLWidget::make_selection_list(const PXR_NS::HdxPickHitVect
 void ViewportGLWidget::on_camera_changed(PXR_NS::SdfPath follow_path)
 {
     if (m_camera_prim_path == follow_path)
+    {
+        update();
         return;
+    }
 
     auto invised_paths = m_params.invised_paths;
     invised_paths.erase(m_camera_prim_path);
@@ -618,9 +662,62 @@ void ViewportGLWidget::update_stage_watcher()
     }
 }
 
+void ViewportGLWidget::restore_camera_state(ViewportCameraController::ViewPreset preset, const GfCamera& camera, const SdfPath& follow_path)
+{
+    m_pending_follow_path.reset();
+    m_camera_controller->set_view_preset(preset);
+    m_camera_controller->set_navigation_camera(camera);
+    if (auto stage = Application::instance().get_session()->get_current_stage())
+        follow_saved_camera(stage, follow_path);
+    else
+        m_pending_follow_path = follow_path;
+}
+
+SdfPath ViewportGLWidget::get_saved_follow_path() const
+{
+    return m_pending_follow_path.value_or(m_camera_controller->get_follow_prim_path());
+}
+
+void ViewportGLWidget::follow_saved_camera(const UsdStageRefPtr& stage, const SdfPath& path)
+{
+    if (path.IsEmpty())
+        return;
+    if (stage->GetPrimAtPath(path))
+        m_camera_controller->set_follow_prim(path);
+    else
+        m_camera_controller->set_view_preset(m_camera_controller->get_view_preset());
+}
+
+void ViewportGLWidget::update_stage_camera(const UsdStageRefPtr& stage, const TfToken& up_axis, bool reset)
+{
+    if (m_pending_follow_path)
+    {
+        if (stage)
+        {
+            const auto camera = m_camera_controller->get_navigation_camera();
+            const auto path = *m_pending_follow_path;
+            m_pending_follow_path.reset();
+            m_camera_controller->set_up_axis(up_axis);
+            m_camera_controller->set_navigation_camera(camera);
+            follow_saved_camera(stage, path);
+        }
+        return;
+    }
+
+    m_camera_controller->set_up_axis(up_axis);
+    if (reset)
+    {
+        m_camera_controller->set_default_camera();
+        const auto preset = m_camera_controller->get_view_preset();
+        if (preset != ViewportCameraController::ViewPreset::DEFAULT)
+            m_camera_controller->set_view_preset(preset);
+    }
+}
+
 void ViewportGLWidget::register_callbacks()
 {
-    m_scene_context->register_event_handler(ViewportSceneContext::EventType::DirtyRenderSettings, [this] { set_render_settings_to_engine(); });
+    m_render_settings_cid =
+        m_scene_context->register_event_handler(ViewportSceneContext::EventType::DirtyRenderSettings, [this] { set_render_settings_to_engine(); });
     m_def_cam_settings_dispatcher_handle = DefCamSettings::instance().register_event_callback([this](const GfCamera& camera) { update(); });
 
     m_current_stage_changed_cid = Application::instance().register_event_callback(Application::EventType::CURRENT_STAGE_CHANGED, [this] {
@@ -639,13 +736,13 @@ void ViewportGLWidget::register_callbacks()
             get_engine()->set_render_setting(TfToken("stageMetersPerUnit"), VtValue(m_params.stage_meters_per_unit));
         }
 
-        const auto up_axis = get_up_axis(m_scene_context->get_context_name(), Application::instance().get_session()->get_current_stage());
+        const auto stage = Application::instance().get_session()->get_current_stage();
+        const auto up_axis = get_up_axis(m_scene_context->get_context_name(), stage);
         if (m_grid)
             m_grid->set_up_axis(up_axis);
-        m_camera_controller->set_up_axis(up_axis);
-        m_camera_controller->set_default_camera();
+        update_stage_camera(stage, up_axis, true);
         m_params.current_stage_root = SdfPath::AbsoluteRootPath();
-        if (auto stage = Application::instance().get_session()->get_current_stage())
+        if (stage)
         {
             if (m_params.stage_resolver)
                 m_params.current_stage_root =
@@ -1527,6 +1624,8 @@ void ViewportGLWidget::set_compositor(const std::shared_ptr<Compositor> composit
 
 void ViewportGLWidget::set_scene_context(std::shared_ptr<ViewportSceneContext> scene_context)
 {
+    makeCurrent();
+    m_scene_context->unregister_event_handler(ViewportSceneContext::EventType::DirtyRenderSettings, m_render_settings_cid);
     m_scene_context = scene_context;
     if (m_scene_context->use_hydra2())
     {
@@ -1536,7 +1635,8 @@ void ViewportGLWidget::set_scene_context(std::shared_ptr<ViewportSceneContext> s
     {
         get_engine()->set_scene_delegates(m_scene_context->get_delegates());
     }
-    m_scene_context->register_event_handler(ViewportSceneContext::EventType::DirtyRenderSettings, [this] { set_render_settings_to_engine(); });
+    m_render_settings_cid =
+        m_scene_context->register_event_handler(ViewportSceneContext::EventType::DirtyRenderSettings, [this] { set_render_settings_to_engine(); });
     m_drag_and_drop_controller->set_scene_context(m_scene_context->get_context_name());
     ViewportCameraMapperPtr cam_map;
     if (scene_context->get_context_name() == TfToken("USD"))
@@ -1546,6 +1646,7 @@ void ViewportGLWidget::set_scene_context(std::shared_ptr<ViewportSceneContext> s
     m_camera_controller->update_camera_mapper(cam_map);
     Application::instance().set_active_view_scene_context(m_scene_context->get_context_name());
     set_render_settings_to_engine();
+    doneCurrent();
     update();
 }
 
@@ -1606,20 +1707,20 @@ void OPENDCC_NAMESPACE::ViewportGLWidget::set_sequence_time(PXR_NS::UsdTimeCode 
 
 void ViewportGLWidget::draw_headup_display_text()
 {
-    std::string camera_text = m_camera_controller->get_follow_prim_path().GetString();
-    if (camera_text.empty())
-        camera_text = "Def Cam";
+    const auto path = m_camera_controller->get_follow_prim_path();
+    const auto camera_text =
+        path.IsEmpty() ? details::get_view_preset_label(m_camera_controller->get_view_preset()) : QString::fromStdString(path.GetString());
 
     QRectF area(0, 0, width(), height() - 10);
     // Draw twice with offset to emulate text shadow
     QPainter painter(this);
     painter.setPen(Qt::black);
     painter.translate(QPoint(1, 0));
-    painter.drawText(area, Qt::AlignHCenter | Qt::AlignBottom, camera_text.c_str());
+    painter.drawText(area, Qt::AlignHCenter | Qt::AlignBottom, camera_text);
 
     painter.setPen(Qt::white);
     painter.translate(QPoint(-1, 0));
-    painter.drawText(area, Qt::AlignHCenter | Qt::AlignBottom, camera_text.c_str());
+    painter.drawText(area, Qt::AlignHCenter | Qt::AlignBottom, camera_text);
     painter.end();
 }
 

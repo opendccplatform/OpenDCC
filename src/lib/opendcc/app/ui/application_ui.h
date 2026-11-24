@@ -93,6 +93,8 @@ private:
     ApplicationUI();
     ~ApplicationUI();
 
+    friend class ViewportWidget;
+    void deactivate_view(ViewportWidget* view);
     void init_ocio();
 
     static ApplicationUI* m_instance;

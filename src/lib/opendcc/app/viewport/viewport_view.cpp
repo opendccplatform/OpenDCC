@@ -53,6 +53,26 @@ void ViewportView::set_rollover_prim(const SdfPath& path)
     get_gl_widget()->set_rollover_prims({ path });
 }
 
+void ViewportView::set_view_preset(ViewportCameraController::ViewPreset preset)
+{
+    get_gl_widget()->get_camera_controller()->set_view_preset(preset);
+}
+
+ViewportCameraController::ViewPreset ViewportView::get_view_preset() const
+{
+    return get_gl_widget()->get_camera_controller()->get_view_preset();
+}
+
+GfCamera ViewportView::get_navigation_camera() const
+{
+    return get_gl_widget()->get_camera_controller()->get_navigation_camera();
+}
+
+void ViewportView::set_navigation_camera(const GfCamera& camera)
+{
+    get_gl_widget()->get_camera_controller()->set_navigation_camera(camera);
+}
+
 void ViewportView::look_through(const SdfPath& path)
 {
     get_gl_widget()->get_camera_controller()->set_follow_prim(path);

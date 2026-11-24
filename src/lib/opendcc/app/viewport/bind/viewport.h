@@ -19,4 +19,5 @@
 #endif
 
 #include "opendcc/app/viewport/viewport_widget.h"
+#include "opendcc/app/viewport/viewport_panel.h"
 #include "opendcc/app/viewport/viewport_view.h"

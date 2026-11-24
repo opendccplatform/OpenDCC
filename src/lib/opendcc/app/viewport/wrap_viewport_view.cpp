@@ -5,6 +5,7 @@
 #include "opendcc/base/pybind_bridge/usd.h"
 #include "opendcc/base/pybind_bridge/shiboken.h"
 #include "opendcc/app/viewport/viewport_view.h"
+#include "opendcc/app/viewport/viewport_camera_labels.h"
 #include <tuple>
 
 OPENDCC_PYBIND_BOOST_BRIDGE(PXR_NS::GfCamera, "pxr.Gf.Camera")
@@ -14,8 +15,23 @@ using namespace pybind11;
 
 void py_interp::bind::wrap_viewport_view(pybind11::module& m)
 {
+    enum_<ViewportCameraController::ViewPreset>(m, "ViewportViewPreset")
+        .value("DEFAULT", ViewportCameraController::ViewPreset::DEFAULT)
+        .value("PERSPECTIVE", ViewportCameraController::ViewPreset::PERSPECTIVE)
+        .value("TOP", ViewportCameraController::ViewPreset::TOP)
+        .value("FRONT", ViewportCameraController::ViewPreset::FRONT)
+        .value("SIDE", ViewportCameraController::ViewPreset::SIDE);
     class_<ViewportView, std::shared_ptr<ViewportView>>(m, "ViewportView")
         .def("get_camera", &ViewportView::get_camera)
+        .def("set_view_preset", &ViewportView::set_view_preset)
+        .def("get_view_preset", &ViewportView::get_view_preset)
+        .def_static("get_view_preset_label",
+                    [](ViewportCameraController::ViewPreset preset) { return details::get_view_preset_label(preset).toStdString(); })
+        .def_static("get_preset_camera_settings", &ViewportCameraController::get_preset_camera_settings)
+        .def_static("preview_preset_camera_settings", &ViewportCameraController::preview_preset_camera_settings)
+        .def_static("finish_preset_camera_settings_edit", &ViewportCameraController::finish_preset_camera_settings_edit)
+        .def("get_navigation_camera", &ViewportView::get_navigation_camera)
+        .def("set_navigation_camera", &ViewportView::set_navigation_camera)
         .def("get_viewport_dimensions",
              [](const ViewportView& view) {
                  const auto dimensions = view.get_viewport_dimensions();

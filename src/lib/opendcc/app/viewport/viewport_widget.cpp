@@ -16,6 +16,7 @@
 #include <QLabel>
 #include <QDoubleSpinBox>
 #include <QKeySequence>
+#include <QOpenGLContext>
 
 #include <pxr/usd/usd/primRange.h>
 #include <pxr/usd/usd/stage.h>
@@ -53,6 +54,51 @@ PXR_NAMESPACE_USING_DIRECTIVE
 using base::commands::CommandInterface;
 using base::commands::CommandArgs;
 std::unordered_set<ViewportWidget*> ViewportWidget::m_live_widgets;
+
+namespace
+{
+    class ViewportContextGuard
+    {
+    public:
+        explicit ViewportContextGuard(ViewportGLWidget& widget)
+            : m_widget(widget)
+        {
+            const auto context = m_widget.context();
+            if (!context || !context->isValid())
+                return;
+
+            m_context = context;
+            m_previous_context = QOpenGLContext::currentContext();
+            if (m_previous_context != m_context)
+            {
+                m_previous_surface = m_previous_context ? m_previous_context->surface() : nullptr;
+                m_widget.makeCurrent();
+            }
+        }
+
+        ViewportContextGuard(const ViewportContextGuard&) = delete;
+        ViewportContextGuard& operator=(const ViewportContextGuard&) = delete;
+
+        ~ViewportContextGuard()
+        {
+            if (!m_context || m_previous_context == m_context)
+                return;
+
+            if (QOpenGLContext::currentContext() == m_context)
+                m_widget.doneCurrent();
+            if (m_previous_context && m_previous_surface && QOpenGLContext::currentContext() != m_previous_context)
+                m_previous_context->makeCurrent(m_previous_surface);
+        }
+
+        bool is_current() const { return m_context && QOpenGLContext::currentContext() == m_context; }
+
+    private:
+        ViewportGLWidget& m_widget;
+        QOpenGLContext* m_context = nullptr;
+        QOpenGLContext* m_previous_context = nullptr;
+        QSurface* m_previous_surface = nullptr;
+    };
+}
 
 void ViewportWidget::setup_toolbar_action(QAction* action)
 {
@@ -312,6 +358,14 @@ ViewportWidget::ViewportWidget(std::shared_ptr<ViewportSceneContext> scene_conte
     init_menu();
 
     m_extensions_list = ViewportUIExtensionRegistry::create_extensions(this);
+    for (auto action : findChildren<QAction*>())
+        if (!action->shortcut().isEmpty())
+        {
+            action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+            addAction(action);
+        }
+    if (m_live_widgets.count(this) != 0)
+        qApp->installEventFilter(this);
 }
 
 ViewportWidget::~ViewportWidget()
@@ -319,11 +373,8 @@ ViewportWidget::~ViewportWidget()
     Application::instance().unregister_event_callback(Application::EventType::CURRENT_STAGE_CHANGED, m_current_stage_changed_cid);
     PrimVisibilityRegistry::unregister_visibility_types_changes(m_visibility_types_changed_cid);
 
-    if (m_feature_flags == FeatureFlags::VIEWPORT)
-    {
-        m_live_widgets.erase(this);
-        ApplicationUI::instance().set_active_view(m_live_widgets.empty() ? nullptr : *m_live_widgets.begin());
-    }
+    if (m_live_widgets.erase(this) != 0)
+        ApplicationUI::instance().deactivate_view(this);
 }
 
 void ViewportWidget::resizeEvent(QResizeEvent* event)
@@ -500,13 +551,23 @@ void ViewportWidget::init_menu()
             utils::action_set_object_name_from_text(render_plugin_action, "viewport_set", "hydra_renderer");
             render_plugin_action->setCheckable(true);
             connect(render_plugin_action, &QAction::triggered, [this, plugin_id](bool) {
-                auto engine = m_glwidget->get_engine();
-                engine->set_renderer_plugin(plugin_id);
+                TfToken render_id;
+                {
+                    const ViewportContextGuard context(*m_glwidget);
+                    if (!context.is_current())
+                        return;
 
-                auto render_id = engine->get_current_render_id() == "GL" ? "Storm" : engine->get_current_render_id().GetText();
+                    const auto engine = m_glwidget->get_engine();
+                    engine->set_renderer_plugin(plugin_id);
+                    if (auto stage = Application::instance().get_session()->get_current_stage())
+                        engine->set_render_setting(TfToken("stageMetersPerUnit"), VtValue(UsdGeomGetStageMetersPerUnit(stage)));
+                    render_id = engine->get_current_render_id();
+                }
+
+                const auto render_name = render_id == "GL" ? "Storm" : render_id.GetText();
                 for (auto action : m_renderer_menu_group->actions())
                 {
-                    if (action->text() == render_id)
+                    if (action->text() == render_name)
                     {
                         action->setChecked(true);
                         break;
@@ -515,9 +576,6 @@ void ViewportWidget::init_menu()
 #if PXR_VERSION >= 2005
                 update_displayed_aovs();
 #endif
-                const auto stage_meters_per_unit = UsdGeomGetStageMetersPerUnit(Application::instance().get_session()->get_current_stage());
-                engine->set_render_setting(TfToken("stageMetersPerUnit"), VtValue(stage_meters_per_unit));
-
                 update_render_actions();
                 render_plugin_changed(plugin_id);
                 update();
@@ -596,7 +654,16 @@ void ViewportWidget::init_menu()
     m_render_actions.restart = new QAction(i18n("viewport.menu_bar.view", "Restart Render"));
     connect(m_render_actions.pause, &QAction::triggered, this, [this] { get_gl_widget()->get_engine()->pause(); });
     connect(m_render_actions.resume, &QAction::triggered, this, [this] { get_gl_widget()->get_engine()->resume(); });
-    connect(m_render_actions.restart, &QAction::triggered, this, [this] { get_gl_widget()->get_engine()->restart(); });
+    connect(m_render_actions.restart, &QAction::triggered, this, [this] {
+        {
+            const ViewportContextGuard context(*m_glwidget);
+            if (!context.is_current())
+                return;
+
+            m_glwidget->get_engine()->restart();
+        }
+        m_glwidget->update();
+    });
     m_view_menu->addAction(m_render_actions.pause);
     m_view_menu->addAction(m_render_actions.resume);
     m_view_menu->addAction(m_render_actions.restart);
@@ -1006,10 +1073,48 @@ void ViewportWidget::update_all_gl_widget()
     }
 }
 
+bool ViewportWidget::eventFilter(QObject* watched, QEvent* event)
+{
+    switch (event->type())
+    {
+    case QEvent::FocusIn:
+    case QEvent::MouseButtonPress:
+    case QEvent::Wheel:
+    case QEvent::KeyPress:
+    case QEvent::ShortcutOverride:
+        if (auto widget = qobject_cast<QWidget*>(watched))
+        {
+            if (isVisible() && (widget == this || isAncestorOf(widget)))
+            {
+                ApplicationUI::instance().set_active_view(this);
+                Q_EMIT activated();
+            }
+        }
+        break;
+    default:
+        break;
+    }
+    return QWidget::eventFilter(watched, event);
+}
+
 bool ViewportWidget::event(QEvent* event)
 {
-    if (event->type() == QEvent::WindowActivate)
-        ApplicationUI::instance().set_active_view(this);
+    switch (event->type())
+    {
+    case QEvent::Hide:
+        ApplicationUI::instance().deactivate_view(this);
+        break;
+    case QEvent::WindowActivate:
+        if (isWindow() && m_live_widgets.count(this) != 0)
+            ApplicationUI::instance().set_active_view(this);
+        break;
+    case QEvent::Show:
+        if (m_live_widgets.count(this) != 0 && ApplicationUI::instance().get_active_view() == this)
+            ApplicationUI::instance().set_active_view(this);
+        break;
+    default:
+        break;
+    }
 
     return QWidget::event(event);
 }

@@ -119,7 +119,7 @@ ViewportOverlayWidget::ViewportOverlayWidget(ViewportOverlay* overlay, QWidget* 
     main_layout->addLayout(center_layout);
     main_layout->addStretch();
 
-    m_camera = new ActionComboBox(":/icons/camera", i18n("viewport.overlay", "Camera"));
+    m_camera = new ActionComboBox(":/icons/camera", i18n("viewport.overlay", "Def Cams and USD Cameras"));
     row_layout->addWidget(m_camera);
     m_renderer = new ActionComboBox("", i18n("viewport.overlay", "Hydra Renderer"));
     row_layout->addWidget(m_renderer);
@@ -172,7 +172,7 @@ ViewportOverlayWidget::~ViewportOverlayWidget()
 
 void ViewportOverlayWidget::add_camera(QAction* action)
 {
-    m_camera->add_action(action);
+    m_camera->add_action(action, action->iconText());
 }
 
 void ViewportOverlayWidget::add_renderer(QAction* action)
@@ -295,15 +295,17 @@ QComboBox:disabled
 
 ActionComboBox::~ActionComboBox() {}
 
-void ActionComboBox::add_action(QAction* action)
+void ActionComboBox::add_action(QAction* action, const QString& label)
 {
     QVariant data = QVariant::fromValue<QAction*>(action);
+    const auto text = label.isEmpty() ? action->text() : label;
 
     blockSignals(true);
     if (m_has_icon)
-        addItem(QIcon(m_icon), action->text(), data);
+        addItem(QIcon(m_icon), text, data);
     else
-        addItem(action->text(), data);
+        addItem(text, data);
+    setItemData(count() - 1, action->toolTip(), Qt::ToolTipRole);
     update_width();
     blockSignals(false);
 

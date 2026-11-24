@@ -32,7 +32,7 @@ public:
     ActionComboBox(const QString& icon, const QString& tooltip, bool arrow = true, QWidget* parent = nullptr);
     virtual ~ActionComboBox();
 
-    void add_action(QAction* action);
+    void add_action(QAction* action, const QString& label = {});
 
 protected:
     void showEvent(QShowEvent* event) override;

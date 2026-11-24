@@ -36,6 +36,7 @@ out vec3 local_pos;
 
 #define XY 0
 #define XZ 1
+#define YZ 2
 
 void main(void)
 {
@@ -45,6 +46,11 @@ void main(void)
    {    
        vert_pos = vec3(in_pos.x, in_pos.y, 0);
        plane_offset = vec3(vViewPosition.x, vViewPosition.y, 0);
+   }
+   else if (plane_orient == YZ)
+   {
+       vert_pos = vec3(0, in_pos.x, in_pos.y);
+       plane_offset = vec3(0, vViewPosition.y, vViewPosition.z);
    }
    else
    {
@@ -74,6 +80,7 @@ out vec4 outColor;
 
 #define XY 0
 #define XZ 1
+#define YZ 2
 #define DISC_RADIUS (M_1_SQRTPI * 1.05)
 #define GRID_LINE_SMOOTH_START (0.5 - DISC_RADIUS)
 #define GRID_LINE_SMOOTH_END (0.5 + DISC_RADIUS)
@@ -86,6 +93,11 @@ float get_grid(vec3 wPos, vec3 fwidthPos, float grid_size)
    {   
        grid_domain = abs(mod(wPos.xy + half_size, grid_size) - half_size);
        grid_domain /= fwidthPos.xy;
+   }
+   else if (plane_orient == YZ)
+   {
+      grid_domain = abs(mod(wPos.yz + half_size, grid_size) - half_size);
+      grid_domain /= fwidthPos.yz;
    }
    else
    {
@@ -103,6 +115,8 @@ void main(void)
    vec3 fwidthPos = fwidth(fragPos3D);
    if (plane_orient == XY)
        fragPos3D += vec3(vViewPosition.x, vViewPosition.y, 0);
+   else if (plane_orient == YZ)
+       fragPos3D += vec3(0, vViewPosition.y, vViewPosition.z);
    else
        fragPos3D += vec3(vViewPosition.x, 0, vViewPosition.z);
    
@@ -116,6 +130,8 @@ void main(void)
        float angle;
        if (plane_orient == XY)
            angle = 1.0 - abs(viewvec.z);
+       else if (plane_orient == YZ)
+           angle = 1.0 - abs(viewvec.x);
        else
            angle = 1.0 - abs(viewvec.y);
        angle *= angle;
@@ -140,6 +156,12 @@ void main(void)
        if (plane_orient == XY)
        {
            angle = 1.0 - abs(matViewInverse[2].z);
+           angle *= angle;
+           fade *= 1.0 - angle * angle;
+       }
+       else if (plane_orient == YZ)
+       {
+           angle = 1.0 - abs(matViewInverse[2].x);
            angle *= angle;
            fade *= 1.0 - angle * angle;
        }
@@ -268,6 +290,11 @@ void ViewportGrid::set_up_axis(const TfToken& up_axis)
         m_plane_orientation = 0;
     else
         m_plane_orientation = 1;
+}
+
+void ViewportGrid::set_plane(Plane plane)
+{
+    m_plane_orientation = static_cast<int>(plane);
 }
 
 void ViewportGrid::draw(const GfFrustum& frustum)

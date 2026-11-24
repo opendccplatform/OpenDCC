@@ -87,30 +87,36 @@ void ApplicationUI::init_ocio()
     OCIO::SetCurrentConfig(config);
 }
 
+namespace
+{
+    ViewportWidget* find_visible_view(ViewportWidget* excluded = nullptr)
+    {
+        for (auto view : ViewportWidget::get_live_widgets())
+        {
+            if (view != excluded && view->isVisible() && view->isVisibleTo(nullptr))
+                return view;
+        }
+        return nullptr;
+    }
+}
+
 ViewportWidget* ApplicationUI::get_active_view()
 {
-
-    if (m_active_view == nullptr)
-    {
-        // Not sure if its good idea, but fixes case then we close all viewports, and create new viewport, without changing active_view focus
-        auto viewports = ViewportWidget::get_live_widgets();
-        if (viewports.size() > 0)
-        {
-            return *(viewports.begin());
-        }
-        else
-        {
-            return nullptr;
-        }
-    }
-    else
-    {
+    if (m_active_view && m_active_view->isVisible() && m_active_view->isVisibleTo(nullptr))
         return m_active_view;
-    }
+    return find_visible_view();
+}
+
+void ApplicationUI::deactivate_view(ViewportWidget* view)
+{
+    if (m_active_view == view)
+        set_active_view(find_visible_view(view));
 }
 
 void ApplicationUI::set_active_view(ViewportWidget* view)
 {
+    if (m_active_view == view)
+        return;
     m_active_view = view;
     Application::instance().dispatch_event(Application::EventType::ACTIVE_VIEW_CHANGED);
 

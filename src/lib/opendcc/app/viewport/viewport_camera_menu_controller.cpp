@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "opendcc/app/viewport/viewport_camera_menu_controller.h"
-#include "opendcc/app/viewport/viewport_gl_widget.h"
-#include "opendcc/app/viewport/viewport_camera_controller.h"
+#include "opendcc/app/viewport/viewport_camera_labels.h"
 #include <QMenu>
 #include <QActionGroup>
 #include "opendcc/app/core/application.h"
@@ -11,20 +10,59 @@
 #include <pxr/usd/usdGeom/camera.h>
 #include "pxr/usd/usd/primRange.h"
 #include "opendcc/app/viewport/viewport_overlay.h"
+#include <algorithm>
 
 OPENDCC_NAMESPACE_OPEN
 
 PXR_NAMESPACE_USING_DIRECTIVE
+
+QString details::get_view_preset_label(ViewportCameraController::ViewPreset preset)
+{
+    using Preset = ViewportCameraController::ViewPreset;
+    switch (preset)
+    {
+    case Preset::PERSPECTIVE:
+        return i18n("viewport.camera", "persp");
+    case Preset::TOP:
+        return i18n("viewport.camera", "top");
+    case Preset::FRONT:
+        return i18n("viewport.camera", "front");
+    case Preset::SIDE:
+        return i18n("viewport.camera", "side");
+    default:
+        return i18n("viewport.camera", "Def Cam");
+    }
+}
 
 ViewportUsdCameraMenuController::ViewportUsdCameraMenuController(ViewportCameraControllerPtr camera_controller, ViewportOverlayWidget* overlay,
                                                                  QObject* parent /*= nullptr*/)
     : ViewportCameraMenuController(camera_controller, parent)
 {
     m_camera_menu = new QMenu(i18n("viewport.menu_bar.view", "Camera"));
+    m_camera_menu->setToolTipsVisible(true);
     m_overlay = overlay;
 
     m_camera_select_group = new QActionGroup(this);
     m_camera_select_group->setExclusive(true);
+
+    using Preset = ViewportCameraController::ViewPreset;
+    for (const auto preset : { Preset::PERSPECTIVE, Preset::TOP, Preset::FRONT, Preset::SIDE })
+    {
+        const auto name = details::get_view_preset_label(preset);
+        auto action = new QAction(name, this);
+        action->setIconText(i18n("viewport.camera", "%1 (Def Cam)").arg(name));
+        action->setToolTip(i18n("viewport.camera", "In-memory navigation view"));
+        action->setCheckable(true);
+        m_navigation_actions.emplace(preset, action);
+        m_camera_select_group->addAction(action);
+        m_overlay->add_camera(action);
+        connect(action, &QAction::triggered, this, [this, preset] {
+            if (preset == m_camera_controller->get_view_preset())
+                m_camera_controller->set_default_camera();
+            else
+                m_camera_controller->set_view_preset(preset);
+        });
+    }
 
     m_look_through_action = new QAction(i18n("viewport.menu_bar.view", "Look Through Selected"), this);
     connect(m_look_through_action, &QAction::triggered, this, &ViewportUsdCameraMenuController::on_look_through);
@@ -44,6 +82,7 @@ ViewportUsdCameraMenuController::~ViewportUsdCameraMenuController()
 {
     Application::instance().get_session()->unregister_stage_changed_callback(Session::StageChangedEventType::CURRENT_STAGE_OBJECT_CHANGED,
                                                                              m_current_stage_object_changed_cid);
+    delete m_camera_menu;
 }
 
 void ViewportUsdCameraMenuController::on_current_stage_object_changed(const UsdNotice::ObjectsChanged& notice)
@@ -111,37 +150,42 @@ void ViewportUsdCameraMenuController::on_look_through(bool)
 
 void ViewportUsdCameraMenuController::on_rebuild_ui()
 {
-    m_camera_actions.clear();
     m_camera_menu->clear();
-    for (auto action : m_camera_select_group->actions())
-        action->deleteLater();
-    m_def_cam_action = new QAction(i18n("viewport.camera", "Def Cam"), this);
-    m_def_cam_action->setCheckable(true);
-    m_def_cam_action->setData(QString::fromStdString(""));
-    m_camera_select_group->addAction(m_def_cam_action);
-    m_camera_menu->addAction(m_def_cam_action);
-    m_overlay->add_camera(m_def_cam_action);
-
-    const auto is_scene_cam_mode = m_camera_controller->get_follow_mode() != ViewportCameraController::FollowMode::DefCam;
-    m_def_cam_action->setChecked(!is_scene_cam_mode);
+    for (const auto& camera : m_camera_actions)
+    {
+        m_camera_select_group->removeAction(camera.second);
+        camera.second->deleteLater();
+    }
+    m_camera_actions.clear();
+    m_camera_menu->addSection(i18n("viewport.camera", "Def Cams"));
+    for (const auto& navigation : m_navigation_actions)
+        m_camera_menu->addAction(navigation.second);
 
     auto stage = Application::instance().get_session()->get_current_stage();
     if (!stage)
+    {
+        on_camera_changed(SdfPath::EmptyPath());
         return;
+    }
+
+    const auto add_scene_view = [this](const UsdPrim& prim, const QString& tooltip) {
+        auto action = new QAction(prim.GetName().GetText(), this);
+        action->setToolTip(tooltip);
+        action->setCheckable(true);
+        m_camera_actions.emplace(prim, action);
+        m_camera_select_group->addAction(action);
+        m_camera_menu->addAction(action);
+        m_overlay->add_camera(action);
+        connect(action, &QAction::triggered, this, [this, path = prim.GetPath()] { m_camera_controller->set_follow_prim(path); });
+    };
 
     if (!m_look_through_prim.IsEmpty())
     {
         auto look_through_prim = stage->GetPrimAtPath(m_look_through_prim);
-        if (look_through_prim)
+        if (look_through_prim && !look_through_prim.IsA<UsdGeomCamera>())
         {
-            auto look_through_prim_action = new QAction(m_look_through_prim.GetName().c_str(), this);
-            look_through_prim_action->setData(QString::fromStdString(m_look_through_prim.GetString()));
-            look_through_prim_action->setCheckable(true);
-            m_camera_actions[look_through_prim] = look_through_prim_action;
-            m_camera_menu->addAction(look_through_prim_action);
-            m_overlay->add_camera(look_through_prim_action);
-            m_camera_select_group->addAction(look_through_prim_action);
-            look_through_prim_action->setChecked(m_camera_controller->get_follow_mode() == ViewportCameraController::FollowMode::StageXformablePrim);
+            m_camera_menu->addSeparator();
+            add_scene_view(look_through_prim, i18n("viewport.camera", "Look through a USD prim"));
         }
         else
         {
@@ -157,23 +201,12 @@ void ViewportUsdCameraMenuController::on_rebuild_ui()
         if (!have_scene_cameras)
         {
             have_scene_cameras = true;
-            m_camera_menu->addSection("Scene Cam");
+            m_camera_menu->addSection(i18n("viewport.camera", "USD Cameras"));
         }
 
-        auto scene_cam_action = new QAction(prim.GetName().GetText(), this);
-        scene_cam_action->setData(QString::fromStdString(prim.GetPath().GetString()));
-        scene_cam_action->setCheckable(true);
-
-        m_camera_actions[prim] = scene_cam_action;
-        m_camera_select_group->addAction(scene_cam_action);
-        m_camera_menu->addAction(scene_cam_action);
-        m_overlay->add_camera(scene_cam_action);
+        add_scene_view(prim, i18n("viewport.camera", "USD scene camera"));
     }
     on_camera_changed(m_camera_controller->get_follow_prim_path());
-    connect(m_camera_select_group, &QActionGroup::triggered, this, [this](QAction* action) {
-        const auto& camera_path_str = action->data().toString().toStdString();
-        camera_path_str.empty() ? m_camera_controller->set_default_camera() : m_camera_controller->set_follow_prim(SdfPath(camera_path_str));
-    });
 }
 
 void ViewportUsdCameraMenuController::on_camera_changed(PXR_NS::SdfPath follow_path)
@@ -186,16 +219,22 @@ void ViewportUsdCameraMenuController::on_camera_changed(PXR_NS::SdfPath follow_p
     }
     if (follow_path.IsEmpty())
     {
-        m_def_cam_action->setChecked(true);
+        using Preset = ViewportCameraController::ViewPreset;
+        const auto preset = m_camera_controller->get_view_preset();
+        m_navigation_actions.at(preset == Preset::DEFAULT ? Preset::PERSPECTIVE : preset)->setChecked(true);
         return;
     }
 
-    auto stage = Application::instance().get_session()->get_current_stage();
-    auto prim = stage->GetPrimAtPath(follow_path);
-    auto iter = m_camera_actions.find(prim);
-    if (iter != m_camera_actions.end())
-        iter->second->setChecked(true);
-    else if (auto checked_action = m_camera_select_group->checkedAction())
+    if (auto stage = Application::instance().get_session()->get_current_stage())
+    {
+        const auto iter = m_camera_actions.find(stage->GetPrimAtPath(follow_path));
+        if (iter != m_camera_actions.end())
+        {
+            iter->second->setChecked(true);
+            return;
+        }
+    }
+    if (auto checked_action = m_camera_select_group->checkedAction())
         checked_action->setChecked(false);
 }
 

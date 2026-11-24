@@ -73,11 +73,13 @@ public:
     static const std::unordered_set<ViewportWidget*>& get_live_widgets();
     static void update_all_gl_widget();
 Q_SIGNALS:
+    void activated();
     void render_plugin_changed(const PXR_NS::TfToken& render_plugin);
     void scene_context_changed(const PXR_NS::TfToken& context);
 
 protected:
     virtual bool event(QEvent* event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
 

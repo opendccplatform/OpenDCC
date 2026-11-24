@@ -162,7 +162,7 @@ def init_ui():
         PreviewRenderAction,
         IprRenderAction,
         StopRenderAction,
-        DiskRenderAction
+        DiskRenderAction,
     )
 
     from opendcc.session_ui import subscribe_to_no_stage_signal
@@ -378,6 +378,13 @@ def init_ui():
 
     select_action.trigger()
 
+    from .viewport_layout import viewport_layout_button
+
+    viewport_layout_spacing = QtWidgets.QWidget(tool_context_toolbar)
+    viewport_layout_spacing.setFixedSize(8, 8)
+    tool_context_toolbar.addWidget(viewport_layout_spacing)
+    tool_context_toolbar.addSeparator()
+    tool_context_toolbar.addWidget(viewport_layout_button(tool_context_toolbar))
     mw.addToolBar(QtCore.Qt.LeftToolBarArea, tool_context_toolbar)
 
     # shortcuts

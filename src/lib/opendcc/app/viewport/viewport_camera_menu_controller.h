@@ -57,7 +57,7 @@ private:
     ViewportOverlayWidget* m_overlay = nullptr;
     QActionGroup* m_camera_select_group = nullptr;
     QAction* m_look_through_action = nullptr;
-    QAction* m_def_cam_action = nullptr;
+    std::map<ViewportCameraController::ViewPreset, QAction*> m_navigation_actions;
     std::map<PXR_NS::UsdPrim, QAction*> m_camera_actions;
     PXR_NS::SdfPath m_look_through_prim;
 

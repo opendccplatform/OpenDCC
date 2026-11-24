@@ -29,6 +29,7 @@
 #include <QOpenGLWidget>
 #include <QContextMenuEvent>
 
+#include <optional>
 #include <string>
 
 class QMouseEvent;
@@ -170,9 +171,16 @@ Q_SIGNALS:
     void render_settings_changed();
 
 protected:
+    void showEvent(QShowEvent* event) override;
     void resizeEvent(QResizeEvent* e) override;
 
 private:
+    friend class ViewportPanel;
+    void restore_camera_state(ViewportCameraController::ViewPreset preset, const PXR_NS::GfCamera& camera, const PXR_NS::SdfPath& follow_path);
+    PXR_NS::SdfPath get_saved_follow_path() const;
+    void update_stage_camera(const PXR_NS::UsdStageRefPtr& stage, const PXR_NS::TfToken& up_axis, bool reset);
+    void follow_saved_camera(const PXR_NS::UsdStageRefPtr& stage, const PXR_NS::SdfPath& path);
+
     std::pair<PXR_NS::HdxPickHitVector, bool> intersect_impl(const PXR_NS::GfVec2f& start, const PXR_NS::GfVec2f& end,
                                                              SelectionList::SelectionMask pick_target,
                                                              const PXR_NS::HdRprimCollection* custom_collection,
@@ -231,6 +239,7 @@ private:
     MouseMode m_mousemode;
     int m_mousex, m_mousey;
     PXR_NS::SdfPath m_camera_prim_path;
+    std::optional<PXR_NS::SdfPath> m_pending_follow_path;
     bool m_enable_background_gradient = false;
     std::unique_ptr<ViewportBackgroundFiller> m_background_drawer;
     std::unique_ptr<ViewportGrid> m_grid;
@@ -257,6 +266,7 @@ private:
     Settings::SettingChangedHandle m_show_camera_cid;
     UsdRefineHandle m_usd_refine_level_changed_cid;
     UsdStageClearedHandle m_usd_stage_cleared_cid;
+    ViewportSceneContext::DispatcherHandle m_render_settings_cid;
     DefCamSettingsDispatcherHandle m_def_cam_settings_dispatcher_handle;
     std::unordered_map<std::string, Settings::SettingChangedHandle> m_setting_changed_cids;
 

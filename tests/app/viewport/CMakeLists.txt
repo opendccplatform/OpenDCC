@@ -13,3 +13,9 @@ opendcc_add_python_test(ViewportWidgetTests SOURCE test_viewport_widget.py GUI E
 opendcc_add_python_test(ViewportGridTests SOURCE test_viewport_grid.py GUI ENV ${_viewport_test_environment})
 opendcc_add_python_test(ApplicationUiCallbackTests SOURCE test_application_ui_callbacks.py GUI ENV
                         ${_viewport_test_environment})
+
+opendcc_add_python_test(ViewportPanelTests SOURCE test_viewport_panel.py GUI ENV ${_viewport_test_environment})
+
+if(DCC_TESTS_GUI)
+    set_tests_properties(ViewportPanelTests PROPERTIES TIMEOUT 180)
+endif()

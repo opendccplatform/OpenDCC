@@ -8,7 +8,7 @@ from pxr import Tf
 Tf.PrepareModule(_core, locals())
 del Tf
 
-from opendcc._viewport import ViewportWidget
+from opendcc._viewport import ViewportWidget, ViewportPanel
 
 try:
     from . import __DOC

@@ -1,6 +1,7 @@
 set(viewport_h
     viewport/iviewport_tool_context.h
     viewport/tool_settings_view.h
+    viewport/viewport_panel.h
     viewport/viewport_widget.h
     viewport/viewport_gl_widget.h
     viewport/viewport_ui_draw_manager.h
@@ -21,6 +22,7 @@ set(viewport_h
     viewport/viewport_view.h
     viewport/viewport_camera_mapper_factory.h
     viewport/viewport_camera_controller.h
+    viewport/viewport_camera_labels.h
     viewport/viewport_camera_mapper.h
     viewport/viewport_camera_menu_controller.h
     viewport/viewport_manipulator.h
@@ -63,6 +65,7 @@ set(scene_indices_cpp viewport/scene_indices/hydra_engine_scene_indices_notifier
 set(viewport_cpp
     viewport/iviewport_tool_context.cpp
     viewport/tool_settings_view.cpp
+    viewport/viewport_panel.cpp
     viewport/viewport_widget.cpp
     viewport/viewport_gl_widget.cpp
     viewport/viewport_ui_draw_manager.cpp

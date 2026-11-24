@@ -22,6 +22,13 @@ public:
     void set_enabled(bool enable);
     void set_min_step(double min_step);
     void set_grid_color(const PXR_NS::GfVec4f& color);
+    enum class Plane
+    {
+        XY, ///< Grid in the XY plane.
+        XZ, ///< Grid in the XZ plane.
+        YZ ///< Grid in the YZ plane.
+    };
+    void set_plane(Plane plane);
     void set_up_axis(const PXR_NS::TfToken& up_axis);
 
 private:

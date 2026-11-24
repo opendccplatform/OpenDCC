@@ -7,6 +7,7 @@
 #include "opendcc/opendcc.h"
 #include <pxr/base/gf/camera.h>
 #include <memory>
+#include "opendcc/app/viewport/viewport_camera_controller.h"
 #include <QImage>
 #include <QPointer>
 #include "opendcc/app/core/rich_selection.h"
@@ -51,6 +52,10 @@ public:
     SelectionList pick_multiple_prims(const PXR_NS::GfVec2f& start, const PXR_NS::GfVec2f& end, SelectionList::SelectionMask pick_target);
     void set_rollover_prim(const PXR_NS::SdfPath& path);
 
+    void set_view_preset(ViewportCameraController::ViewPreset preset);
+    ViewportCameraController::ViewPreset get_view_preset() const;
+    PXR_NS::GfCamera get_navigation_camera() const;
+    void set_navigation_camera(const PXR_NS::GfCamera& camera);
     void look_through(const PXR_NS::SdfPath& path);
     PXR_NS::GfCamera get_camera() const;
     ViewportDimensions get_viewport_dimensions() const;

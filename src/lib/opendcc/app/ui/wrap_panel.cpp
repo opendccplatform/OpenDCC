@@ -91,7 +91,10 @@ void py_interp::bind::wrap_panel(pybind11::module& m)
             .def("get_registered_panels", &get_registered_panels);
 
     class_<ads::CDockAreaWidget>(m, "CDockAreaWidget");
-    class_<ads::CDockWidget>(m, "CDockWidget").def("dockAreaWidget", &ads::CDockWidget::dockAreaWidget, return_value_policy::reference);
+    class_<ads::CDockWidget>(m, "CDockWidget")
+        .def("dockAreaWidget", &ads::CDockWidget::dockAreaWidget, return_value_policy::reference)
+        .def("widget", &ads::CDockWidget::widget, return_value_policy::reference)
+        .def("objectName", [](const ads::CDockWidget& dock) { return dock.objectName().toStdString(); });
 
     m.def("create_panel", &create_panel, return_value_policy::reference, arg("panel_type"), arg("floating") = true, arg("parent_panel") = nullptr,
           arg("dock_area") = ads::CenterDockWidgetArea, arg("site_index") = 0);

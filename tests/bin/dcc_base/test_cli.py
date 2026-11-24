@@ -3,11 +3,13 @@
 
 from pathlib import Path
 import json
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 class TestApplicationCli(unittest.TestCase):
@@ -47,6 +49,18 @@ class TestApplicationCli(unittest.TestCase):
         self.check_result(
             self.run_script("close_stage_on_startup.py", ("--gui",)), 0, "startup stages closed"
         )
+
+    def test_gui_startup_restores_viewport_cameras_after_stage_opens(self):
+        stage = Path(self.directory.name) / "scene.usda"
+        options = ("--gui", str(stage))
+        with patch.dict(os.environ, {"OPENDCC_SETTINGS_DIR": str(stage.parent / "settings")}):
+            self.check_result(
+                self.run_script("viewport_startup.py", ("--gui",), ("save", str(stage))), 0
+            )
+            self.check_result(self.run_script("viewport_startup.py", options, ("restore",)), 0)
+            self.check_result(
+                self.run_script("viewport_startup.py", ("--gui",), ("open", str(stage))), 0
+            )
 
     def test_startup_and_shutdown_callbacks(self):
         fixtures = Path(__file__).parent / "fixtures"

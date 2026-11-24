@@ -1,176 +1,115 @@
 # Copyright Contributors to the OpenDCC project
 # SPDX-License-Identifier: Apache-2.0
 
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtCore, QtWidgets
+from pxr import Gf
 import sys
+
 import opendcc.core as dcc_core
 from opendcc.common_widgets import DoubleWidget, RolloutWidget
-
 from opendcc.i18n import i18n
 
 
 class DefCamPage(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        super(DefCamPage, self).__init__(parent=parent)
+        super().__init__(parent)
         self.setObjectName(i18n("preferences.def_cam", "Default Camera"))
-        layout = QtWidgets.QVBoxLayout()
+        self._edited = set()
+
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        rollout = RolloutWidget(i18n("preferences.def_cam", "Default Camera"), expandable=False)
-        rollout_layout = QtWidgets.QFormLayout()
-        rollout.set_layout(rollout_layout)
-        layout.addWidget(rollout)
+        self._rollout = RolloutWidget(self.objectName(), expandable=False)
+        self._form = QtWidgets.QFormLayout()
+        self._rollout.set_layout(self._form)
+        layout.addWidget(self._rollout)
         layout.addStretch()
-        self.setLayout(layout)
-        self.fov_ui = DoubleWidget()
-        self.fov_ui.set_range(0, 180)
-        self.fov_ui.enable_slider(5, 120)
 
-        self.near_clip_plane_ui = DoubleWidget()
-        self.near_clip_plane_ui.set_range(0.0001, sys.float_info.max)
-        self.near_clip_plane_ui.setFixedWidth(80)
-        self.far_clip_plane_ui = DoubleWidget()
-        self.far_clip_plane_ui.set_range(0.0001, sys.float_info.max)
-        self.far_clip_plane_ui.setFixedWidth(80)
-
-        self.focal_length_ui = DoubleWidget()
-        self.focal_length_ui.set_range(0.0001, sys.float_info.max)
-        self.focal_length_ui.enable_slider(5, 250)
-
-        self.horizontal_aperture_ui = DoubleWidget()
-        self.horizontal_aperture_ui.set_range(0.0001, sys.float_info.max)
-        self.horizontal_aperture_ui.setFixedWidth(80)
-
-        self.vertical_aperture_ui = DoubleWidget()
-        self.vertical_aperture_ui.set_range(0.0001, sys.float_info.max)
-        self.vertical_aperture_ui.setFixedWidth(80)
-
-        self.aspect_ratio_ui = DoubleWidget()
-        self.aspect_ratio_ui.set_range(0.0001, sys.float_info.max)
-        self.aspect_ratio_ui.enable_slider(0.0001, 10)
-
-        self.clipping_range_ui = QtWidgets.QHBoxLayout()
-        self.clipping_range_ui.addWidget(self.near_clip_plane_ui)
-        self.clipping_range_ui.addWidget(self.far_clip_plane_ui)
-
-        self.projection_ui = QtWidgets.QCheckBox()
-
-        rollout_layout.addRow(i18n("preferences.def_cam", "Field of view:"), self.fov_ui)
-        rollout_layout.addRow(
-            i18n("preferences.def_cam", "Clipping plane:"), self.clipping_range_ui
+        self._camera_picker = QtWidgets.QComboBox()
+        presets = dcc_core.ViewportViewPreset
+        self._presets = (presets.PERSPECTIVE, presets.TOP, presets.FRONT, presets.SIDE)
+        self._camera_picker.addItems(
+            [dcc_core.ViewportView.get_view_preset_label(preset) for preset in self._presets]
         )
-        rollout_layout.addRow(i18n("preferences.def_cam", "Focal length:"), self.focal_length_ui)
-        rollout_layout.addRow(
-            i18n("preferences.def_cam", "Horizontal aperture:"), self.horizontal_aperture_ui
-        )
-        rollout_layout.addRow(
-            i18n("preferences.def_cam", "Vertical aperture:"), self.vertical_aperture_ui
-        )
-        rollout_layout.addRow(i18n("preferences.def_cam", "Aspect ratio:"), self.aspect_ratio_ui)
-        rollout_layout.addRow(i18n("preferences.def_cam", "Perspective:"), self.projection_ui)
+        self._form.addRow(i18n("preferences.def_cam", "Def Cam:"), self._camera_picker)
+
+        self._fields = {}
+        for field, label in (
+            ("fov", i18n("preferences.def_cam", "Field of view:")),
+            ("focal_length", i18n("preferences.def_cam", "Focal length:")),
+            ("aperture", i18n("preferences.def_cam", "Horizontal aperture:")),
+            ("size", i18n("preferences.def_cam", "Orthographic size:")),
+            ("near", i18n("preferences.def_cam", "Near clip plane:")),
+            ("far", i18n("preferences.def_cam", "Far clip plane:")),
+        ):
+            widget = DoubleWidget()
+            widget.set_range(0.0001, sys.float_info.max)
+            self._form.addRow(label, widget)
+            self._fields[field] = widget
+            widget.value_changed.connect(lambda value, field=field: self._set_field(field, value))
+
+        self._fields["fov"].set_range(0.0001, 179.9999)
+        self._fields["fov"].enable_slider(5, 120)
+        self._fields["focal_length"].enable_slider(5, 250)
+        self._camera_picker.currentIndexChanged.connect(self.load_values)
         self.load_values()
-        self.save_values_to_restore()
-
-        self.fov_ui.value_changed.connect(self.set_fov)
-        self.near_clip_plane_ui.value_changed.connect(self.set_near_clip_plane)
-        self.far_clip_plane_ui.value_changed.connect(self.set_far_clip_plane)
-        self.focal_length_ui.value_changed.connect(self.set_focal_length)
-        self.horizontal_aperture_ui.value_changed.connect(self.set_horizontal_aperture)
-        self.vertical_aperture_ui.value_changed.connect(self.set_vertical_aperture)
-        self.aspect_ratio_ui.value_changed.connect(self.set_aspect_ratio)
-        self.projection_ui.toggled.connect(self.set_projection)
-
-    def block_signals(self, value):
-        self.fov_ui.blockSignals(value)
-        self.near_clip_plane_ui.blockSignals(value)
-        self.far_clip_plane_ui.blockSignals(value)
-        self.focal_length_ui.blockSignals(value)
-        self.horizontal_aperture_ui.blockSignals(value)
-        self.vertical_aperture_ui.blockSignals(value)
-        self.aspect_ratio_ui.blockSignals(value)
-        self.projection_ui.blockSignals(value)
 
     def load_values(self):
-        self.block_signals(True)
-        self.fov_ui.set_value(dcc_core.DefCamSettings.instance().fov)
-        self.near_clip_plane_ui.set_value(dcc_core.DefCamSettings.instance().near_clip_plane)
-        self.far_clip_plane_ui.set_value(dcc_core.DefCamSettings.instance().far_clip_plane)
-        self.focal_length_ui.set_value(dcc_core.DefCamSettings.instance().focal_length)
-        self.horizontal_aperture_ui.set_value(
-            dcc_core.DefCamSettings.instance().horizontal_aperture
-        )
-        self.vertical_aperture_ui.set_value(dcc_core.DefCamSettings.instance().vertical_aperture)
-        self.aspect_ratio_ui.set_value(dcc_core.DefCamSettings.instance().aspect_ratio)
-        self.projection_ui.setChecked(dcc_core.DefCamSettings.instance().is_perspective)
-        self.block_signals(False)
+        preset = self._presets[self._camera_picker.currentIndex()]
+        camera = dcc_core.ViewportView.get_preset_camera_settings(preset)
+        perspective = camera.projection == Gf.Camera.Perspective
+        values = {
+            "fov": camera.GetFieldOfView(Gf.Camera.FOVHorizontal) if perspective else 0,
+            "focal_length": camera.focalLength,
+            "aperture": camera.horizontalAperture,
+            "size": camera.horizontalAperture * Gf.Camera.APERTURE_UNIT,
+            "near": camera.clippingRange.GetMin(),
+            "far": camera.clippingRange.GetMax(),
+        }
+        lens_fields = ("fov", "focal_length", "aperture") if perspective else ("size",)
+        visible_fields = lens_fields + ("near", "far")
+        for field, widget in self._fields.items():
+            visible = field in visible_fields
+            self._form.labelForField(widget).setVisible(visible)
+            widget.setVisible(visible)
+            blocker = QtCore.QSignalBlocker(widget)
+            if field in ("near", "far"):
+                widget.set_range(0.0001 if perspective else -sys.float_info.max, sys.float_info.max)
+            if visible:
+                widget.set_value(values[field])
+            del blocker
 
-    def save_values_to_restore(self):
-        """Some crutch for saving state of setting when open preference window"""
-        self.saved_fov_ui = dcc_core.DefCamSettings.instance().fov
-        self.saved_near_clip_plane_ui = dcc_core.DefCamSettings.instance().near_clip_plane
-        self.saved_far_clip_plane_ui = dcc_core.DefCamSettings.instance().far_clip_plane
-        self.saved_focal_length_ui = dcc_core.DefCamSettings.instance().focal_length
-        self.saved_horizontal_aperture_ui = dcc_core.DefCamSettings.instance().horizontal_aperture
-        self.saved_vertical_aperture_ui = dcc_core.DefCamSettings.instance().vertical_aperture
-        self.saved_aspect_ratio_ui = dcc_core.DefCamSettings.instance().aspect_ratio
-        self.saved_projection_ui = dcc_core.DefCamSettings.instance().is_perspective
+    def _set_field(self, field, value):
+        preset = self._presets[self._camera_picker.currentIndex()]
+        camera = dcc_core.ViewportView.get_preset_camera_settings(preset)
+        if field == "fov":
+            camera.SetPerspectiveFromAspectRatioAndFieldOfView(
+                camera.aspectRatio, value, Gf.Camera.FOVHorizontal, camera.horizontalAperture
+            )
+        elif field == "focal_length":
+            camera.focalLength = value
+        elif field == "aperture":
+            camera.horizontalAperture = value
+        elif field == "size":
+            camera.horizontalAperture = value / Gf.Camera.APERTURE_UNIT
+        else:
+            near = value if field == "near" else camera.clippingRange.GetMin()
+            far = value if field == "far" else camera.clippingRange.GetMax()
+            if near >= far:
+                self.load_values()
+                return
+            camera.clippingRange = Gf.Range1f(near, far)
 
-    def set_fov(self, value):
-        dcc_core.DefCamSettings.instance().fov = value
-        self.block_signals(True)
-        self.focal_length_ui.set_value(dcc_core.DefCamSettings.instance().focal_length)
-        self.vertical_aperture_ui.set_value(dcc_core.DefCamSettings.instance().vertical_aperture)
-        self.horizontal_aperture_ui.set_value(
-            dcc_core.DefCamSettings.instance().horizontal_aperture
-        )
-        self.block_signals(False)
-
-    def set_near_clip_plane(self, value):
-        dcc_core.DefCamSettings.instance().near_clip_plane = value
-
-    def set_far_clip_plane(self, value):
-        dcc_core.DefCamSettings.instance().far_clip_plane = value
-
-    def set_focal_length(self, value):
-        dcc_core.DefCamSettings.instance().focal_length = value
-        self.block_signals(True)
-        self.fov_ui.set_value(dcc_core.DefCamSettings.instance().fov)
-        self.block_signals(False)
-
-    def set_horizontal_aperture(self, value):
-        dcc_core.DefCamSettings.instance().horizontal_aperture = value
-        self.fov_ui.set_value(dcc_core.DefCamSettings.instance().fov)
-        self.aspect_ratio_ui.set_value(dcc_core.DefCamSettings.instance().aspect_ratio)
-
-    def set_vertical_aperture(self, value):
-        dcc_core.DefCamSettings.instance().vertical_aperture = value
-        self.block_signals(True)
-        self.fov_ui.set_value(dcc_core.DefCamSettings.instance().fov)
-        self.aspect_ratio_ui.set_value(dcc_core.DefCamSettings.instance().aspect_ratio)
-        self.block_signals(False)
-
-    def set_aspect_ratio(self, value):
-        dcc_core.DefCamSettings.instance().aspect_ratio = value
-        self.block_signals(True)
-        self.horizontal_aperture_ui.set_value(
-            dcc_core.DefCamSettings.instance().horizontal_aperture
-        )
-        self.fov_ui.set_value(dcc_core.DefCamSettings.instance().fov)
-        self.block_signals(False)
-
-    def set_projection(self, state):
-        dcc_core.DefCamSettings.instance().is_perspective = self.projection_ui.isChecked()
+        dcc_core.ViewportView.preview_preset_camera_settings(preset, camera)
+        self._edited.add(preset)
+        self.load_values()
 
     def save_settings(self):
-        dcc_core.DefCamSettings.instance().save_settings()
-        self.save_values_to_restore()
+        for preset in self._edited:
+            dcc_core.ViewportView.finish_preset_camera_settings_edit(preset, True)
+        self._edited.clear()
 
     def restore_previous_settings(self):
-        self.set_fov(self.saved_fov_ui)
-        self.set_near_clip_plane(self.saved_near_clip_plane_ui)
-        self.set_far_clip_plane(self.saved_far_clip_plane_ui)
-        self.set_focal_length(self.saved_focal_length_ui)
-        self.set_horizontal_aperture(self.saved_horizontal_aperture_ui)
-        self.set_vertical_aperture(self.saved_vertical_aperture_ui)
-        self.set_aspect_ratio(self.saved_aspect_ratio_ui)
-        self.set_projection(self.saved_projection_ui)
+        for preset in self._edited:
+            dcc_core.ViewportView.finish_preset_camera_settings_edit(preset, False)
+        self._edited.clear()
         self.load_values()
