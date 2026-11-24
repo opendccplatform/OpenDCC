@@ -161,7 +161,7 @@ def scripting_layout():
     )
     arrange_splitters(script_editor, [0.5, 1.62, 0.5])
     layers = create_panel(
-        "Layers", False, viewport.dockAreaWidget(), DockWidgetArea.BottomDockWidgetArea
+        "usd_layers", False, viewport.dockAreaWidget(), DockWidgetArea.BottomDockWidgetArea
     )
     usd_details_view = create_panel("usd_details_view", False, layers.dockAreaWidget())
     logger = create_panel("logger", False, layers.dockAreaWidget())

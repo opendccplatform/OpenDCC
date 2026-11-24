@@ -1,0 +1,8 @@
+#usda 1.0
+# Copyright Contributors to the OpenDCC project
+# SPDX-License-Identifier: Apache-2.0
+
+def Xform "Prop"
+{
+    def Xform "Geometry" {}
+}

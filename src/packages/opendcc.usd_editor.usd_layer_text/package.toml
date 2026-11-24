@@ -1,0 +1,12 @@
+[base]
+name = 'opendcc.usd_editor.usd_layer_text'
+
+[dependencies]
+'opendcc.usd_editor.layer_cmds' = {}
+'opendcc.ui.code_editor' = {}
+
+[[python.path]]
+path = 'python'
+
+[[python.entry_point]]
+module = 'opendcc.usd_editor.usd_layer_text'

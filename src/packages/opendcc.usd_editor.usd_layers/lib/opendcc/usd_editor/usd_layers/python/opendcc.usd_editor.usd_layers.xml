@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<typesystem package="opendcc.usd_editor.usd_layers._usd_layers">
+
+    <load-typesystem name="typesystem_core.xml" generate="no"/>
+    <load-typesystem name="typesystem_gui.xml" generate="no"/>
+    <load-typesystem name="typesystem_widgets.xml" generate="no"/>
+
+    <rejection class="OpenDCC::UsdLayersModel" function-name="set_stage"/>
+    <rejection class="OpenDCC::UsdLayersModel" function-name="stage"/>
+    <rejection class="OpenDCC::UsdLayersModel" function-name="layer_for_index"/>
+    <rejection class="OpenDCC::UsdLayersModel" function-name="item_for_index"/>
+    <rejection class="OpenDCC::UsdLayersModel" function-name="index_for_layer"/>
+    <rejection class="OpenDCC::UsdLayersModel" function-name="set_edit_target_layer"/>
+    <rejection class="OpenDCC::UsdLayersModel" function-name="toggle_muted"/>
+    <rejection class="OpenDCC::UsdLayersModel" function-name="add_sublayer"/>
+
+    <namespace-type name="OpenDCC" generate="no">
+        <object-type name="UsdLayersModel">
+            <enum-type name="Column"/>
+            <enum-type name="CustomRole"/>
+        </object-type>
+        <object-type name="UsdLayersView">
+            <modify-function signature="layer_model()const">
+                <modify-argument index="return">
+                    <define-ownership class="target" owner="c++"/>
+                </modify-argument>
+            </modify-function>
+        </object-type>
+    </namespace-type>
+
+
+</typesystem>

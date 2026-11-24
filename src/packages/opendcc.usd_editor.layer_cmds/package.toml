@@ -1,0 +1,5 @@
+[base]
+name = 'opendcc.usd_editor.layer_cmds'
+
+[[native.entry_point]]
+path = 'lib/${LIB_PREFIX}opendcc.usd_editor.layer_cmds${LIB_EXT}'

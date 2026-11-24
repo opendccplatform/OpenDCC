@@ -1,0 +1,15 @@
+[base]
+name = 'opendcc.usd_editor.usd_layers'
+
+[dependencies]
+'opendcc.usd_editor.layer_cmds' = {}
+'opendcc.usd_editor.usd_layer_text' = {}
+
+[[python.path]]
+path = 'python'
+
+[[python.entry_point]]
+module = 'opendcc.usd_editor.usd_layers'
+
+[[native.load]]
+path='lib/${LIB_PREFIX}opendcc.usd_editor.usd_layers${LIB_EXT}'
